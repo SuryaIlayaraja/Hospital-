@@ -167,6 +167,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       address: "Address",
       contactInfo: "Contact Information",
       ourValues: "Our Values",
+      facilities: ["Advanced Diagnostic Center", "24/7 Emergency Services", "Modern Operation Theaters", "Intensive Care Units", "Pharmacy & Laboratory", "Patient Counseling Services"],
       valuesItems: [
         {
           title: "Patient Centricity",
@@ -226,6 +227,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       address: "முகவரி",
       contactInfo: "தொடர்பு தகவல்",
       ourValues: "எங்கள் மதிப்புகள்",
+      facilities: ["மேம்பட்ட நோயறிதல் மையம்", "24/7 அவசர சேவைகள்", "நவீன அறுவை சிகிச்சை அரங்குகள்", "தீவிர சிகிச்சை பிரிவுகள்", "மருந்தகம் & ஆய்வகம்", "நோயாளி ஆலோசனை சேவைகள்"],
       valuesItems: [
         {
           title: "நோயாளி மையம்",
@@ -335,6 +337,16 @@ const Dashboard: React.FC<DashboardProps> = ({
     }, 5000);
     return () => clearInterval(timer);
   }, []);
+
+  // Facility Ticker Logic
+  const [facilityIndex, setFacilityIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFacilityIndex((prev) => (prev + 1) % (t[language] as any).facilities.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [language]);
 
   // Carousel Logic
   const heroImages = [
@@ -529,27 +541,25 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            {/* 3. Facilities Ticker - Full Width (6 cols) */}
-            <div className="md:col-span-6 overflow-hidden rounded-3xl bg-white/5 border border-white/10 py-8 relative">
-              <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10" />
-              <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10" />
+            {/* 3. Facilities Ticker - One-by-One Slider */}
+            <div className="md:col-span-6 h-24 overflow-hidden rounded-3xl bg-white/5 border border-white/10 relative flex items-center justify-center">
+              <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10" />
+              <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10" />
 
-              <div className="flex animate-marquee hover:[animation-play-state:paused] gap-4 w-max px-4">
-                {[...Array(2)].map((_, i) => (
-                  <React.Fragment key={i}>
-                    {(language === "en"
-                      ? ["Advanced Diagnostic Center", "24/7 Emergency Services", "Modern Operation Theaters", "Intensive Care Units", "Pharmacy & Laboratory", "Patient Counseling Services"]
-                      : ["மேம்பட்ட நோயறிதல் மையம்", "24/7 அவசர சேவைகள்", "நவீன அறுவை சிகிச்சை அரங்குகள்", "தீவிர சிகிச்சை பிரிவுகள்", "மருந்தகம் & ஆய்வகம்", "நோயாளி ஆலோசனை சேவைகள்"]
-                    ).map((facility, index) => (
-                      <div
-                        key={`${i}-${index}`}
-                        className="flex items-center gap-3 bg-gray-900/80 border border-gray-800 px-6 py-3 rounded-full whitespace-nowrap"
-                      >
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        <span className="text-gray-300 font-medium">{facility}</span>
-                      </div>
-                    ))}
-                  </React.Fragment>
+              <div className="relative w-full h-full flex items-center justify-center">
+                {(t[language] as any).facilities.map((facility: string, index: number) => (
+                  <div
+                    key={index}
+                    className={`absolute flex items-center gap-4 bg-gray-900/80 border border-gray-800 px-8 py-4 rounded-full whitespace-nowrap transition-all duration-1000 ease-in-out
+                      ${index === facilityIndex
+                        ? "opacity-100 translate-x-0 scale-100 blur-0"
+                        : index < facilityIndex
+                          ? "opacity-0 -translate-x-full scale-95 blur-sm pointer-events-none"
+                          : "opacity-0 translate-x-full scale-95 blur-sm pointer-events-none"}`}
+                  >
+                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
+                    <span className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{facility}</span>
+                  </div>
                 ))}
               </div>
             </div>
