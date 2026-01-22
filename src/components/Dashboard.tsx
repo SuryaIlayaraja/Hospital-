@@ -26,6 +26,9 @@ import {
   Bone,
   Target,
   Lightbulb,
+  Facebook,
+  Instagram,
+  Twitter,
 } from "lucide-react";
 import { getActiveDoctors, Doctor } from "../services/apiService";
 
@@ -551,50 +554,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            {/* 4. Contact/Address - Split (3 cols each) */}
-            <div className="md:col-span-3 bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:border-blue-500/30 transition-all duration-500">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/20">
-                  <MapPin className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">{t[language].address}</h3>
-                  <p className="text-blue-400 text-sm">{language === "en" ? "Visit Us" : "எங்களை சந்திக்கவும்"}</p>
-                </div>
-              </div>
-              <p className="text-gray-400 leading-relaxed text-lg">
-                {language === "en"
-                  ? "123 Medical District, Healthcare City, State - 600001"
-                  : "123 மருத்துவ மாவட்டம், சுகாதார நகரம், மாநிலம் - 600001"}
-              </p>
-            </div>
-
-            <div className="md:col-span-3 bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:border-pink-500/30 transition-all duration-500">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-pink-500/10 rounded-full flex items-center justify-center border border-pink-500/20">
-                  <Phone className="h-5 w-5 text-pink-400" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">{t[language].contactInfo}</h3>
-                  <p className="text-pink-400 text-sm">{language === "en" ? "24/7 Support" : "24/7 ஆதரவு"}</p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
-                  <span className="text-gray-400">Emergency</span>
-                  <span className="text-white font-mono">+91 98765 43210</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
-                  <span className="text-gray-400">Booking</span>
-                  <span className="text-white font-mono">+91 98765 43211</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Email</span>
-                  <span className="text-white">info@vikramhospital.com</span>
-                </div>
-              </div>
-            </div>
-
           </div>
 
           {/* Our Values Section */}
@@ -613,6 +572,69 @@ const Dashboard: React.FC<DashboardProps> = ({
               {(t[language] as any).valuesItems.slice(3, 5).map((item: any, idx: number) => (
                 <ValueCard key={idx + 3} item={item} index={idx + 3} />
               ))}
+            </div>
+          </div>
+
+          {/* Visit & Connect Section (Last) */}
+          <div className="mt-24 pt-16 border-t border-white/5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Address */}
+              <div className="bg-white/5 rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
+                    <MapPin className="h-5 w-5 text-indigo-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">{t[language].address}</h3>
+                </div>
+                <p className="text-gray-400 leading-relaxed">
+                  {language === "en"
+                    ? "123 Medical District, Healthcare City, State - 600001"
+                    : "123 மருத்துவ மாவட்டம், சுகாதார நகரம், மாநிலம் - 600001"}
+                </p>
+              </div>
+
+              {/* Contact Info */}
+              <div className="bg-white/5 rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
+                    <Phone className="h-5 w-5 text-indigo-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">{t[language].contactInfo}</h3>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-gray-400 flex justify-between">
+                    <span>Emergency:</span>
+                    <span className="text-indigo-300 font-mono">+91 98765 43210</span>
+                  </p>
+                  <p className="text-gray-400 flex justify-between">
+                    <span>Email:</span>
+                    <span className="text-indigo-300">info@vikramhospital.com</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Social Media */}
+              <div className="bg-white/5 rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-6 underline decoration-indigo-500/50 underline-offset-8">
+                    {language === "en" ? "Connect With Us" : "எங்களுடன் இணையுங்கள்"}
+                  </h3>
+                  <div className="flex gap-4">
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#1877F2]/20 border border-white/10 hover:border-[#1877F2]/50 transition-all text-gray-400 hover:text-[#1877F2]">
+                      <Facebook className="h-6 w-6" />
+                    </a>
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#E4405F]/20 border border-white/10 hover:border-[#E4405F]/50 transition-all text-gray-400 hover:text-[#E4405F]">
+                      <Instagram className="h-6 w-6" />
+                    </a>
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#1DA1F2]/20 border border-white/10 hover:border-[#1DA1F2]/50 transition-all text-gray-400 hover:text-[#1DA1F2]">
+                      <Twitter className="h-6 w-6" />
+                    </a>
+                  </div>
+                </div>
+                <p className="text-gray-500 text-sm mt-8">
+                  © 2026 Vikram Hospital. All rights reserved.
+                </p>
+              </div>
             </div>
           </div>
         </div>
