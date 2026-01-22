@@ -15,7 +15,6 @@ import {
   Ticket,
   MapPin,
   Phone,
-  Mail,
   Clock,
   Activity,
   Plus,
@@ -25,16 +24,18 @@ import {
   Microscope,
   Droplets,
   Bone,
+  Target,
+  Lightbulb,
 } from "lucide-react";
 import { getActiveDoctors, Doctor } from "../services/apiService";
 
-const CountUpNumber = ({ 
-  endValue, 
-  duration = 4000, 
-  startTrigger 
-}: { 
-  endValue: number; 
-  duration?: number; 
+const CountUpNumber = ({
+  endValue,
+  duration = 4000,
+  startTrigger
+}: {
+  endValue: number;
+  duration?: number;
   startTrigger: boolean;
 }) => {
   const [count, setCount] = useState(0);
@@ -53,11 +54,11 @@ const CountUpNumber = ({
       if (!startTimeRef.current) startTimeRef.current = timestamp;
       const progress = timestamp - startTimeRef.current;
       const percentage = Math.min(progress / duration, 1);
-      
+
       // Easing function for smoother finish
       const easeOutQuad = (t: number) => t * (2 - t);
       const currentCount = Math.floor(easeOutQuad(percentage) * endValue);
-      
+
       if (currentCount !== countRef.current) {
         setCount(currentCount);
         countRef.current = currentCount;
@@ -73,6 +74,32 @@ const CountUpNumber = ({
   }, [startTrigger, endValue, duration]);
 
   return <span>{count.toLocaleString()}</span>;
+};
+
+const ValueCard = ({ item, index }: { item: any; index: number }) => {
+  const icons = [UserCheck, Shield, Users, Target, Lightbulb];
+  const Icon = icons[index % icons.length];
+
+  return (
+    <div className="bg-gradient-to-br from-gray-900/50 to-black/50 backdrop-blur-md border border-white/5 rounded-2xl p-6 hover:border-indigo-500/30 transition-all duration-500 group">
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-indigo-500/10 transition-colors">
+          <Icon className="h-6 w-6 text-gray-400 group-hover:text-indigo-400 transition-colors" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">{item.title}</h3>
+          <ul className="space-y-2">
+            {item.desc.map((bullet: string, i: number) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-400 leading-snug">
+                <span className="text-indigo-500 mt-1">›</span>
+                {bullet}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 interface DashboardProps {
@@ -132,6 +159,33 @@ const Dashboard: React.FC<DashboardProps> = ({
       loadingDoctors: "Loading our expert doctors...",
       noDoctors: "No Doctors Available",
       noDoctorsDesc: "Please check back later for our medical team information.",
+      ourMission: "Our Mission",
+      ourVision: "Our Vision",
+      address: "Address",
+      contactInfo: "Contact Information",
+      ourValues: "Our Values",
+      valuesItems: [
+        {
+          title: "Patient Centricity",
+          desc: ["Commit to 'best outcomes and experience' for our patients", "Treat patients and their caregivers with compassion, care", "Our patients' needs will come first"]
+        },
+        {
+          title: "Integrity",
+          desc: ["Be principled, open and honest", "Model and live our 'Values'", "Demonstrate moral courage to speak up and do the right things"]
+        },
+        {
+          title: "Teamwork",
+          desc: ["Proactively support each other and operate as one team", "Respect and value people at all levels", "Demonstrate moral courage to speak up and do the right things"]
+        },
+        {
+          title: "Ownership",
+          desc: ["Be responsible and take pride in our actions", "Take initiative and go beyond the call of duty", "Deliver commitment and agreement made"]
+        },
+        {
+          title: "Innovation",
+          desc: ["Continuously improve and innovate to exceed expectations", "Adopt a 'can-do' attitude", "Challenge ourselves to do things differently"]
+        }
+      ]
     },
     ta: {
       opdFeedback: "வெளிநோயாளர் கருத்து",
@@ -164,6 +218,33 @@ const Dashboard: React.FC<DashboardProps> = ({
       loadingDoctors: "எங்கள் நிபுணர் மருத்துவர்களை ஏற்றுகிறது...",
       noDoctors: "மருத்துவர்கள் இல்லை",
       noDoctorsDesc: "எங்கள் மருத்துவ குழு தகவலுக்கு பின்னர் சரிபார்க்கவும்.",
+      ourMission: "எங்கள் நோக்கம்",
+      ourVision: "எங்கள் பார்வை",
+      address: "முகவரி",
+      contactInfo: "தொடர்பு தகவல்",
+      ourValues: "எங்கள் மதிப்புகள்",
+      valuesItems: [
+        {
+          title: "நோயாளி மையம்",
+          desc: ["எங்கள் நோயாளிகளுக்கு 'சிறந்த முடிவுகள் மற்றும் அனுபவத்தை' வழங்குதல்", "நோயாளிகள் மற்றும் அவர்களின் பராமரிப்பாளர்களை இரக்கத்துடன் நடத்துதல்", "எங்கள் நோயாளிகளின் தேவைகளுக்கு முன்னுரிமை அளிக்கப்படும்"]
+        },
+        {
+          title: "நேர்மை",
+          desc: ["கொள்கையுடையவராகவும், வெளிப்படையாகவும் மற்றும் நேர்மையாகவும் இருத்தல்", "எங்கள் 'மதிப்புகளை' பின்பற்றி வாழ்தல்", "சரியான விஷயங்களைச் செய்ய தைரியத்தை வெளிப்படுத்துதல்"]
+        },
+        {
+          title: "குழுப்பணி",
+          desc: ["ஒருவருக்கொருவர் ஆதரவளித்து ஒரு குழுவாக செயல்படுதல்", "அனைத்து மட்டங்களிலும் உள்ளவர்களை மதிக்கவும்", "சரியான விஷயங்களைச் செய்ய தைரியத்தை வெளிப்படுத்துதல்"]
+        },
+        {
+          title: "உரிமை",
+          desc: ["எங்கள் செயல்களில் பொறுப்பாகவும் பெருமையாகவும் இருத்தல்", "முயற்சி எடுத்து கடமைக்கு அப்பால் செயல்படுதல்", "வாக்குறுதிகளை நிறைவேற்றுதல்"]
+        },
+        {
+          title: "புதுமை",
+          desc: ["எதிர்பார்ப்புகளை மீற தொடர்ந்து முன்னேறுதல் மற்றும் புதுமைப்படுத்துதல்", "நேர்மறையான அணுகுமுறையை ஏற்றுக்கொள்வது", "வித்தியாசமாகச் செய்ய நம்மை நாமே சவால் விடுவது"]
+        }
+      ]
     },
   };
 
@@ -215,7 +296,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
-    
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -301,7 +382,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       setCurrentHeroIndex(0);
       return;
     }
-    
+
     // Only run interval if hero is actually visible on screen
     if (!heroVisible) return;
 
@@ -320,12 +401,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     // Push a dummy state to history when component mounts
     window.history.pushState(null, "", window.location.href);
-    
+
     // Handle popstate event (browser back/forward button)
     const handlePopState = () => {
       // Prevent default back navigation
       window.history.pushState(null, "", window.location.href);
-      
+
       // If user is on doctors screen, go back to dashboard instead
       if (showDoctors) {
         setShowDoctors(false);
@@ -346,7 +427,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
-        
+
         {/* Navigation Header */}
         <nav className="relative z-20 border-b border-gray-800/50 bg-black/20 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -366,135 +447,172 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </nav>
 
-        {/* About Content */}
+        {/* About Content - Bento Grid Redesign */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
-              <Building2 className="h-4 w-4 text-indigo-400" />
-              <span className="text-sm text-indigo-300">{t[language].about}</span>
-            </div>
-            <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-              {language === "en" ? "About Our" : "எங்கள் மருத்துவமனை"}{" "}
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent">
-                {language === "en" ? "Hospital" : "பற்றி"}
-              </span>
-            </h1>
-            <p className="text-gray-400 text-lg max-w-3xl mx-auto leading-relaxed">
-              {language === "en" 
-                ? "Vikram ENT Hospital is a premier healthcare facility dedicated to providing world-class medical services. With state-of-the-art infrastructure and a team of highly qualified medical professionals, we are committed to delivering exceptional patient care."
-                : "விக்ரம் ENT மருத்துவமனை உலகத்தரம் வாய்ந்த மருத்துவ சேவைகளை வழங்குவதற்கு அர்ப்பணிக்கப்பட்ட ஒரு முன்னணி சுகாதார வசதி ஆகும். அதிநவீன உள்கட்டமைப்பு மற்றும் உயர் தகுதி வாய்ந்த மருத்துவ நிபுணர்கள் குழுவுடன், நாங்கள் விதிவிலக்கான நோயாளி பராமரிப்பை வழங்க உறுதிபூண்டுள்ளோம்."}
-            </p>
-          </div>
 
-          {/* Mission & Vision */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-            <div className="bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-indigo-500/50 transition-all duration-500">
-              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <Star className="h-6 w-6 text-indigo-400" />
-                {language === "en" ? "Our Mission" : "எங்கள் நோக்கம்"}
-              </h3>
-              <p className="text-gray-400 leading-relaxed">
+          {/* Header Section */}
+          <div className="text-center mb-16 relative">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none" />
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6 hover:bg-white/10 transition-colors cursor-default">
+                <Building2 className="h-4 w-4 text-indigo-400" />
+                <span className="text-sm font-medium text-indigo-200">{t[language].about}</span>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+                {language === "en" ? "Redefining" : "மருத்துவ"}{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 animate-gradient-x">
+                  {language === "en" ? "Healthcare" : "சேவை"}
+                </span>
+              </h1>
+              <p className="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light">
                 {language === "en"
-                  ? "To provide accessible, affordable, and quality healthcare services to all sections of society with compassion and dedication."
-                  : "இரக்கம் மற்றும் அர்ப்பணிப்புடன் சமூகத்தின் அனைத்து பிரிவினருக்கும் அணுகக்கூடிய, மலிவு மற்றும் தரமான சுகாதார சேவைகளை வழங்குவது."}
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-purple-500/50 transition-all duration-500">
-              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <Zap className="h-6 w-6 text-purple-400" />
-                {language === "en" ? "Our Vision" : "எங்கள் பார்வை"}
-              </h3>
-              <p className="text-gray-400 leading-relaxed">
-                {language === "en"
-                  ? "To be recognized as a leading healthcare institution known for clinical excellence, patient satisfaction, and innovative medical practices."
-                  : "மருத்துவ சிறப்பு, நோயாளி திருப்தி மற்றும் புதுமையான மருத்துவ நடைமுறைகளுக்கு பெயர் பெற்ற முன்னணி சுகாதார நிறுவனமாக அங்கீகரிக்கப்படுவது."}
+                  ? "Experience the convergence of compassion and advanced medical technology. Vikram ENT Hospital sets the benchmark for excellence in patient care."
+                  : "கருணை மற்றும் மேம்பட்ட மருத்துவ தொழில்நுட்பத்தின் சங்கமத்தை அனுபவிக்கவும். விக்ரம் ENT மருத்துவமனை நோயாளி பராமரிப்பில் சிறந்து விளங்குவதற்கான அளவுகோலை அமைக்கிறது."}
               </p>
             </div>
           </div>
 
-          {/* Facilities */}
-          <div className="mb-12">
-            <h2 className="text-3xl font-bold text-center mb-8">{language === "en" ? "Our Facilities" : "எங்கள் வசதிகள்"}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(language === "en" 
-                ? ["Advanced Diagnostic Center", "24/7 Emergency Services", "Modern Operation Theaters", "Intensive Care Units", "Pharmacy & Laboratory", "Patient Counseling Services"]
-                : ["மேம்பட்ட நோயறிதல் மையம்", "24/7 அவசர சேவைகள்", "நவீன அறுவை சிகிச்சை அரங்குகள்", "தீவிர சிகிச்சை பிரிவுகள்", "மருந்தகம் & ஆய்வகம்", "நோயாளி ஆலோசனை சேவைகள்"]
-              ).map((facility, index) => (
-                <div
-                  key={index}
-                  className="bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-indigo-500/30 transition-all duration-300 hover:scale-105"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                    <p className="text-gray-300">{facility}</p>
+          {/* Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-6 auto-rows-auto">
+
+            {/* 1. Mission Card - Large (4 cols) */}
+            <div className="md:col-span-4 bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:border-indigo-500/30 transition-all duration-500 group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 blur-[80px] rounded-full group-hover:bg-indigo-600/20 transition-all duration-500" />
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                <div className="mb-6">
+                  <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-indigo-500/30">
+                    <Star className="h-6 w-6 text-indigo-400" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-white mb-4">{t[language].ourMission}</h3>
+                  <p className="text-gray-400 text-lg leading-relaxed max-w-2xl">
+                    {language === "en"
+                      ? "To provide accessible, affordable, and quality healthcare services to all sections of society with compassion and dedication. We believe in healing with a human touch."
+                      : "இரக்கம் மற்றும் அர்ப்பணிப்புடன் சமூகத்தின் அனைத்து பிரிவினருக்கும் அணுகக்கூடிய, மலிவு மற்றும் தரமான சுகாதார சேவைகளை வழங்குவது."}
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/5 text-sm text-gray-300">
+                    {language === "en" ? "Compassion" : "கருணை"}
+                  </div>
+                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/5 text-sm text-gray-300">
+                    {language === "en" ? "Quality" : "தரம்"}
+                  </div>
+                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/5 text-sm text-gray-300">
+                    {language === "en" ? "Dedication" : "அர்ப்பணிப்பு"}
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
 
-          {/* Location & Contact */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Map Placeholder */}
-            <div className="bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-indigo-500/50 transition-all duration-500">
-              <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <MapPin className="h-6 w-6 text-indigo-400" />
-                {language === "en" ? "Address" : "முகவரி"}
-              </h3>
-              <div className="bg-gray-900/50 rounded-xl h-64 flex items-center justify-center mb-4 border border-gray-700">
-                <div className="text-center">
-                  <MapPin className="h-16 w-16 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">Map Location</p>
+            {/* 2. Vision Card - Tall (2 cols) */}
+            <div className="md:col-span-2 bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:border-purple-500/30 transition-all duration-500 group relative overflow-hidden">
+              <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-purple-900/10 to-transparent opacity-50" />
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-purple-500/30">
+                  <Zap className="h-6 w-6 text-purple-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">{t[language].ourVision}</h3>
+                <p className="text-gray-400 leading-relaxed mb-6">
+                  {language === "en"
+                    ? "To be recognized as a leading healthcare institution known for clinical excellence and innovation."
+                    : "மருத்துவ சிறப்பு மற்றும் புதுமைக்காக அறியப்பட்ட முன்னணி சுகாதார நிறுவனமாக அங்கீகரிக்கப்படுவது."}
+                </p>
+                <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-purple-500 w-3/4 rounded-full animate-pulse" />
+                </div>
+                <div className="mt-2 text-right text-xs text-purple-400 font-mono">
+                  {language === "en" ? "GOAL IN PROGRESS" : "இலக்கு முன்னேற்றத்தில் உள்ளது"}
                 </div>
               </div>
-              <p className="text-gray-400 leading-relaxed">
+            </div>
+
+            {/* 3. Facilities Ticker - Full Width (6 cols) */}
+            <div className="md:col-span-6 overflow-hidden rounded-3xl bg-white/5 border border-white/10 py-8 relative">
+              <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10" />
+              <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10" />
+
+              <div className="flex animate-marquee hover:[animation-play-state:paused] gap-4 w-max px-4">
+                {[...Array(2)].map((_, i) => (
+                  <React.Fragment key={i}>
+                    {(language === "en"
+                      ? ["Advanced Diagnostic Center", "24/7 Emergency Services", "Modern Operation Theaters", "Intensive Care Units", "Pharmacy & Laboratory", "Patient Counseling Services"]
+                      : ["மேம்பட்ட நோயறிதல் மையம்", "24/7 அவசர சேவைகள்", "நவீன அறுவை சிகிச்சை அரங்குகள்", "தீவிர சிகிச்சை பிரிவுகள்", "மருந்தகம் & ஆய்வகம்", "நோயாளி ஆலோசனை சேவைகள்"]
+                    ).map((facility, index) => (
+                      <div
+                        key={`${i}-${index}`}
+                        className="flex items-center gap-3 bg-gray-900/80 border border-gray-800 px-6 py-3 rounded-full whitespace-nowrap"
+                      >
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-gray-300 font-medium">{facility}</span>
+                      </div>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Contact/Address - Split (3 cols each) */}
+            <div className="md:col-span-3 bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:border-blue-500/30 transition-all duration-500">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/20">
+                  <MapPin className="h-5 w-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">{t[language].address}</h3>
+                  <p className="text-blue-400 text-sm">{language === "en" ? "Visit Us" : "எங்களை சந்திக்கவும்"}</p>
+                </div>
+              </div>
+              <p className="text-gray-400 leading-relaxed text-lg">
                 {language === "en"
                   ? "123 Medical District, Healthcare City, State - 600001"
                   : "123 மருத்துவ மாவட்டம், சுகாதார நகரம், மாநிலம் - 600001"}
               </p>
             </div>
 
-            {/* Contact Information */}
-            <div className="bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-purple-500/50 transition-all duration-500">
-              <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <Phone className="h-6 w-6 text-purple-400" />
-                {language === "en" ? "Contact Information" : "தொடர்பு தகவல்"}
-              </h3>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <Phone className="h-5 w-5 text-red-400 mt-1" />
-                  <div>
-                    <p className="font-semibold text-white mb-1">{language === "en" ? "Emergency Contact" : "அவசர தொடர்பு"}</p>
-                    <p className="text-gray-400">+91 98765 43210</p>
-                  </div>
+            <div className="md:col-span-3 bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:border-pink-500/30 transition-all duration-500">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-pink-500/10 rounded-full flex items-center justify-center border border-pink-500/20">
+                  <Phone className="h-5 w-5 text-pink-400" />
                 </div>
-
-                <div className="flex items-start gap-4">
-                  <Phone className="h-5 w-5 text-blue-400 mt-1" />
-                  <div>
-                    <p className="font-semibold text-white mb-1">{language === "en" ? "Appointment Booking" : "சந்திப்பு முன்பதிவு"}</p>
-                    <p className="text-gray-400">+91 98765 43211</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <Mail className="h-5 w-5 text-green-400 mt-1" />
-                  <div>
-                    <p className="font-semibold text-white mb-1">{language === "en" ? "Email" : "மின்னஞ்சல்"}</p>
-                    <p className="text-gray-400">info@vikramhospital.com</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <Clock className="h-5 w-5 text-yellow-400 mt-1" />
-                  <div>
-                    <p className="font-semibold text-white mb-1">{language === "en" ? "Working Hours" : "பணி நேரம்"}</p>
-                    <p className="text-gray-400">{language === "en" ? "24/7 Emergency Services | OPD: 9 AM - 8 PM" : "24/7 அவசர சேவைகள் | OPD: காலை 9 - இரவு 8"}</p>
-                  </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">{t[language].contactInfo}</h3>
+                  <p className="text-pink-400 text-sm">{language === "en" ? "24/7 Support" : "24/7 ஆதரவு"}</p>
                 </div>
               </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                  <span className="text-gray-400">Emergency</span>
+                  <span className="text-white font-mono">+91 98765 43210</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                  <span className="text-gray-400">Booking</span>
+                  <span className="text-white font-mono">+91 98765 43211</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Email</span>
+                  <span className="text-white">info@vikramhospital.com</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Our Values Section */}
+          <div className="mt-24">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">{t[language].ourValues}</h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {(t[language] as any).valuesItems.slice(0, 3).map((item: any, idx: number) => (
+                <ValueCard key={idx} item={item} index={idx} />
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 max-w-4xl mx-auto">
+              {(t[language] as any).valuesItems.slice(3, 5).map((item: any, idx: number) => (
+                <ValueCard key={idx + 3} item={item} index={idx + 3} />
+              ))}
             </div>
           </div>
         </div>
@@ -508,7 +626,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
-        
+
         {/* Navigation Header */}
         <nav className="relative z-20 border-b border-gray-800/50 bg-black/20 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -633,23 +751,23 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Muted Sophisticated Background */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Animated Subtle Orbs */}
-        <div 
+        <div
           className="absolute top-[-10%] left-[-20%] w-[100vw] h-[100vw] bg-indigo-900/10 rounded-full blur-[120px] animate-drift-slow"
           style={{ transform: `translateY(${orb1Y}px) scale(${scale})` }}
         />
-        <div 
+        <div
           className="absolute bottom-[-20%] right-[-10%] w-[80vw] h-[80vw] bg-slate-800/10 rounded-full blur-[100px] animate-drift-mid"
           style={{ transform: `translateY(${orb2Y}px) scale(${scale * 0.9})` }}
         />
 
         {/* Muted Technical Grid Pattern */}
-        <div 
-          className="absolute inset-0 opacity-[0.08]" 
-          style={{ 
+        <div
+          className="absolute inset-0 opacity-[0.08]"
+          style={{
             backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0)`,
             backgroundSize: '40px 40px',
             maskImage: 'radial-gradient(ellipse at center, black, transparent 80%)'
-          }} 
+          }}
         />
 
         {/* Single Deep Radial Glow at top */}
@@ -712,7 +830,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           animation: blood-flow 10s linear infinite;
         }
       `}</style>
-      
+
       {/* Sticky Top Header (Nav + Notice Bar) */}
       <div className="sticky top-0 z-50 w-full">
         {/* Navigation Header */}
@@ -721,7 +839,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
               <div className="flex items-center gap-2">
-                  <Building2 className="h-6 w-6 text-indigo-500" />
+                <Building2 className="h-6 w-6 text-indigo-500" />
                 <span className="text-lg font-bold text-white">Vikram Hospital</span>
               </div>
 
@@ -796,14 +914,14 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="relative w-full h-[52px] bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center justify-center overflow-hidden">
           {/* Subtle Gradient Glow */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-500/5 to-transparent opacity-30" />
-          
+
           <div className="max-w-7xl mx-auto px-4 w-full h-full relative">
             {noticeMessages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ease-in-out
-                  ${idx === noticeIndex 
-                    ? "opacity-100 translate-y-0 scale-100 blur-0" 
+                  ${idx === noticeIndex
+                    ? "opacity-100 translate-y-0 scale-100 blur-0"
                     : "opacity-0 -translate-y-4 scale-95 blur-sm pointer-events-none"}`}
               >
                 <span className="text-base font-semibold text-indigo-200/90 tracking-[0.1em] text-center uppercase drop-shadow-[0_0_8px_rgba(129,140,248,0.3)]">
@@ -818,9 +936,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Hero Section */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-20">
         <div
-          className={`flex flex-col lg:flex-row items-center gap-12 transition-all duration-1000 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
+          className={`flex flex-col lg:flex-row items-center gap-12 transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
         >
           {/* Text Content */}
           <div className="flex-1 text-center lg:text-left">
@@ -831,22 +948,21 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="relative h-5 w-5 flex-shrink-0">
                   <Activity className="absolute inset-0 h-5 w-5 text-indigo-400 animate-pulse" />
                 </div>
-                
+
                 <div className="relative h-5 min-w-[260px] sm:min-w-[420px] max-w-[calc(100vw-80px)] overflow-hidden">
                   {badgeMessages.map((msg, idx) => (
                     <span
                       key={idx}
-                      className={`absolute inset-0 text-xs sm:text-sm font-semibold tracking-wide whitespace-nowrap transition-all duration-1000 ease-in-out flex items-center ${
-                        idx === badgeIndex 
-                          ? "opacity-100 translate-y-0 text-indigo-200" 
-                          : "opacity-0 translate-y-4 text-white/0"
-                      }`}
+                      className={`absolute inset-0 text-xs sm:text-sm font-semibold tracking-wide whitespace-nowrap transition-all duration-1000 ease-in-out flex items-center ${idx === badgeIndex
+                        ? "opacity-100 translate-y-0 text-indigo-200"
+                        : "opacity-0 translate-y-4 text-white/0"
+                        }`}
                     >
                       {msg}
                     </span>
                   ))}
                 </div>
-                
+
                 {/* Subtle highlight effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               </div>
@@ -854,7 +970,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
             {/* Hero Heading */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              <TypewriterText 
+              <TypewriterText
                 typingSpeed={80}
                 segments={[
                   { text: t[language].elevateYour + " ", className: "text-white" },
@@ -891,16 +1007,15 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div ref={heroRef} className="flex-[1.4] relative group w-full lg:w-[60%]">
             {/* Ambient Glow behind image */}
             <div className="absolute inset-x-0 -bottom-10 h-1/2 bg-gradient-to-t from-indigo-500/20 to-transparent blur-3xl rounded-full" />
-            
+
             <div className="relative z-10 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(79,70,229,0.2)] transition-all duration-700 hover:scale-[1.03] hover:border-indigo-500/30 aspect-[4/3]">
               {heroImages.map((image, index) => (
                 <div
                   key={index}
-                  className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-                    index === currentHeroIndex 
-                      ? "opacity-100 scale-100" 
-                      : "opacity-0 scale-110 pointer-events-none"
-                  }`}
+                  className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === currentHeroIndex
+                    ? "opacity-100 scale-100"
+                    : "opacity-0 scale-110 pointer-events-none"
+                    }`}
                 >
                   <img
                     src={image.url}
@@ -934,11 +1049,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     key={index}
                     onClick={() => setCurrentHeroIndex(index)}
-                    className={`h-2 rounded-full transition-all duration-500 ${
-                      index === currentHeroIndex 
-                        ? "w-8 bg-white" 
-                        : "w-2 bg-white/30 hover:bg-white/50"
-                    }`}
+                    className={`h-2 rounded-full transition-all duration-500 ${index === currentHeroIndex
+                      ? "w-8 bg-white"
+                      : "w-2 bg-white/30 hover:bg-white/50"
+                      }`}
                   />
                 ))}
               </div>
@@ -970,9 +1084,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Quick Access Section */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div
-          className={`transition-all duration-1000 delay-200 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
+          className={`transition-all duration-1000 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
         >
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10">
             {t[language].quickAccess}
@@ -1020,9 +1133,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Feature Cards Section */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         <div
-          className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all duration-1000 delay-400 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
+          className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all duration-1000 delay-400 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
         >
           {/* Fast Shipping -> 24/7 Emergency Services */}
           <div className="group bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-indigo-500/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/10">
@@ -1069,14 +1181,13 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="relative h-[450px] w-full overflow-hidden mt-12 select-none flex items-center justify-center">
         {/* Central Purplish Pink Glow */}
         <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[550px] bg-[#d946ef]/15 blur-[130px] rounded-full z-0 transition-opacity duration-700 ${hoveredBanner ? 'opacity-40' : 'opacity-100'}`} />
-        
+
         {/* Black Banner (Behind) */}
-        <div 
+        <div
           onMouseEnter={() => setHoveredBanner('black')}
           onMouseLeave={() => setHoveredBanner(null)}
-          className={`absolute w-[260%] h-28 bg-black border-y-2 border-white/10 -rotate-[18deg] flex items-center shadow-[0_0_60px_rgba(0,0,0,0.6)] z-10 transition-all duration-500 cursor-crosshair pointer-events-auto ${
-            hoveredBanner === 'accent' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
-          }`}
+          className={`absolute w-[260%] h-28 bg-black border-y-2 border-white/10 -rotate-[18deg] flex items-center shadow-[0_0_60px_rgba(0,0,0,0.6)] z-10 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'accent' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
+            }`}
         >
           <div className="flex whitespace-nowrap animate-marquee">
             {[...Array(8)].map((_, i) => (
@@ -1086,14 +1197,13 @@ const Dashboard: React.FC<DashboardProps> = ({
             ))}
           </div>
         </div>
-        
+
         {/* Purplish Pink Banner (Front) */}
-        <div 
+        <div
           onMouseEnter={() => setHoveredBanner('accent')}
           onMouseLeave={() => setHoveredBanner(null)}
-          className={`absolute w-[260%] h-28 bg-[#d946ef] rotate-[12deg] flex items-center shadow-[0_0_70px_rgba(217,70,239,0.4)] z-20 transition-all duration-500 cursor-crosshair pointer-events-auto ${
-            hoveredBanner === 'black' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
-          }`}
+          className={`absolute w-[260%] h-28 bg-[#d946ef] rotate-[12deg] flex items-center shadow-[0_0_70px_rgba(217,70,239,0.4)] z-20 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'black' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
+            }`}
         >
           <div className="flex whitespace-nowrap animate-marquee-reverse">
             {[...Array(8)].map((_, i) => (
@@ -1195,11 +1305,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 relative z-10 border-t border-white/5">
         <div className="text-center mb-20">
           <h2 className="text-4xl sm:text-5xl font-bold mb-8">
-            Welcome To <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">Vikram ENT</span> — 
+            Welcome To <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">Vikram ENT</span> —
             <br className="hidden sm:block" /> The International Leader in <span className="text-[#d946ef]">ENT Care</span>
           </h2>
           <p className="text-gray-400 text-lg max-w-4xl mx-auto leading-relaxed">
-            Looking for the best <span className="text-white font-semibold">ENT Hospital in Coimbatore</span> that not only treats you but truly understands what you’re going through? 
+            Looking for the best <span className="text-white font-semibold">ENT Hospital in Coimbatore</span> that not only treats you but truly understands what you’re going through?
             Vikram ENT Hospital and Research Institute has offered the best compassionate and specialised care for your ear, nose and throat conditions since <span className="text-indigo-400 font-bold">1972</span>.
           </p>
         </div>
@@ -1207,62 +1317,62 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div ref={statsRef} className="relative group">
           {/* Subtle background glow for the stats grid */}
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-full w-full bg-indigo-500/5 blur-[120px] rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 py-8">
             {/* Stat 1: Years of Experience */}
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-indigo-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
-               <div className="relative z-10">
-                 <div className="text-6xl font-bold text-white mb-2 group-hover/stat:text-indigo-400 transition-colors">
-                   <CountUpNumber endValue={55} startTrigger={statsVisible} />+
-                 </div>
-                 <div className="text-gray-400 text-lg font-medium leading-tight">Years of <br /> Experience</div>
-               </div>
-               <div className="p-5 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover/stat:bg-indigo-500/20 group-hover/stat:scale-110 transition-all duration-500">
-                 <Clock className="h-10 w-10" />
-               </div>
-               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
+              <div className="relative z-10">
+                <div className="text-6xl font-bold text-white mb-2 group-hover/stat:text-indigo-400 transition-colors">
+                  <CountUpNumber endValue={55} startTrigger={statsVisible} />+
+                </div>
+                <div className="text-gray-400 text-lg font-medium leading-tight">Years of <br /> Experience</div>
+              </div>
+              <div className="p-5 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover/stat:bg-indigo-500/20 group-hover/stat:scale-110 transition-all duration-500">
+                <Clock className="h-10 w-10" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
             </div>
 
             {/* Stat 2: Doctors */}
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-purple-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
-               <div className="relative z-10">
-                 <div className="text-6xl font-bold text-white mb-2 group-hover/stat:text-purple-400 transition-colors">
-                   <CountUpNumber endValue={20} startTrigger={statsVisible} />+
-                 </div>
-                 <div className="text-gray-400 text-lg font-medium leading-tight">Expert <br /> Doctors</div>
-               </div>
-               <div className="p-5 rounded-2xl bg-purple-500/10 text-purple-400 group-hover/stat:bg-purple-500/20 group-hover/stat:scale-110 transition-all duration-500">
-                 <Users className="h-10 w-10" />
-               </div>
-               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
+              <div className="relative z-10">
+                <div className="text-6xl font-bold text-white mb-2 group-hover/stat:text-purple-400 transition-colors">
+                  <CountUpNumber endValue={20} startTrigger={statsVisible} />+
+                </div>
+                <div className="text-gray-400 text-lg font-medium leading-tight">Expert <br /> Doctors</div>
+              </div>
+              <div className="p-5 rounded-2xl bg-purple-500/10 text-purple-400 group-hover/stat:bg-purple-500/20 group-hover/stat:scale-110 transition-all duration-500">
+                <Users className="h-10 w-10" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
             </div>
 
             {/* Stat 3: Procedures */}
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-pink-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
-               <div className="relative z-10">
-                 <div className="text-5xl font-bold text-white mb-2 group-hover/stat:text-pink-400 transition-colors">
-                   <CountUpNumber endValue={500000} startTrigger={statsVisible} />+
-                 </div>
-                 <div className="text-gray-400 text-lg font-medium leading-tight">Successful <br /> Procedures</div>
-               </div>
-               <div className="p-5 rounded-2xl bg-pink-500/10 text-pink-400 group-hover/stat:bg-pink-500/20 group-hover/stat:scale-110 transition-all duration-500">
-                 <Activity className="h-10 w-10" />
-               </div>
-               <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
+              <div className="relative z-10">
+                <div className="text-5xl font-bold text-white mb-2 group-hover/stat:text-pink-400 transition-colors">
+                  <CountUpNumber endValue={500000} startTrigger={statsVisible} />+
+                </div>
+                <div className="text-gray-400 text-lg font-medium leading-tight">Successful <br /> Procedures</div>
+              </div>
+              <div className="p-5 rounded-2xl bg-pink-500/10 text-pink-400 group-hover/stat:bg-pink-500/20 group-hover/stat:scale-110 transition-all duration-500">
+                <Activity className="h-10 w-10" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
             </div>
 
             {/* Stat 4: Lives Touched */}
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-cyan-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
-               <div className="relative z-10">
-                 <div className="text-5xl font-bold text-white mb-2 group-hover/stat:text-cyan-400 transition-colors">
-                   <CountUpNumber endValue={5000000} startTrigger={statsVisible} />+
-                 </div>
-                 <div className="text-gray-400 text-lg font-medium leading-tight">Lives <br /> Touched</div>
-               </div>
-               <div className="p-5 rounded-2xl bg-cyan-500/10 text-cyan-400 group-hover/stat:bg-cyan-500/20 group-hover/stat:scale-110 transition-all duration-500">
-                 <UserCheck className="h-10 w-10" />
-               </div>
-               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
+              <div className="relative z-10">
+                <div className="text-5xl font-bold text-white mb-2 group-hover/stat:text-cyan-400 transition-colors">
+                  <CountUpNumber endValue={5000000} startTrigger={statsVisible} />+
+                </div>
+                <div className="text-gray-400 text-lg font-medium leading-tight">Lives <br /> Touched</div>
+              </div>
+              <div className="p-5 rounded-2xl bg-cyan-500/10 text-cyan-400 group-hover/stat:bg-cyan-500/20 group-hover/stat:scale-110 transition-all duration-500">
+                <UserCheck className="h-10 w-10" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
             </div>
           </div>
         </div>
@@ -1285,7 +1395,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Thick Wavy Blood Flow Animation - Pure Cells - Balanced Scale */}
       <div className="relative h-[450px] w-full overflow-hidden pointer-events-none">
         {[...Array(30)].map((_, i) => (
-          <div 
+          <div
             key={i}
             className="absolute top-1/2 left-0 rounded-full z-[60]"
             style={{
@@ -1297,7 +1407,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               animationDelay: `${i * 0.25}s`,
               opacity: 0.8 + (i % 3) * 0.1,
               filter: `blur(${i % 5 === 0 ? '2px' : '0px'})`,
-              marginTop: `${(i % 5 - 2) * 40}px` 
+              marginTop: `${(i % 5 - 2) * 40}px`
             }}
           >
             {/* Cell detail */}
@@ -1310,11 +1420,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   );
 };
 
-const TypewriterText = ({ 
-  segments, 
-  typingSpeed = 50, 
-  pauseDuration = 3000 
-}: { 
+const TypewriterText = ({
+  segments,
+  typingSpeed = 50,
+  pauseDuration = 3000
+}: {
   segments: { text: string; className?: string }[];
   pauseDuration?: number;
   typingSpeed?: number;
@@ -1327,19 +1437,19 @@ const TypewriterText = ({
   useEffect(() => {
     let startTime: number | null = null;
     let animationFrameId: number;
-    
+
     const totalChars = segments.reduce((acc, seg) => acc + seg.text.length, 0);
     const totalTypingTime = totalChars * typingSpeed;
     const totalCycleTime = totalTypingTime + pauseDuration;
-    
+
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = timestamp - startTime;
       const elapsed = progress % totalCycleTime;
-      
+
       if (elapsed < totalTypingTime) {
         const globalCharIndex = Math.floor(elapsed / typingSpeed);
-        
+
         let count = 0;
         let found = false;
         for (let i = 0; i < segments.length; i++) {
@@ -1374,9 +1484,9 @@ const TypewriterText = ({
         <span key={sIdx} className="relative inline-block whitespace-pre">
           <span className="invisible opacity-0 select-none">{segment.text}</span>
           <span className={`absolute top-0 left-0 whitespace-pre ${segment.className || ""}`}>
-            {sIdx < currentTextIndex 
-              ? segment.text 
-              : sIdx === currentTextIndex 
+            {sIdx < currentTextIndex
+              ? segment.text
+              : sIdx === currentTextIndex
                 ? segment.text.slice(0, currentCharIndex)
                 : ""}
           </span>
