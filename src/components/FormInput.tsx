@@ -21,12 +21,12 @@ const FormInput: React.FC<FormInputProps> = ({
   className = ""
 }) => {
   const { t } = useLanguage();
-  
+
   return (
     <div className={`space-y-3 ${className}`}>
-      <label className="block text-sm font-bold text-gray-300">
+      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
         {label}
-        {required && <span className="text-indigo-400 ml-1 font-bold">{t('common.required')}</span>}
+        {required && <span className="text-indigo-600 dark:text-indigo-400 ml-1 font-bold">{t('common.required')}</span>}
       </label>
       <input
         type={type}
@@ -34,7 +34,7 @@ const FormInput: React.FC<FormInputProps> = ({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-white placeholder-gray-500"
+        className="w-full px-4 py-3 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
     </div>
   );

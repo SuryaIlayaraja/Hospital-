@@ -87,7 +87,7 @@ const AdminPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"opd" | "ipd" | "tickets">("opd");
   const [mainView, setMainView] = useState<"feedbacks" | "tickets" | "floors" | "doctors" | "departments" | "rooms">("feedbacks");
-  
+
   // Floor management states
   const [floors, setFloors] = useState<Floor[]>([]);
   const [floorsLoading, setFloorsLoading] = useState(false);
@@ -169,7 +169,7 @@ const AdminPanel: React.FC = () => {
   });
   // Always show today's data by default (when no filters are active)
   const showTodayOnly = true;
-  
+
   // Authentication and user state
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Check if token exists
@@ -286,7 +286,7 @@ const AdminPanel: React.FC = () => {
         }
       }
     };
-    
+
     verifyUser();
   }, [isAuthenticated, currentUser]);
 
@@ -304,12 +304,12 @@ const AdminPanel: React.FC = () => {
   const isViewAllowed = (view: typeof mainView) => {
     if (!currentUser) return false;
     if (currentUser.role === "COO") return true; // COO has access to all
-    
+
     // Supervisors only have access to departments view
     if (currentUser.role === "Supervisor") {
       return view === "departments";
     }
-    
+
     return false;
   };
 
@@ -333,21 +333,21 @@ const AdminPanel: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       setLoginError("Email and password are required");
       return;
     }
-    
+
     setIsLoggingIn(true);
     setLoginError("");
-    
+
     try {
       console.log("Attempting login with:", email);
       const response = await login({ email, password });
-      
+
       console.log("Login response in component:", response);
-      
+
       // Extremely robust check for success
       const isSuccess = response.success === true || (response as any).token;
       const data = (response.data || response) as any; // Use the response itselt as data if .data is missing
@@ -356,21 +356,21 @@ const AdminPanel: React.FC = () => {
 
       if (isSuccess && userData) {
         console.log("Login logic success! User:", userData);
-        
+
         // Show success message first
         setLoginSuccess(true);
         setIsLoggingIn(false);
         setLoginError("");
-        
+
         // Ensure tokens/user are stored if not already by apiService
         if (token) {
-           localStorage.setItem("authToken", token);
+          localStorage.setItem("authToken", token);
         }
         localStorage.setItem("authUser", JSON.stringify(userData));
-        
+
         // Set user data immediately
         setCurrentUser(userData);
-        
+
         // Delay setting authenticated state to allow success animation to show
         setTimeout(() => {
           setIsAuthenticated(true);
@@ -439,7 +439,7 @@ const AdminPanel: React.FC = () => {
         .split(",")
         .map((d) => d.trim())
         .filter((d) => d !== "");
-      
+
       const response = await createFloor({
         floorNumber: floorFormData.floorNumber,
         floorName: floorFormData.floorName,
@@ -843,7 +843,7 @@ const AdminPanel: React.FC = () => {
 
   const handleSeedDepartments = async () => {
     if (!confirm("This will replace all existing departments with the default list. Are you sure?")) return;
-    
+
     try {
       setDepartmentsLoading(true);
       const response = await seedDepartments();
@@ -905,21 +905,21 @@ const AdminPanel: React.FC = () => {
 
       // Date range filter
       let matchesDateRange = true;
-      
+
       // If any filters are active, use date filter if provided
       // Otherwise, default to today's tickets
       if (hasActiveFilters) {
-      if (ticketDateFilter.startDate || ticketDateFilter.endDate) {
-        const ticketDate = new Date(ticket.createdAt);
-        if (ticketDateFilter.startDate) {
-          const startDate = new Date(ticketDateFilter.startDate);
-          matchesDateRange = matchesDateRange && ticketDate >= startDate;
-        }
-        if (ticketDateFilter.endDate) {
-          const endDate = new Date(ticketDateFilter.endDate);
-          endDate.setHours(23, 59, 59, 999); // Include the entire end date
-          matchesDateRange = matchesDateRange && ticketDate <= endDate;
-        }
+        if (ticketDateFilter.startDate || ticketDateFilter.endDate) {
+          const ticketDate = new Date(ticket.createdAt);
+          if (ticketDateFilter.startDate) {
+            const startDate = new Date(ticketDateFilter.startDate);
+            matchesDateRange = matchesDateRange && ticketDate >= startDate;
+          }
+          if (ticketDateFilter.endDate) {
+            const endDate = new Date(ticketDateFilter.endDate);
+            endDate.setHours(23, 59, 59, 999); // Include the entire end date
+            matchesDateRange = matchesDateRange && ticketDate <= endDate;
+          }
         }
       } else {
         // No filters active - show only today's tickets
@@ -927,7 +927,7 @@ const AdminPanel: React.FC = () => {
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        
+
         const ticketDate = new Date(ticket.createdAt);
         matchesDateRange = ticketDate >= today && ticketDate < tomorrow;
       }
@@ -987,11 +987,11 @@ const AdminPanel: React.FC = () => {
   // Generate and send report to CEO via Gmail
   const sendReportToCEO = () => {
     const today = new Date();
-    const todayStr = today.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    const todayStr = today.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
 
     // Calculate statistics
@@ -1234,9 +1234,8 @@ Admin Panel - Vikram ENT Hospital`;
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${type}-Feedback-${
-      new Date().toISOString().split("T")[0]
-    }.xlsx`;
+    a.download = `${type}-Feedback-${new Date().toISOString().split("T")[0]
+      }.xlsx`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -1474,11 +1473,11 @@ Admin Panel - Vikram ENT Hospital`;
   const currentData =
     mainView === "feedbacks"
       ? activeTab === "opd"
-      ? filteredFeedback.opd
+        ? filteredFeedback.opd
         : filteredFeedback.ipd
       : mainView === "tickets"
-      ? filteredTickets
-      : [];
+        ? filteredTickets
+        : [];
 
   // Show Day Wise Analysis Page (before authentication check)
   if (showDaywisePage) {
@@ -1489,127 +1488,127 @@ Admin Panel - Vikram ENT Hospital`;
   if (!isAuthenticated) {
     console.log("Rendering login view. State:", { isLoggingIn, loginSuccess });
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 lg:p-0">
-        <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-[1200px] min-h-[700px] flex flex-col lg:flex-row relative">
-          
+      <div className="min-h-screen bg-white dark:bg-[#030303] flex items-center justify-center p-4 lg:p-0">
+        <div className="bg-gray-50 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-[1200px] min-h-[700px] flex flex-col lg:flex-row relative border border-gray-200 dark:border-white/10">
+
           {/* Left Side - Hero/Illustration */}
-          
+
           {/* Left Side - Hero/Illustration (Interactive Shapes) */}
-          <div className="w-full lg:w-1/2 bg-[#f4f4f5] flex items-center justify-center relative overflow-hidden">
-             
-             <div className="w-full h-full absolute inset-0">
-                <LoginShapes focusedInput={focusedInput} emailLength={email.length} />
-             </div>
+          <div className="w-full lg:w-1/2 bg-gray-100 dark:bg-[#080808] flex items-center justify-center relative overflow-hidden">
+
+            <div className="w-full h-full absolute inset-0">
+              <LoginShapes focusedInput={focusedInput} emailLength={email.length} />
+            </div>
           </div>
 
           {/* Right Side - Login Form */}
-          <div className="w-full lg:w-1/2 p-8 lg:p-16 flex flex-col justify-center bg-white">
-            
+          <div className="w-full lg:w-1/2 p-8 lg:p-16 flex flex-col justify-center bg-white dark:bg-[#0c0c0c]/50">
+
             {/* Logo area */}
             <div className="mb-8 text-center lg:text-left">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-black rounded-xl mb-4 text-white">
-                 <div className="w-6 h-1 bg-white rounded-full"></div>
-                 <div className="absolute w-1 h-6 bg-white rounded-full"></div>
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-black dark:bg-[#1a1a1a] rounded-xl mb-4 text-white dark:text-indigo-400 border dark:border-white/10">
+                <div className="w-6 h-1 bg-white dark:bg-indigo-400 rounded-full"></div>
+                <div className="absolute w-1 h-6 bg-white dark:bg-indigo-400 rounded-full"></div>
               </div>
             </div>
 
             <div className="mb-8 text-center lg:text-left">
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Welcome back!</h1>
-              <p className="text-gray-500">Please enter your details</p>
+              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Welcome back!</h1>
+              <p className="text-gray-500 dark:text-gray-400">Please enter your details</p>
             </div>
 
             {loginSuccess ? (
-               <div className="flex flex-col items-center justify-center py-12">
-                 <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4 animate-bounce">
-                   <CheckCircle2 className="w-8 h-8 text-white" />
-                 </div>
-                 <p className="text-green-600 font-bold text-lg animate-pulse">Login successful! Redirecting...</p>
-               </div>
-            ) : isLoggingIn ? (
-               <div className="flex flex-col items-center justify-center py-12">
-                 <div className="w-16 h-16 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
-                 <p className="text-gray-600 font-medium animate-pulse">Logging in...</p>
-               </div>
-            ) : (
-            <form onSubmit={handleLogin} className="space-y-6">
-              
-              
-              {/* Email Input */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setFocusedInput('email')}
-                  onBlur={() => setFocusedInput(null)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-900 bg-white"
-                  placeholder="admin@hospital.com"
-                />
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4 animate-bounce">
+                  <CheckCircle2 className="w-8 h-8 text-white" />
+                </div>
+                <p className="text-green-600 font-bold text-lg animate-pulse">Login successful! Redirecting...</p>
               </div>
+            ) : isLoggingIn ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-600 font-medium animate-pulse">Logging in...</p>
+              </div>
+            ) : (
+              <form onSubmit={handleLogin} className="space-y-6">
 
-              {/* Password Input */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Password</label>
-                <div className="relative">
+
+                {/* Email Input */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Email</label>
                   <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onFocus={() => setFocusedInput('password')}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setFocusedInput('email')}
                     onBlur={() => setFocusedInput(null)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-900 bg-white pr-10"
-                    placeholder="Enter password"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 focus:ring-2 focus:ring-black dark:focus:ring-indigo-500/50 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white bg-white dark:bg-[#1a1a1a]/50"
+                    placeholder="admin@hospital.com"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
+                </div>
+
+                {/* Password Input */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setFocusedInput('password')}
+                      onBlur={() => setFocusedInput(null)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 focus:ring-2 focus:ring-black dark:focus:ring-indigo-500/50 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white bg-white dark:bg-[#1a1a1a]/50 pr-10"
+                      placeholder="Enter password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                  {loginError && (
+                    <p className="text-red-500 text-sm mt-1">{loginError}</p>
+                  )}
+                </div>
+
+                {/* Remember Me & Forgot Password */}
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                    />
+                    <span className="text-sm text-gray-600 font-medium">Remember for 30 days</span>
+                  </label>
+                  <button type="button" className="text-sm font-semibold text-gray-900 dark:text-gray-300 hover:underline">
+                    Forgot password?
                   </button>
                 </div>
-                {loginError && (
-                  <p className="text-red-500 text-sm mt-1">{loginError}</p>
-                )}
-              </div>
 
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
-                  />
-                  <span className="text-sm text-gray-600 font-medium">Remember for 30 days</span>
-                </label>
-                <button type="button" className="text-sm font-semibold text-gray-900 hover:underline">
-                  Forgot password?
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-lg transform hover:scale-[1.02] duration-200"
+                >
+                  Log in
                 </button>
-              </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full py-4 bg-black text-white rounded-xl font-bold text-lg hover:bg-gray-800 transition-colors shadow-lg transform hover:scale-[1.02] duration-200"
-              >
-                Log in
-              </button>
+                {/* Info text */}
+                <div className="text-center mt-6">
+                  <p className="text-sm text-gray-500">
+                    Use your hospital credentials to sign in
+                  </p>
+                </div>
 
-              {/* Info text */}
-              <div className="text-center mt-6">
-                <p className="text-sm text-gray-500">
-                  Use your hospital credentials to sign in
-                </p>
-              </div>
-
-            </form>
+              </form>
             )}
           </div>
         </div>
@@ -1618,13 +1617,13 @@ Admin Panel - Vikram ENT Hospital`;
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#0a0a0a] text-white">
+    <div className="w-full min-h-screen bg-white dark:bg-[#030303] text-gray-900 dark:text-white">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
-      
+
       <div className="relative z-10 w-full p-8">
         {/* Header */}
-        <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-3xl p-8 mb-8 shadow-2xl">
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-3xl p-8 mb-8 shadow-2xl">
           <div className="flex items-center gap-4 mb-6">
             <Database className="h-8 w-8 text-indigo-400" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent">
@@ -1643,7 +1642,7 @@ Admin Panel - Vikram ENT Hospital`;
 
             <button
               onClick={loadFeedback}
-              className="flex items-center gap-2 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-700 text-gray-300 px-4 py-2 rounded-xl transition-all duration-300"
+              className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700/70 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-all duration-300"
             >
               <Eye className="h-4 w-4" />
               Refresh Data
@@ -1662,7 +1661,7 @@ Admin Panel - Vikram ENT Hospital`;
                 (mainView === "tickets" && filteredTickets.length === 0) ||
                 (mainView !== "feedbacks" && mainView !== "tickets")
               }
-              className="flex items-center gap-2 bg-gray-700/50 hover:bg-gray-700/70 border border-gray-700 text-gray-300 px-4 py-2 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700/70 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className="h-4 w-4" />
               Export {mainView === "tickets" ? "TICKETS" : activeTab.toUpperCase()} Excel
@@ -1680,448 +1679,439 @@ Admin Panel - Vikram ENT Hospital`;
 
         <div className="mb-8 flex justify-center items-center gap-4 flex-wrap">
           {isViewAllowed("feedbacks") && (
-          <button
-            onClick={() => {
-              setMainView("feedbacks");
-              setActiveTab("opd"); // Reset to OPD when switching to feedbacks
-            }}
-            className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${
-              mainView === "feedbacks"
+            <button
+              onClick={() => {
+                setMainView("feedbacks");
+                setActiveTab("opd"); // Reset to OPD when switching to feedbacks
+              }}
+              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "feedbacks"
                 ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white scale-105 shadow-xl border border-indigo-500/50"
-                : "bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:scale-105"
-            }`}
-          >
-            <Filter className="h-5 w-5 inline-block mr-2" />
-            Filter Feedbacks
-          </button>
+                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
+                }`}
+            >
+              <Filter className="h-5 w-5 inline-block mr-2" />
+              Filter Feedbacks
+            </button>
           )}
           {isViewAllowed("tickets") && (
-          <button
-            onClick={() => {
-              setMainView("tickets");
-              setActiveTab("tickets");
-            }}
-            className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${
-              mainView === "tickets"
+            <button
+              onClick={() => {
+                setMainView("tickets");
+                setActiveTab("tickets");
+              }}
+              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "tickets"
                 ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white scale-105 shadow-xl border border-purple-500/50"
-                : "bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:scale-105"
-            }`}
-          >
-            <Filter className="h-5 w-5 inline-block mr-2" />
-            Filter Tickets
-          </button>
+                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
+                }`}
+            >
+              <Filter className="h-5 w-5 inline-block mr-2" />
+              Filter Tickets
+            </button>
           )}
           {isViewAllowed("floors") && (
-          <button
-            onClick={() => {
-              setMainView("floors");
-              loadFloors();
-            }}
-            className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${
-              mainView === "floors"
+            <button
+              onClick={() => {
+                setMainView("floors");
+                loadFloors();
+              }}
+              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "floors"
                 ? "bg-gradient-to-r from-orange-500 to-red-500 text-white scale-105 shadow-xl border border-orange-500/50"
-                : "bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:scale-105"
-            }`}
-          >
-            <Building2 className="h-5 w-5 inline-block mr-2" />
-            Manage Floors
-          </button>
+                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
+                }`}
+            >
+              <Building2 className="h-5 w-5 inline-block mr-2" />
+              Manage Floors
+            </button>
           )}
           {isViewAllowed("doctors") && (
-          <button
-            onClick={() => {
-              setMainView("doctors");
-              loadDoctors();
-            }}
-            className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${
-              mainView === "doctors"
+            <button
+              onClick={() => {
+                setMainView("doctors");
+                loadDoctors();
+              }}
+              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "doctors"
                 ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white scale-105 shadow-xl border border-indigo-500/50"
-                : "bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:scale-105"
-            }`}
-          >
-            <UserPlus className="h-5 w-5 inline-block mr-2" />
-            Manage Doctors
-          </button>
+                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
+                }`}
+            >
+              <UserPlus className="h-5 w-5 inline-block mr-2" />
+              Manage Doctors
+            </button>
           )}
           {isViewAllowed("departments") && (
-          <button
-            onClick={() => {
-              setMainView("departments");
-              loadDepartments();
-              loadCOO();
-            }}
-            className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${
-              mainView === "departments"
+            <button
+              onClick={() => {
+                setMainView("departments");
+                loadDepartments();
+                loadCOO();
+              }}
+              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "departments"
                 ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white scale-105 shadow-xl border border-emerald-500/50"
-                : "bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:scale-105"
-            }`}
-          >
-            <GitBranch className="h-5 w-5 inline-block mr-2" />
-            {currentUser?.role === 'Supervisor' ? 'My Department' : 'Manage Departments'}
-          </button>
+                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
+                }`}
+            >
+              <GitBranch className="h-5 w-5 inline-block mr-2" />
+              {currentUser?.role === 'Supervisor' ? 'My Department' : 'Manage Departments'}
+            </button>
           )}
           {isViewAllowed("rooms") && (
-          <button
-            onClick={() => {
-              setMainView("rooms");
-            }}
-            className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${
-              mainView === "rooms"
+            <button
+              onClick={() => {
+                setMainView("rooms");
+              }}
+              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "rooms"
                 ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white scale-105 shadow-xl border border-cyan-500/50"
                 : "bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:scale-105"
-            }`}
-          >
-            <BedDouble className="h-5 w-5 inline-block mr-2" />
-            View Rooms
-          </button>
+                }`}
+            >
+              <BedDouble className="h-5 w-5 inline-block mr-2" />
+              View Rooms
+            </button>
           )}
           {currentUser?.role === 'COO' && (
-          <button
-            onClick={() => setShowDaywisePage(true)}
-            className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${
-              showDaywisePage
+            <button
+              onClick={() => setShowDaywisePage(true)}
+              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${showDaywisePage
                 ? "bg-blue-600 text-white scale-105 shadow-xl border border-blue-500/50"
                 : "bg-gray-800/50 border-2 border-blue-500/50 text-blue-400 hover:bg-gray-700/50 hover:scale-105"
-            }`}
-          >
-            <BarChart3 className="h-5 w-5 inline-block mr-2" />
-            Show Day Wise Analysis
-          </button>
+                }`}
+            >
+              <BarChart3 className="h-5 w-5 inline-block mr-2" />
+              Show Day Wise Analysis
+            </button>
           )}
-              </div>
+        </div>
 
         {/* Feedback Section - Only show when mainView is "feedbacks" */}
         {mainView === "feedbacks" && (
           <>
-        {/* Date Filter Section */}
-        <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Filter className="h-6 w-6 text-indigo-400" />
-            <h3 className="text-xl font-bold text-gray-200">
-              Filter by Date
-            </h3>
-          </div>
+            {/* Date Filter Section */}
+            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-lg mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <Filter className="h-6 w-6 text-indigo-400" />
+                <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
+                  Filter by Date
+                </h3>
+              </div>
 
-          {/* Filter Type Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-bold text-gray-300 mb-2">
-              Filter Type
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => switchFilterType("range")}
-                className={`px-4 py-2 rounded-xl font-bold transition-all duration-300 ${
-                  dateFilter.filterType === "range"
-                    ? "bg-indigo-500 text-white shadow-lg border border-indigo-500/50"
-                    : "bg-gray-700/50 text-gray-300 hover:bg-gray-700/70 border border-gray-700"
-                }`}
-              >
-                Date Range
-              </button>
-              <button
-                onClick={() => switchFilterType("single")}
-                className={`px-4 py-2 rounded-xl font-bold transition-all duration-300 ${
-                  dateFilter.filterType === "single"
-                    ? "bg-indigo-500 text-white shadow-lg border border-indigo-500/50"
-                    : "bg-gray-700/50 text-gray-300 hover:bg-gray-700/70 border border-gray-700"
-                }`}
-              >
-                Single Day
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-4 items-end">
-            {dateFilter.filterType === "range" ? (
-              <>
-                <div className="flex-1 min-w-[200px]">
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={dateFilter.startDate}
-                    onChange={(e) =>
-                      setDateFilter((prev) => ({
-                        ...prev,
-                        startDate: e.target.value,
-                        isActive: true,
-                      }))
-                    }
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                    placeholder="Select start date"
-                  />
-                </div>
-
-                <div className="flex-1 min-w-[200px]">
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={dateFilter.endDate}
-                    onChange={(e) =>
-                      setDateFilter((prev) => ({
-                        ...prev,
-                        endDate: e.target.value,
-                        isActive: true,
-                      }))
-                    }
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                    placeholder="Select end date"
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  Select Date
+              {/* Filter Type Selection */}
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
+                  Filter Type
                 </label>
-                <input
-                  type="date"
-                  value={dateFilter.singleDate}
-                  onChange={(e) =>
-                    setDateFilter((prev) => ({
-                      ...prev,
-                      singleDate: e.target.value,
-                      isActive: true,
-                    }))
-                  }
-                  className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                  placeholder="Select date"
-                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => switchFilterType("range")}
+                    className={`px-4 py-2 rounded-xl font-bold transition-all duration-300 ${dateFilter.filterType === "range"
+                      ? "bg-indigo-500 text-white shadow-lg border border-indigo-500/50"
+                      : "bg-gray-700/50 text-gray-300 hover:bg-gray-700/70 border border-gray-700"
+                      }`}
+                  >
+                    Date Range
+                  </button>
+                  <button
+                    onClick={() => switchFilterType("single")}
+                    className={`px-4 py-2 rounded-xl font-bold transition-all duration-300 ${dateFilter.filterType === "single"
+                      ? "bg-indigo-500 text-white shadow-lg border border-indigo-500/50"
+                      : "bg-gray-700/50 text-gray-300 hover:bg-gray-700/70 border border-gray-700"
+                      }`}
+                  >
+                    Single Day
+                  </button>
+                </div>
               </div>
-            )}
 
-            <div className="flex gap-2">
-              <button
-                onClick={clearDateFilter}
-                className="flex items-center gap-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-400 px-4 py-2 rounded-xl transition-all duration-300"
-              >
-                <Calendar className="h-4 w-4" />
-                Clear Filter
-              </button>
-            </div>
-          </div>
-
-          {dateFilter.isActive && (
-            <div className="mt-4 p-3 bg-gray-900/50 border border-gray-700 rounded-xl">
-              <p className="text-gray-300 text-sm">
-                <strong>Active Filter:</strong>
-                {dateFilter.filterType === "single" ? (
-                  dateFilter.singleDate ? (
-                    ` Single day: ${new Date(
-                      dateFilter.singleDate
-                    ).toLocaleDateString()}`
-                  ) : (
-                    " No date selected"
-                  )
-                ) : (
+              <div className="flex flex-wrap gap-4 items-end">
+                {dateFilter.filterType === "range" ? (
                   <>
-                    {dateFilter.startDate &&
-                      ` From ${new Date(
-                        dateFilter.startDate
-                      ).toLocaleDateString()}`}
-                    {dateFilter.endDate &&
-                      ` To ${new Date(
-                        dateFilter.endDate
-                      ).toLocaleDateString()}`}
-                    {!dateFilter.startDate &&
-                      !dateFilter.endDate &&
-                      " No date range selected"}
+                    <div className="flex-1 min-w-[200px]">
+                      <label className="block text-sm font-bold text-gray-300 mb-2">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={dateFilter.startDate}
+                        onChange={(e) =>
+                          setDateFilter((prev) => ({
+                            ...prev,
+                            startDate: e.target.value,
+                            isActive: true,
+                          }))
+                        }
+                        className="w-full px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                        placeholder="Select start date"
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-[200px]">
+                      <label className="block text-sm font-bold text-gray-300 mb-2">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={dateFilter.endDate}
+                        onChange={(e) =>
+                          setDateFilter((prev) => ({
+                            ...prev,
+                            endDate: e.target.value,
+                            isActive: true,
+                          }))
+                        }
+                        className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                        placeholder="Select end date"
+                      />
+                    </div>
                   </>
+                ) : (
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-sm font-bold text-gray-300 mb-2">
+                      Select Date
+                    </label>
+                    <input
+                      type="date"
+                      value={dateFilter.singleDate}
+                      onChange={(e) =>
+                        setDateFilter((prev) => ({
+                          ...prev,
+                          singleDate: e.target.value,
+                          isActive: true,
+                        }))
+                      }
+                      className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                      placeholder="Select date"
+                    />
+                  </div>
                 )}
-              </p>
-              <p className="text-gray-400 text-xs mt-1">
-                Showing {currentData.length} {activeTab.toUpperCase()} feedback
-                entries
-              </p>
-            </div>
-          )}
-        </div>
 
-        {/* Search Filter Section */}
-        <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Filter className="h-6 w-6 text-purple-400" />
-            <h3 className="text-xl font-bold text-gray-200">
-              Search by Patient Details
-            </h3>
-          </div>
-
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
-                Patient Name
-              </label>
-              <input
-                type="text"
-                value={searchFilter.name}
-                onChange={(e) =>
-                  setSearchFilter((prev) => ({
-                    ...prev,
-                    name: e.target.value,
-                    isActive: true,
-                  }))
-                }
-                className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
-                placeholder="Enter patient name"
-              />
-            </div>
-
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
-                Mobile Number
-              </label>
-              <input
-                type="text"
-                value={searchFilter.mobile}
-                onChange={(e) =>
-                  setSearchFilter((prev) => ({
-                    ...prev,
-                    mobile: e.target.value,
-                    isActive: true,
-                  }))
-                }
-                className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
-                placeholder="Enter mobile number"
-              />
-            </div>
-
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
-                UHID
-              </label>
-              <input
-                type="text"
-                value={searchFilter.uhid}
-                onChange={(e) =>
-                  setSearchFilter((prev) => ({
-                    ...prev,
-                    uhid: e.target.value,
-                    isActive: true,
-                  }))
-                }
-                className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
-                placeholder="Enter UHID"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={clearSearchFilter}
-                className="flex items-center gap-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-400 px-4 py-2 rounded-xl transition-all duration-300"
-              >
-                <Calendar className="h-4 w-4" />
-                Clear Search
-              </button>
-            </div>
-          </div>
-
-          {searchFilter.isActive && (
-            <div className="mt-4 p-3 bg-gray-900/50 border border-gray-700 rounded-xl">
-              <p className="text-gray-300 text-sm">
-                <strong>Active Search:</strong>
-                {searchFilter.name && ` Name: "${searchFilter.name}"`}
-                {searchFilter.mobile && ` Mobile: "${searchFilter.mobile}"`}
-                {searchFilter.uhid && ` UHID: "${searchFilter.uhid}"`}
-                {!searchFilter.name &&
-                  !searchFilter.mobile &&
-                  !searchFilter.uhid &&
-                  " No search criteria"}
-              </p>
-              <p className="text-gray-400 text-xs mt-1">
-                Showing {currentData.length} {activeTab.toUpperCase()} feedback
-                entries
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Rating Filter Section */}
-        <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Star className="h-6 w-6 text-yellow-400" />
-            <h3 className="text-xl font-bold text-gray-200">
-              Filter by Overall Rating
-            </h3>
-          </div>
-
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="flex-1 min-w-64">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
-                Overall Experience Rating
-              </label>
-              <select
-                value={ratingFilter.rating}
-                onChange={(e) => {
-                  setRatingFilter((prev) => ({
-                    ...prev,
-                    rating: e.target.value,
-                  }));
-                  applyRatingFilter();
-                }}
-                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-300 text-white"
-              >
-                <option value="">All Ratings</option>
-                <option value="Excellent">😊 Excellent</option>
-                <option value="Good">😐 Good</option>
-                <option value="Average">😞 Average</option>
-              </select>
-            </div>
-
-            {ratingFilter.isActive && (
-              <div className="flex gap-2">
-                <button
-                  onClick={clearRatingFilter}
-                  className="flex items-center gap-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-400 px-4 py-2 rounded-xl transition-all duration-300"
-                >
-                  <Star className="h-4 w-4" />
-                  Clear Rating Filter
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={clearDateFilter}
+                    className="flex items-center gap-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-400 px-4 py-2 rounded-xl transition-all duration-300"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Clear Filter
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
 
-          {ratingFilter.isActive && (
-            <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-xl">
-              <p className="text-gray-300 text-sm">
-                <strong>Active Rating Filter:</strong> Showing only{" "}
-                {ratingFilter.rating === "Excellent"
-                  ? "😊 Excellent"
-                  : ratingFilter.rating === "Good"
-                  ? "😐 Good"
-                  : "😞 Average"}{" "}
-                ratings
-              </p>
-              <p className="text-gray-400 text-xs mt-1">
-                Showing {currentData.length} {activeTab.toUpperCase()} feedback
-                entries with{" "}
-                {ratingFilter.rating === "Excellent"
-                  ? "😊 Excellent"
-                  : ratingFilter.rating === "Good"
-                  ? "😐 Good"
-                  : "😞 Average"}{" "}
-                rating
-              </p>
+              {dateFilter.isActive && (
+                <div className="mt-4 p-3 bg-gray-900/50 border border-gray-700 rounded-xl">
+                  <p className="text-gray-300 text-sm">
+                    <strong>Active Filter:</strong>
+                    {dateFilter.filterType === "single" ? (
+                      dateFilter.singleDate ? (
+                        ` Single day: ${new Date(
+                          dateFilter.singleDate
+                        ).toLocaleDateString()}`
+                      ) : (
+                        " No date selected"
+                      )
+                    ) : (
+                      <>
+                        {dateFilter.startDate &&
+                          ` From ${new Date(
+                            dateFilter.startDate
+                          ).toLocaleDateString()}`}
+                        {dateFilter.endDate &&
+                          ` To ${new Date(
+                            dateFilter.endDate
+                          ).toLocaleDateString()}`}
+                        {!dateFilter.startDate &&
+                          !dateFilter.endDate &&
+                          " No date range selected"}
+                      </>
+                    )}
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    Showing {currentData.length} {activeTab.toUpperCase()} feedback
+                    entries
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Clear All Filters */}
-        {(dateFilter.isActive ||
-          searchFilter.isActive ||
-          ratingFilter.isActive) && (
-          <div className="flex justify-center mb-8">
-            <button
-              onClick={clearAllFilters}
-              className="flex items-center gap-2 bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-xl hover:bg-red-500 transition-all duration-300 shadow-lg font-bold"
-            >
-              <Calendar className="h-5 w-5" />
-              Clear All Filters
-            </button>
-          </div>
-        )}
+            {/* Search Filter Section */}
+            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <Filter className="h-6 w-6 text-purple-400" />
+                <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
+                  Search by Patient Details
+                </h3>
+              </div>
+
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
+                    Patient Name
+                  </label>
+                  <input
+                    type="text"
+                    value={searchFilter.name}
+                    onChange={(e) =>
+                      setSearchFilter((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                        isActive: true,
+                      }))
+                    }
+                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    placeholder="Enter patient name"
+                  />
+                </div>
+
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
+                    Mobile Number
+                  </label>
+                  <input
+                    type="text"
+                    value={searchFilter.mobile}
+                    onChange={(e) =>
+                      setSearchFilter((prev) => ({
+                        ...prev,
+                        mobile: e.target.value,
+                        isActive: true,
+                      }))
+                    }
+                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    placeholder="Enter mobile number"
+                  />
+                </div>
+
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
+                    UHID
+                  </label>
+                  <input
+                    type="text"
+                    value={searchFilter.uhid}
+                    onChange={(e) =>
+                      setSearchFilter((prev) => ({
+                        ...prev,
+                        uhid: e.target.value,
+                        isActive: true,
+                      }))
+                    }
+                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    placeholder="Enter UHID"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={clearSearchFilter}
+                    className="flex items-center gap-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-400 px-4 py-2 rounded-xl transition-all duration-300"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Clear Search
+                  </button>
+                </div>
+              </div>
+
+              {searchFilter.isActive && (
+                <div className="mt-4 p-3 bg-gray-900/50 border border-gray-700 rounded-xl">
+                  <p className="text-gray-300 text-sm">
+                    <strong>Active Search:</strong>
+                    {searchFilter.name && ` Name: "${searchFilter.name}"`}
+                    {searchFilter.mobile && ` Mobile: "${searchFilter.mobile}"`}
+                    {searchFilter.uhid && ` UHID: "${searchFilter.uhid}"`}
+                    {!searchFilter.name &&
+                      !searchFilter.mobile &&
+                      !searchFilter.uhid &&
+                      " No search criteria"}
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    Showing {currentData.length} {activeTab.toUpperCase()} feedback
+                    entries
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Rating Filter Section */}
+            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <Star className="h-6 w-6 text-yellow-400" />
+                <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
+                  Filter by Overall Rating
+                </h3>
+              </div>
+
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex-1 min-w-64">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
+                    Overall Experience Rating
+                  </label>
+                  <select
+                    value={ratingFilter.rating}
+                    onChange={(e) => {
+                      setRatingFilter((prev) => ({
+                        ...prev,
+                        rating: e.target.value,
+                      }));
+                      applyRatingFilter();
+                    }}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-300 text-gray-900 dark:text-white"
+                  >
+                    <option value="">All Ratings</option>
+                    <option value="Excellent">😊 Excellent</option>
+                    <option value="Good">😐 Good</option>
+                    <option value="Average">😞 Average</option>
+                  </select>
+                </div>
+
+                {ratingFilter.isActive && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={clearRatingFilter}
+                      className="flex items-center gap-2 bg-orange-500/10 dark:bg-orange-500/20 hover:bg-orange-500/20 dark:hover:bg-orange-500/30 border border-orange-500/30 dark:border-orange-500/50 text-orange-600 dark:text-orange-400 px-4 py-2 rounded-xl transition-all duration-300"
+                    >
+                      <Star className="h-4 w-4" />
+                      Clear Rating Filter
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {ratingFilter.isActive && (
+                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 dark:border-yellow-500/50 rounded-xl">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm">
+                    <strong>Active Rating Filter:</strong> Showing only{" "}
+                    {ratingFilter.rating === "Excellent"
+                      ? "😊 Excellent"
+                      : ratingFilter.rating === "Good"
+                        ? "😐 Good"
+                        : "😞 Average"}{" "}
+                    ratings
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    Showing {currentData.length} {activeTab.toUpperCase()} feedback
+                    entries with{" "}
+                    {ratingFilter.rating === "Excellent"
+                      ? "😊 Excellent"
+                      : ratingFilter.rating === "Good"
+                        ? "😐 Good"
+                        : "😞 Average"}{" "}
+                    rating
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Clear All Filters */}
+            {(dateFilter.isActive ||
+              searchFilter.isActive ||
+              ratingFilter.isActive) && (
+                <div className="flex justify-center mb-8">
+                  <button
+                    onClick={clearAllFilters}
+                    className="flex items-center gap-2 bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-xl hover:bg-red-500 transition-all duration-300 shadow-lg font-bold"
+                  >
+                    <Calendar className="h-5 w-5" />
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
 
           </>
         )}
@@ -2129,128 +2119,128 @@ Admin Panel - Vikram ENT Hospital`;
         {/* Tickets Section - Only show when mainView is "tickets" */}
         {mainView === "tickets" && (
           <>
-        {/* Ticket Filters */}
-          <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <Filter className="h-6 w-6 text-indigo-400" />
-              <h3 className="text-xl font-bold text-gray-200">
-                Filter Tickets
-              </h3>
+            {/* Ticket Filters */}
+            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <Filter className="h-6 w-6 text-indigo-400" />
+                <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
+                  Filter Tickets
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                    Search
+                  </label>
+                  <input
+                    type="text"
+                    value={ticketSearchTerm}
+                    onChange={(e) => setTicketSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                    placeholder="Search by title, description, department..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={ticketStatusFilter}
+                    onChange={(e) => setTicketStatusFilter(e.target.value)}
+                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="open">Open</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                    Severity
+                  </label>
+                  <select
+                    value={ticketSeverityFilter}
+                    onChange={(e) => setTicketSeverityFilter(e.target.value)}
+                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                  >
+                    <option value="all">All Severity</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                    Department
+                  </label>
+                  <input
+                    type="text"
+                    value={ticketDepartmentFilter}
+                    onChange={(e) => setTicketDepartmentFilter(e.target.value)}
+                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                    placeholder="Filter by department"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={ticketDateFilter.startDate}
+                    onChange={(e) =>
+                      setTicketDateFilter((prev) => ({
+                        ...prev,
+                        startDate: e.target.value,
+                      }))
+                    }
+                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={ticketDateFilter.endDate}
+                    onChange={(e) =>
+                      setTicketDateFilter((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                      }))
+                    }
+                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                  />
+                </div>
+              </div>
+
+              {(ticketSearchTerm ||
+                ticketStatusFilter !== "all" ||
+                ticketSeverityFilter !== "all" ||
+                ticketDepartmentFilter ||
+                ticketDateFilter.startDate ||
+                ticketDateFilter.endDate) && (
+                  <div className="flex justify-center">
+                    <button
+                      onClick={clearTicketFilters}
+                      className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 px-6 py-3 rounded-xl transition-all duration-300 font-bold"
+                    >
+                      <X className="h-5 w-5" />
+                      Clear All Ticket Filters
+                    </button>
+                  </div>
+                )}
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  Search
-                </label>
-                <input
-                  type="text"
-                  value={ticketSearchTerm}
-                  onChange={(e) => setTicketSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                  placeholder="Search by title, description, department..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  Status
-                </label>
-                <select
-                  value={ticketStatusFilter}
-                  onChange={(e) => setTicketStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                >
-                  <option value="all">All Status</option>
-                  <option value="open">Open</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  Severity
-                </label>
-                <select
-                  value={ticketSeverityFilter}
-                  onChange={(e) => setTicketSeverityFilter(e.target.value)}
-                  className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                >
-                  <option value="all">All Severity</option>
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  Department
-                </label>
-                <input
-                  type="text"
-                  value={ticketDepartmentFilter}
-                  onChange={(e) => setTicketDepartmentFilter(e.target.value)}
-                  className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                  placeholder="Filter by department"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={ticketDateFilter.startDate}
-                  onChange={(e) =>
-                    setTicketDateFilter((prev) => ({
-                      ...prev,
-                      startDate: e.target.value,
-                    }))
-                  }
-                  className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={ticketDateFilter.endDate}
-                  onChange={(e) =>
-                    setTicketDateFilter((prev) => ({
-                      ...prev,
-                      endDate: e.target.value,
-                    }))
-                  }
-                  className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                />
-              </div>
-            </div>
-
-            {(ticketSearchTerm ||
-              ticketStatusFilter !== "all" ||
-              ticketSeverityFilter !== "all" ||
-              ticketDepartmentFilter ||
-              ticketDateFilter.startDate ||
-              ticketDateFilter.endDate) && (
-              <div className="flex justify-center">
-                <button
-                  onClick={clearTicketFilters}
-                  className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 px-6 py-3 rounded-xl transition-all duration-300 font-bold"
-                >
-                  <X className="h-5 w-5" />
-                  Clear All Ticket Filters
-                </button>
-              </div>
-            )}
-          </div>
           </>
         )}
 
@@ -2408,11 +2398,10 @@ Admin Panel - Vikram ENT Hospital`;
                   {floors.map((floor) => (
                     <div
                       key={floor._id}
-                      className={`bg-gray-800/40 backdrop-blur-sm rounded-xl p-4 border ${
-                        floor.isActive
-                          ? "border-green-500/30"
-                          : "border-gray-700 opacity-60"
-                      } hover:bg-gray-800/60 transition-all duration-300`}
+                      className={`bg-white dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-4 border ${floor.isActive
+                        ? "border-green-500/30"
+                        : "border-gray-200 dark:border-gray-700 opacity-60"
+                        } hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-all duration-300 shadow-md`}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>
@@ -2424,11 +2413,10 @@ Admin Panel - Vikram ENT Hospital`;
                           </p>
                         </div>
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-bold ${
-                            floor.isActive
-                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                              : "bg-gray-700/50 text-gray-400 border border-gray-600"
-                          }`}
+                          className={`px-2 py-1 rounded-full text-xs font-bold ${floor.isActive
+                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                            : "bg-gray-700/50 text-gray-400 border border-gray-600"
+                            }`}
                         >
                           {floor.isActive ? "Active" : "Inactive"}
                         </span>
@@ -2708,11 +2696,10 @@ Admin Panel - Vikram ENT Hospital`;
                   {doctors.map((doctor) => (
                     <div
                       key={doctor._id}
-                      className={`bg-gray-800/40 backdrop-blur-sm rounded-xl shadow-lg border overflow-hidden ${
-                        doctor.isActive
-                          ? "border-green-500/30"
-                          : "border-gray-700 opacity-60"
-                      } hover:bg-gray-800/60 transition-all duration-300`}
+                      className={`bg-gray-800/40 backdrop-blur-sm rounded-xl shadow-lg border overflow-hidden ${doctor.isActive
+                        ? "border-green-500/30"
+                        : "border-gray-700 opacity-60"
+                        } hover:bg-gray-800/60 transition-all duration-300`}
                     >
                       {doctor.image && (
                         <div className="w-full aspect-square bg-gray-900 overflow-hidden flex items-center justify-center">
@@ -2726,7 +2713,7 @@ Admin Panel - Vikram ENT Hospital`;
                           />
                         </div>
                       )}
-                      
+
                       <div className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
@@ -2735,28 +2722,27 @@ Admin Panel - Vikram ENT Hospital`;
                             </h4>
                           </div>
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-bold ${
-                              doctor.isActive
-                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                : "bg-gray-700/50 text-gray-400 border border-gray-600"
-                            }`}
+                            className={`px-2 py-1 rounded-full text-xs font-bold ${doctor.isActive
+                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                              : "bg-gray-700/50 text-gray-400 border border-gray-600"
+                              }`}
                           >
                             {doctor.isActive ? "Active" : "Inactive"}
                           </span>
                         </div>
-                        
+
                         {doctor.studies && (
                           <p className="text-xs text-gray-400 mb-2 leading-relaxed">
                             {doctor.studies}
                           </p>
                         )}
-                        
+
                         {doctor.specialization && (
                           <p className="text-sm font-semibold text-indigo-400 mb-3">
                             {doctor.specialization}
                           </p>
                         )}
-                        
+
                         <div className="flex gap-2 mt-4">
                           <button
                             onClick={() => handleEditDoctor(doctor)}
@@ -2812,7 +2798,7 @@ Admin Panel - Vikram ENT Hospital`;
                 </div>
 
                 {showCOOForm ? (
-                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
                     <form onSubmit={handleUpdateCOO} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -2822,7 +2808,7 @@ Admin Panel - Vikram ENT Hospital`;
                           <input
                             type="text"
                             value={cooFormData.name}
-                            onChange={(e) => setCooFormData({...cooFormData, name: e.target.value})}
+                            onChange={(e) => setCooFormData({ ...cooFormData, name: e.target.value })}
                             className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             placeholder="e.g. Dr. Vikram Singh"
                           />
@@ -2834,7 +2820,7 @@ Admin Panel - Vikram ENT Hospital`;
                           <input
                             type="text"
                             value={cooFormData.designation}
-                            onChange={(e) => setCooFormData({...cooFormData, designation: e.target.value})}
+                            onChange={(e) => setCooFormData({ ...cooFormData, designation: e.target.value })}
                             className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             placeholder="COO"
                           />
@@ -2846,7 +2832,7 @@ Admin Panel - Vikram ENT Hospital`;
                           <input
                             type="email"
                             value={cooFormData.email}
-                            onChange={(e) => setCooFormData({...cooFormData, email: e.target.value})}
+                            onChange={(e) => setCooFormData({ ...cooFormData, email: e.target.value })}
                             className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             placeholder="coo@hospital.com"
                           />
@@ -2858,7 +2844,7 @@ Admin Panel - Vikram ENT Hospital`;
                           <input
                             type="text"
                             value={cooFormData.phone}
-                            onChange={(e) => setCooFormData({...cooFormData, phone: e.target.value})}
+                            onChange={(e) => setCooFormData({ ...cooFormData, phone: e.target.value })}
                             className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             placeholder="+91..."
                           />
@@ -2872,19 +2858,19 @@ Admin Panel - Vikram ENT Hospital`;
                           <input
                             type="text"
                             value={cooFormData.access}
-                            onChange={(e) => setCooFormData({...cooFormData, access: e.target.value})}
+                            onChange={(e) => setCooFormData({ ...cooFormData, access: e.target.value })}
                             className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             placeholder="All Departments"
                           />
                         </div>
-                         <div>
+                        <div>
                           <label className="block text-sm font-bold text-gray-300 mb-2">
                             Ward Access Scope
                           </label>
                           <input
                             type="text"
                             value={cooFormData.wardAccess}
-                            onChange={(e) => setCooFormData({...cooFormData, wardAccess: e.target.value})}
+                            onChange={(e) => setCooFormData({ ...cooFormData, wardAccess: e.target.value })}
                             className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             placeholder="All Wards"
                           />
@@ -2906,7 +2892,7 @@ Admin Panel - Vikram ENT Hospital`;
                         </button>
                       </div>
                     </form>
-                   </div>
+                  </div>
                 ) : cooData ? (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
@@ -2916,14 +2902,14 @@ Admin Panel - Vikram ENT Hospital`;
                     </div>
                     <div className="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
                       <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Contact Info</p>
-                       <div className="space-y-1">
+                      <div className="space-y-1">
                         <p className="text-gray-300 flex items-center gap-2">
                           <Mail className="h-4 w-4" /> {cooData.email || "N/A"}
                         </p>
                         <p className="text-gray-300 flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4" /> {cooData.phone || "N/A"}
                         </p>
-                       </div>
+                      </div>
                     </div>
                     <div className="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
                       <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Access Rights</p>
@@ -2941,7 +2927,7 @@ Admin Panel - Vikram ENT Hospital`;
               {/* Departments Management Section */}
               <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg">
                 <div className="flex items-center justify-between mb-6">
-                   <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <GitBranch className="h-6 w-6 text-emerald-400" />
                     <div>
                       <h3 className="text-xl font-bold text-gray-200">
@@ -2955,7 +2941,7 @@ Admin Panel - Vikram ENT Hospital`;
                   <div className="flex gap-2">
                     <button
                       onClick={handleSeedDepartments}
-                       className="flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/50 text-yellow-500 px-4 py-2 rounded-xl hover:bg-yellow-500/30 transition-all duration-300 text-sm"
+                      className="flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/50 text-yellow-500 px-4 py-2 rounded-xl hover:bg-yellow-500/30 transition-all duration-300 text-sm"
                     >
                       Reset Default Data
                     </button>
@@ -2990,16 +2976,16 @@ Admin Panel - Vikram ENT Hospital`;
                       {editingDepartment ? "Edit Department Hierarchy" : "Add New Department Hierarchy"}
                     </h4>
                     <form onSubmit={editingDepartment ? handleUpdateDepartment : handleCreateDepartment} className="space-y-6">
-                      
+
                       {/* Department Name */}
                       <div>
-                         <label className="block text-sm font-bold text-gray-300 mb-2">
+                        <label className="block text-sm font-bold text-gray-300 mb-2">
                           Department Name <span className="text-red-400">*</span>
                         </label>
                         <input
                           type="text"
                           value={departmentFormData.departmentName}
-                          onChange={(e) => setDepartmentFormData({...departmentFormData, departmentName: e.target.value})}
+                          onChange={(e) => setDepartmentFormData({ ...departmentFormData, departmentName: e.target.value })}
                           required
                           className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                           placeholder="e.g. Operations"
@@ -3016,7 +3002,7 @@ Admin Panel - Vikram ENT Hospital`;
                               <input
                                 type="text"
                                 value={departmentFormData.firstLevelDesignation}
-                                onChange={(e) => setDepartmentFormData({...departmentFormData, firstLevelDesignation: e.target.value})}
+                                onChange={(e) => setDepartmentFormData({ ...departmentFormData, firstLevelDesignation: e.target.value })}
                                 required
                                 className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-emerald-500"
                                 placeholder="e.g. Nursing Supervisor"
@@ -3027,7 +3013,7 @@ Admin Panel - Vikram ENT Hospital`;
                               <input
                                 type="text"
                                 value={departmentFormData.firstLevelAccess}
-                                onChange={(e) => setDepartmentFormData({...departmentFormData, firstLevelAccess: e.target.value})}
+                                onChange={(e) => setDepartmentFormData({ ...departmentFormData, firstLevelAccess: e.target.value })}
                                 required
                                 className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-emerald-500"
                                 placeholder="e.g. Particular Ward"
@@ -3039,7 +3025,7 @@ Admin Panel - Vikram ENT Hospital`;
                                 <input
                                   type="text"
                                   value={departmentFormData.firstLevelEmail}
-                                  onChange={(e) => setDepartmentFormData({...departmentFormData, firstLevelEmail: e.target.value})}
+                                  onChange={(e) => setDepartmentFormData({ ...departmentFormData, firstLevelEmail: e.target.value })}
                                   className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-emerald-500"
                                   placeholder="Optional"
                                 />
@@ -3049,7 +3035,7 @@ Admin Panel - Vikram ENT Hospital`;
                                 <input
                                   type="text"
                                   value={departmentFormData.firstLevelPhone}
-                                  onChange={(e) => setDepartmentFormData({...departmentFormData, firstLevelPhone: e.target.value})}
+                                  onChange={(e) => setDepartmentFormData({ ...departmentFormData, firstLevelPhone: e.target.value })}
                                   className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-emerald-500"
                                   placeholder="Optional"
                                 />
@@ -3063,34 +3049,34 @@ Admin Panel - Vikram ENT Hospital`;
                           <h5 className="font-bold text-blue-400 mb-4 border-b border-gray-700 pb-2">Level 2 Escalation</h5>
                           <div className="space-y-4">
                             <div>
-                               <label className="block text-xs font-bold text-gray-400 mb-1">Designation</label>
+                              <label className="block text-xs font-bold text-gray-400 mb-1">Designation</label>
                               <input
                                 type="text"
                                 value={departmentFormData.secondLevelDesignation}
-                                onChange={(e) => setDepartmentFormData({...departmentFormData, secondLevelDesignation: e.target.value})}
+                                onChange={(e) => setDepartmentFormData({ ...departmentFormData, secondLevelDesignation: e.target.value })}
                                 required
                                 className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-blue-500"
                                 placeholder="e.g. Head Operations"
                               />
                             </div>
                             <div>
-                               <label className="block text-xs font-bold text-gray-400 mb-1">Access</label>
+                              <label className="block text-xs font-bold text-gray-400 mb-1">Access</label>
                               <input
                                 type="text"
                                 value={departmentFormData.secondLevelAccess}
-                                onChange={(e) => setDepartmentFormData({...departmentFormData, secondLevelAccess: e.target.value})}
+                                onChange={(e) => setDepartmentFormData({ ...departmentFormData, secondLevelAccess: e.target.value })}
                                 required
                                 className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-blue-500"
                                 placeholder="e.g. All Wards"
                               />
                             </div>
-                             <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-xs font-bold text-gray-400 mb-1">Email</label>
                                 <input
                                   type="text"
                                   value={departmentFormData.secondLevelEmail}
-                                  onChange={(e) => setDepartmentFormData({...departmentFormData, secondLevelEmail: e.target.value})}
+                                  onChange={(e) => setDepartmentFormData({ ...departmentFormData, secondLevelEmail: e.target.value })}
                                   className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-blue-500"
                                   placeholder="Optional"
                                 />
@@ -3100,7 +3086,7 @@ Admin Panel - Vikram ENT Hospital`;
                                 <input
                                   type="text"
                                   value={departmentFormData.secondLevelPhone}
-                                  onChange={(e) => setDepartmentFormData({...departmentFormData, secondLevelPhone: e.target.value})}
+                                  onChange={(e) => setDepartmentFormData({ ...departmentFormData, secondLevelPhone: e.target.value })}
                                   className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-blue-500"
                                   placeholder="Optional"
                                 />
@@ -3132,78 +3118,78 @@ Admin Panel - Vikram ENT Hospital`;
                 {/* Departments List */}
                 {departmentsLoading ? (
                   <div className="text-center py-12">
-                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-                     <p className="text-gray-400">Loading hierarchy...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+                    <p className="text-gray-400">Loading hierarchy...</p>
                   </div>
                 ) : departments.length === 0 ? (
                   <div className="text-center py-12">
                     <GitBranch className="h-16 w-16 text-gray-600 mx-auto mb-4" />
                     <p className="text-gray-400 text-lg">No departments found.</p>
-                     <p className="text-gray-500 text-sm mt-2">
-                        Add a new department or reset to defaults.
-                      </p>
+                    <p className="text-gray-500 text-sm mt-2">
+                      Add a new department or reset to defaults.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {departments.map((dept) => (
                       <div key={dept._id} className="bg-gray-800/30 border border-gray-700 rounded-xl p-4 hover:bg-gray-800/50 transition-all duration-200">
-                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                           {/* Department Info */}
-                           <div className="min-w-[200px]">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded">#{dept.serialNumber}</span>
-                                <h4 className="text-lg font-bold text-white">{dept.departmentName}</h4>
-                              </div>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${dept.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                                {dept.isActive ? 'Active' : 'Inactive'}
-                              </span>
-                           </div>
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                          {/* Department Info */}
+                          <div className="min-w-[200px]">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded">#{dept.serialNumber}</span>
+                              <h4 className="text-lg font-bold text-white">{dept.departmentName}</h4>
+                            </div>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${dept.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                              {dept.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
 
-                           {/* Escalation Levels Visual */}
-                           <div className="flex-1 flex flex-col md:flex-row gap-2 md:items-center">
-                              {/* Level 1 */}
-                              <div className="flex-1 bg-emerald-900/20 border border-emerald-500/20 rounded-lg p-3">
-                                <p className="text-xs text-emerald-500 font-bold mb-1">Level 1</p>
-                                <p className="text-sm text-gray-200 font-semibold">{dept.firstLevel.designation}</p>
-                                <p className="text-xs text-gray-400">{dept.firstLevel.access}</p>
-                              </div>
-                              
-                              <div className="hidden md:block text-gray-600">→</div>
-                              
-                              {/* Level 2 */}
-                               <div className="flex-1 bg-blue-900/20 border border-blue-500/20 rounded-lg p-3">
-                                <p className="text-xs text-blue-500 font-bold mb-1">Level 2</p>
-                                <p className="text-sm text-gray-200 font-semibold">{dept.secondLevel.designation}</p>
-                                <p className="text-xs text-gray-400">{dept.secondLevel.access}</p>
-                              </div>
+                          {/* Escalation Levels Visual */}
+                          <div className="flex-1 flex flex-col md:flex-row gap-2 md:items-center">
+                            {/* Level 1 */}
+                            <div className="flex-1 bg-emerald-900/20 border border-emerald-500/20 rounded-lg p-3">
+                              <p className="text-xs text-emerald-500 font-bold mb-1">Level 1</p>
+                              <p className="text-sm text-gray-200 font-semibold">{dept.firstLevel.designation}</p>
+                              <p className="text-xs text-gray-400">{dept.firstLevel.access}</p>
+                            </div>
 
-                               <div className="hidden md:block text-gray-600">→</div>
+                            <div className="hidden md:block text-gray-600">→</div>
 
-                               {/* Next Level (COO) - Static Visual */}
-                                <div className="flex-[0.5] bg-purple-900/20 border border-purple-500/20 rounded-lg p-3 opacity-70">
-                                <p className="text-xs text-purple-500 font-bold mb-1">Next</p>
-                                <p className="text-sm text-gray-200 font-semibold">{cooData?.designation || "COO"}</p>
-                              </div>
-                           </div>
+                            {/* Level 2 */}
+                            <div className="flex-1 bg-blue-900/20 border border-blue-500/20 rounded-lg p-3">
+                              <p className="text-xs text-blue-500 font-bold mb-1">Level 2</p>
+                              <p className="text-sm text-gray-200 font-semibold">{dept.secondLevel.designation}</p>
+                              <p className="text-xs text-gray-400">{dept.secondLevel.access}</p>
+                            </div>
 
-                           {/* Actions */}
-                           <div className="flex items-center gap-2">
-                             <button
-                               onClick={() => handleEditDepartment(dept)}
-                               className="p-2 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
-                               title="Edit"
-                             >
-                               <Edit className="h-4 w-4" />
-                             </button>
-                             <button
-                               onClick={() => handleDeleteDepartment(dept._id)}
-                               className="p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
-                               title="Delete"
-                             >
-                               <Trash2 className="h-4 w-4" />
-                             </button>
-                           </div>
-                         </div>
+                            <div className="hidden md:block text-gray-600">→</div>
+
+                            {/* Next Level (COO) - Static Visual */}
+                            <div className="flex-[0.5] bg-purple-900/20 border border-purple-500/20 rounded-lg p-3 opacity-70">
+                              <p className="text-xs text-purple-500 font-bold mb-1">Next</p>
+                              <p className="text-sm text-gray-200 font-semibold">{cooData?.designation || "COO"}</p>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditDepartment(dept)}
+                              className="p-2 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
+                              title="Edit"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDepartment(dept._id)}
+                              className="p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -3226,7 +3212,7 @@ Admin Panel - Vikram ENT Hospital`;
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-900/40">
+            <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-xl">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-yellow-500/90 shadow-lg">
@@ -3268,372 +3254,364 @@ Admin Panel - Vikram ENT Hospital`;
                 </tfoot>
               </table>
             </div>
-            
+
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-               <div className="p-6 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 rounded-2xl">
-                  <p className="text-indigo-400 font-bold text-sm uppercase mb-2">Ward Capacity</p>
-                  <p className="text-3xl font-bold text-white">23 <span className="text-sm font-normal text-gray-500">General Beds</span></p>
-               </div>
-               <div className="p-6 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-2xl">
-                  <p className="text-cyan-400 font-bold text-sm uppercase mb-2">Critical Care</p>
-                  <p className="text-3xl font-bold text-white">50 <span className="text-sm font-normal text-gray-500">ICU Beds</span></p>
-               </div>
-               <div className="p-6 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl">
-                  <p className="text-purple-400 font-bold text-sm uppercase mb-2">Private Rooms</p>
-                  <p className="text-3xl font-bold text-white">56 <span className="text-sm font-normal text-gray-500">Premium Units</span></p>
-               </div>
+              <div className="p-6 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 rounded-2xl">
+                <p className="text-indigo-400 font-bold text-sm uppercase mb-2">Ward Capacity</p>
+                <p className="text-3xl font-bold text-white">23 <span className="text-sm font-normal text-gray-500">General Beds</span></p>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-2xl">
+                <p className="text-cyan-400 font-bold text-sm uppercase mb-2">Critical Care</p>
+                <p className="text-3xl font-bold text-white">50 <span className="text-sm font-normal text-gray-500">ICU Beds</span></p>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl">
+                <p className="text-purple-400 font-bold text-sm uppercase mb-2">Private Rooms</p>
+                <p className="text-3xl font-bold text-white">56 <span className="text-sm font-normal text-gray-500">Premium Units</span></p>
+              </div>
             </div>
           </div>
         )}
 
         {/* Tabs - Only show for feedbacks view */}
         {mainView === "feedbacks" && (
-        <div className="flex space-x-2 bg-gray-800/50 backdrop-blur-sm p-2 rounded-2xl w-fit shadow-lg mb-8 border border-gray-700">
-          <button
-            onClick={() => setActiveTab("opd")}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 transform ${
-              activeTab === "opd"
+          <div className="flex space-x-2 bg-gray-800/50 backdrop-blur-sm p-2 rounded-2xl w-fit shadow-lg mb-8 border border-gray-700">
+            <button
+              onClick={() => setActiveTab("opd")}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 transform ${activeTab === "opd"
                 ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-xl scale-105"
                 : "bg-gray-700/30 text-gray-400 hover:bg-gray-700/50 hover:scale-105 hover:text-gray-200"
-            }`}
-          >
-            OPD Feedback ({filteredFeedback.opd.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("ipd")}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 transform ${
-              activeTab === "ipd"
+                }`}
+            >
+              OPD Feedback ({filteredFeedback.opd.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("ipd")}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 transform ${activeTab === "ipd"
                 ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-xl scale-105"
                 : "bg-gray-700/30 text-gray-400 hover:bg-gray-700/50 hover:scale-105 hover:text-gray-200"
-            }`}
-          >
-            IPD Feedback ({filteredFeedback.ipd.length})
-          </button>
-        </div>
+                }`}
+            >
+              IPD Feedback ({filteredFeedback.ipd.length})
+            </button>
+          </div>
         )}
 
         {/* Data Table - Only show for feedbacks or tickets view */}
         {(mainView === "feedbacks" || mainView === "tickets") && (
-        <div className="bg-gray-900/80 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-gray-800">
-          {loading || (mainView === "tickets" && ticketsLoading) ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-              <p className="text-gray-400">
-                {mainView === "tickets"
-                  ? "Loading tickets..."
-                  : "Loading feedback data..."}
-              </p>
-            </div>
-          ) : currentData.length === 0 ? (
-            <div className="p-8 text-center">
-              <Database className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">
-                No{" "}
-                {mainView === "tickets"
-                  ? "tickets"
-                  : `${activeTab.toUpperCase()} feedback`}{" "}
-                data found
-              </p>
-              <p className="text-gray-500 text-sm mt-2">
-                {mainView === "tickets"
-                  ? "No tickets have been submitted yet"
-                  : "Submit some feedback to see it here"}
-              </p>
-            </div>
-          ) : mainView === "tickets" ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-800 border-b border-gray-700">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
-                      S.No
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
-                      Ticket ID
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
-                      Title
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
-                      Issue Category
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
-                      Department
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
-                      Severity
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
-                      Created At
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {filteredTickets.map((ticket, index) => (
-                    <tr
-                      key={ticket.id}
-                      className={`group hover:bg-gray-800/50 transition-all duration-200 border-b border-gray-800 last:border-0 ${
-                        index % 2 === 0 ? "bg-gray-900/20" : "bg-transparent"
-                      }`}
-                    >
-                      <td className="px-6 py-4 text-sm text-gray-400 font-mono group-hover:text-indigo-400 transition-colors">
-                        {index + 1}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-white font-semibold">
-                        {ticket.id}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-300">
-                        <div className="max-w-xs truncate" title={ticket.title}>
-                          {ticket.title}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                          {ticket.issueCategory || "N/A"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-400">
-                        {ticket.department}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            ticket.severity === "high"
+          <div className="bg-white dark:bg-gray-900/80 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+            {loading || (mainView === "tickets" && ticketsLoading) ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+                <p className="text-gray-400">
+                  {mainView === "tickets"
+                    ? "Loading tickets..."
+                    : "Loading feedback data..."}
+                </p>
+              </div>
+            ) : currentData.length === 0 ? (
+              <div className="p-8 text-center">
+                <Database className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 text-lg">
+                  No{" "}
+                  {mainView === "tickets"
+                    ? "tickets"
+                    : `${activeTab.toUpperCase()} feedback`}{" "}
+                  data found
+                </p>
+                <p className="text-gray-500 text-sm mt-2">
+                  {mainView === "tickets"
+                    ? "No tickets have been submitted yet"
+                    : "Submit some feedback to see it here"}
+                </p>
+              </div>
+            ) : mainView === "tickets" ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                        S.No
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                        Ticket ID
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                        Title
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                        Issue Category
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                        Department
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                        Severity
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                        Created At
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {filteredTickets.map((ticket, index) => (
+                      <tr
+                        key={ticket.id}
+                        className={`group hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all duration-200 border-b border-gray-100 dark:border-gray-800 last:border-0 ${index % 2 === 0 ? "bg-gray-50 dark:bg-gray-900/20" : "bg-transparent"
+                          }`}
+                      >
+                        <td className="px-6 py-4 text-sm text-gray-400 font-mono group-hover:text-indigo-400 transition-colors">
+                          {index + 1}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-white font-semibold">
+                          {ticket.id}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-300">
+                          <div className="max-w-xs truncate" title={ticket.title}>
+                            {ticket.title}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                            {ticket.issueCategory || "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {ticket.department}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-bold ${ticket.severity === "high"
                               ? "bg-red-500/20 text-red-400 border border-red-500/30"
                               : ticket.severity === "medium"
-                              ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                              : "bg-green-500/20 text-green-400 border border-green-500/30"
-                          }`}
-                        >
-                          {ticket.severity.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
-                            ticket.status === "open"
+                                ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                : "bg-green-500/20 text-green-400 border border-green-500/30"
+                              }`}
+                          >
+                            {ticket.severity.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${ticket.status === "open"
                               ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                               : ticket.status === "in-progress"
-                              ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                              : "bg-green-500/20 text-green-400 border border-green-500/30"
-                          }`}
-                        >
-                          {getTicketStatusIcon(ticket.status)}
-                          {ticket.status.replace("-", " ").toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {new Date(ticket.createdAt).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              const newStatus =
-                                ticket.status === "open"
-                                  ? "in-progress"
-                                  : ticket.status === "in-progress"
-                                  ? "resolved"
-                                  : "open";
-                              updateTicket(ticket.id, { status: newStatus });
-                            }}
-                            className="px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/50 rounded-lg hover:bg-blue-500/30 transition-colors text-xs"
+                                ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                : "bg-green-500/20 text-green-400 border border-green-500/30"
+                              }`}
                           >
-                            Update Status
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  "Are you sure you want to delete this ticket?"
-                                )
-                              ) {
-                                deleteTicket(ticket.id);
-                              }
-                            }}
-                            className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 transition-colors text-xs"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+                            {getTicketStatusIcon(ticket.status)}
+                            {ticket.status.replace("-", " ").toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {new Date(ticket.createdAt).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                const newStatus =
+                                  ticket.status === "open"
+                                    ? "in-progress"
+                                    : ticket.status === "in-progress"
+                                      ? "resolved"
+                                      : "open";
+                                updateTicket(ticket.id, { status: newStatus });
+                              }}
+                              className="px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/50 rounded-lg hover:bg-blue-500/30 transition-colors text-xs"
+                            >
+                              Update Status
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    "Are you sure you want to delete this ticket?"
+                                  )
+                                ) {
+                                  deleteTicket(ticket.id);
+                                }
+                              }}
+                              className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 transition-colors text-xs"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-100 dark:bg-gradient-to-r dark:from-blue-50 dark:to-cyan-50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
+                        S.No
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
+                        Name
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
+                        UHID
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
+                        Date
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
+                        Mobile
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
+                        Overall Rating
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
+                        Timestamp
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-blue-50 to-cyan-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
-                      S.No
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
-                      Name
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
-                      UHID
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
-                      Date
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
-                      Mobile
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
-                      Overall Rating
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">
-                      Timestamp
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {(currentData as FeedbackData[]).map((item, index) => (
-                    <tr
-                      key={item.id || `feedback-${index}`}
-                      className={`group hover:bg-gray-800/50 transition-all duration-200 border-b border-gray-800 last:border-0 ${
-                        index % 2 === 0 ? "bg-gray-900/20" : "bg-transparent"
-                      }`}
-                    >
-                      <td className="px-6 py-4 text-sm text-gray-400 font-mono group-hover:text-indigo-400 transition-colors">
-                        {index + 1}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-white font-semibold">
-                        {item.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-300">
-                        {item.uhid}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-400">
-                        {item.date}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-400">
-                        {item.mobile}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {(currentData as FeedbackData[]).map((item, index) => (
+                      <tr
+                        key={item.id || `feedback-${index}`}
+                        className={`group hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all duration-200 border-b border-gray-100 dark:border-gray-800 last:border-0 ${index % 2 === 0 ? "bg-gray-50 dark:bg-gray-900/20" : "bg-transparent"
+                          }`}
+                      >
+                        <td className="px-6 py-4 text-sm text-gray-400 font-mono group-hover:text-indigo-400 transition-colors">
+                          {index + 1}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-white font-semibold">
+                          {item.name}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-300">
+                          {item.uhid}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {item.date}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {item.mobile}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
 
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
-                            item.overallExperience === "Excellent"
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${item.overallExperience === "Excellent"
                               ? "bg-green-500/20 text-green-400 border border-green-500/30"
                               : item.overallExperience === "Good"
-                              ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                              : "bg-orange-500/20 text-orange-400 border border-orange-500/30"
-                          }`}
-                        >
-                          <span className="text-sm">
-                            {item.overallExperience === "Excellent"
-                              ? "😊"
-                              : item.overallExperience === "Good"
-                              ? "😐"
-                              : "😞"}
+                                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                : "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                              }`}
+                          >
+                            <span className="text-sm">
+                              {item.overallExperience === "Excellent"
+                                ? "😊"
+                                : item.overallExperience === "Good"
+                                  ? "😐"
+                                  : "😞"}
+                            </span>
+                            {item.overallExperience}
                           </span>
-                          {item.overallExperience}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {new Date(item.timestamp).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {new Date(item.timestamp).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Stats - Only show for feedbacks or tickets view */}
-        {(mainView === "feedbacks" || mainView === "tickets") && (
-        <div className="mt-8">
-        {mainView === "tickets" ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-green-400 mb-2">
-                Total Tickets
-              </h3>
-              <p className="text-3xl font-bold text-white">
-                {tickets.length}
-              </p>
-            </div>
-            <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-blue-400 mb-2">
-                Open Tickets
-              </h3>
-              <p className="text-3xl font-bold text-white">
-                {tickets.filter((t) => t.status === "open").length}
-              </p>
-            </div>
-            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-purple-400 mb-2">
-                Resolved Tickets
-              </h3>
-              <p className="text-3xl font-bold text-white">
-                {tickets.filter((t) => t.status === "resolved").length}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-green-400 mb-2">
-                {dateFilter.isActive
-                  ? "Filtered Submissions"
-                  : "Total Submissions"}
-              </h3>
-              <p className="text-3xl font-bold text-white">
-                {filteredFeedback.opd.length + filteredFeedback.ipd.length}
-              </p>
-              {dateFilter.isActive && (
-                <p className="text-sm text-green-500/80 mt-1">
-                  of {feedback.opd.length + feedback.ipd.length} total
-                </p>
+        {
+          (mainView === "feedbacks" || mainView === "tickets") && (
+            <div className="mt-8">
+              {mainView === "tickets" ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                    <h3 className="text-lg font-bold text-green-400 mb-2">
+                      Total Tickets
+                    </h3>
+                    <p className="text-3xl font-bold text-white">
+                      {tickets.length}
+                    </p>
+                  </div>
+                  <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                    <h3 className="text-lg font-bold text-blue-400 mb-2">
+                      Open Tickets
+                    </h3>
+                    <p className="text-3xl font-bold text-white">
+                      {tickets.filter((t) => t.status === "open").length}
+                    </p>
+                  </div>
+                  <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                    <h3 className="text-lg font-bold text-purple-400 mb-2">
+                      Resolved Tickets
+                    </h3>
+                    <p className="text-3xl font-bold text-white">
+                      {tickets.filter((t) => t.status === "resolved").length}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                    <h3 className="text-lg font-bold text-green-600 dark:text-green-400 mb-2">
+                      {dateFilter.isActive
+                        ? "Filtered Submissions"
+                        : "Total Submissions"}
+                    </h3>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                      {filteredFeedback.opd.length + filteredFeedback.ipd.length}
+                    </p>
+                    {dateFilter.isActive && (
+                      <p className="text-sm text-green-600 dark:text-green-500/80 mt-1">
+                        of {feedback.opd.length + feedback.ipd.length} total
+                      </p>
+                    )}
+                  </div>
+                  <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                    <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-2">
+                      OPD Feedback
+                    </h3>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                      {filteredFeedback.opd.length}
+                    </p>
+                    {dateFilter.isActive && (
+                      <p className="text-sm text-blue-600 dark:text-blue-500/80 mt-1">
+                        of {feedback.opd.length} total
+                      </p>
+                    )}
+                  </div>
+                  <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                    <h3 className="text-lg font-bold text-purple-600 dark:text-purple-400 mb-2">
+                      IPD Feedback
+                    </h3>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                      {filteredFeedback.ipd.length}
+                    </p>
+                    {dateFilter.isActive && (
+                      <p className="text-sm text-purple-600 dark:text-purple-500/80 mt-1">
+                        of {feedback.ipd.length} total
+                      </p>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
-            <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-blue-400 mb-2">
-                OPD Feedback
-              </h3>
-              <p className="text-3xl font-bold text-white">
-                {filteredFeedback.opd.length}
-              </p>
-              {dateFilter.isActive && (
-                <p className="text-sm text-blue-500/80 mt-1">
-                  of {feedback.opd.length} total
-                </p>
-              )}
-            </div>
-            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-purple-400 mb-2">
-                IPD Feedback
-              </h3>
-              <p className="text-3xl font-bold text-white">
-                {filteredFeedback.ipd.length}
-              </p>
-              {dateFilter.isActive && (
-                <p className="text-sm text-purple-500/80 mt-1">
-                  of {feedback.ipd.length} total
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-        </div>
-        )}
+          )}
       </div>
     </div>
   );
-
-
 };
 
 export default AdminPanel;

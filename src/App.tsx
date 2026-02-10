@@ -12,10 +12,14 @@ import IPDFeedback from "./components/IPDFeedback";
 import AdminPanel from "./components/AdminPanel";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import LoadingScreen from "./components/LoadingScreen";
+import ThemeToggle from "./components/ThemeToggle";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
+
 import ReportNavbar from "./components/ReportNavbar";
 import RaiseTicketPage from "./components/RaiseTicketPage";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ThemeProvider } from "./contexts/ThemeContext";
+
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -32,13 +36,13 @@ const AppContent: React.FC = () => {
     <>
       {isLoading && <LoadingScreen onComplete={handleLoadingComplete} />}
       <div
-        className={`min-h-screen bg-[#0a0a0a] transition-opacity duration-500 ${
-          isLoading ? "opacity-0" : "opacity-100"
-        }`}
+        className={`min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-white transition-opacity duration-500 ${isLoading ? "opacity-0" : "opacity-100"
+          }`}
       >
         {/* Header - Only show when not on dashboard or raise-ticket */}
         {activeTab !== "dashboard" && activeTab !== "raise-ticket" && (
-          <header className="relative bg-[#0a0a0a] shadow-lg border-b border-gray-800 overflow-hidden">
+          <header className="relative bg-white dark:bg-[#0a0a0a] shadow-lg border-b border-gray-200 dark:border-gray-800 overflow-hidden">
+
             {/* Background Doctor Image */}
             <div
               className="absolute inset-0 opacity-5 bg-cover bg-center bg-no-repeat pointer-events-none"
@@ -54,7 +58,7 @@ const AppContent: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <Hospital className="h-8 w-8 text-blue-600" />
                   <div>
-                    <h1 className="text-2xl font-bold text-white">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                       {t("hospital.name")}
                     </h1>
                     <p className="text-gray-400 font-medium">
@@ -63,16 +67,17 @@ const AppContent: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
+                  <ThemeToggle />
                   <LanguageSwitcher />
                   <ReportNavbar onOpen={() => setActiveTab("raise-ticket")} />
                 </div>
               </div>
 
               {/* Tab Navigation */}
-              <div className="flex space-x-1 bg-gray-800/50 p-1 rounded-lg w-fit border border-gray-700/50">
+              <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-lg w-fit border border-gray-200 dark:border-gray-700/50">
                 <button
                   onClick={() => setActiveTab("dashboard")}
-                  className="flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 text-gray-400 hover:text-white hover:bg-gray-700/50"
+                  className="flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700/50"
                 >
                   <Home className="h-4 w-4" />
                   Dashboard
@@ -81,22 +86,20 @@ const AppContent: React.FC = () => {
                   <>
                     <button
                       onClick={() => setActiveTab("opd")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-                        activeTab === "opd"
-                          ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                          : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${activeTab === "opd"
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                        }`}
                     >
                       <Users className="h-4 w-4" />
                       {t("nav.opd")}
                     </button>
                     <button
                       onClick={() => setActiveTab("ipd")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-                        activeTab === "ipd"
-                          ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                          : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${activeTab === "ipd"
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                        }`}
                     >
                       <UserCheck className="h-4 w-4" />
                       {t("nav.ipd")}
@@ -105,11 +108,10 @@ const AppContent: React.FC = () => {
                 )}
                 <button
                   onClick={() => setActiveTab("admin")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-                    activeTab === "admin"
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                      : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${activeTab === "admin"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                    : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                    }`}
                 >
                   <Settings className="h-4 w-4" />
                   Admin
@@ -138,8 +140,8 @@ const AppContent: React.FC = () => {
         </main>
 
         {/* Footer */}
-        <footer className="bg-gray-900 border-t border-gray-800 mt-0">
-          <div className="w-full px-6 py-6 text-center text-gray-400">
+        <footer className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-0">
+          <div className="w-full px-6 py-6 text-center text-gray-600 dark:text-gray-400">
             <p className="font-medium">{t("footer.copyright")}</p>
           </div>
         </footer>
@@ -153,9 +155,11 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
-      <LanguageProvider>
-        <AppContent />
-      </LanguageProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AppContent />
+        </LanguageProvider>
+      </ThemeProvider>
     </GoogleOAuthProvider>
   );
 }

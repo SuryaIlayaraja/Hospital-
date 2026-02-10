@@ -1,5 +1,4 @@
 import React from 'react';
-import { Star } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface RatingSelectorProps {
@@ -35,13 +34,13 @@ const RatingSelector: React.FC<RatingSelectorProps> = ({ label, value, onChange,
   ];
 
   return (
-    <div className="border-b border-gray-800 py-6 last:border-b-0">
+    <div className="border-b border-gray-200 dark:border-gray-800 py-6 last:border-b-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <label className="text-sm font-bold text-gray-300 flex-1">
+        <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex-1">
           {label}
-          {required && <span className="text-indigo-400 ml-1 font-bold">*</span>}
+          {required && <span className="text-indigo-600 dark:text-indigo-400 ml-1 font-bold">*</span>}
         </label>
-        
+
         <div className="flex gap-3">
           {ratings.map((rating) => (
             <label key={rating.text} className="flex items-center gap-2 cursor-pointer group">
@@ -55,15 +54,14 @@ const RatingSelector: React.FC<RatingSelectorProps> = ({ label, value, onChange,
                 required={required}
               />
               <div
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${
-                  value === rating.text
-                    ? rating.type === 'excellent'
-                      ? 'bg-green-500/20 text-green-400 border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)] scale-105'
-                      : rating.type === 'good'
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${value === rating.text
+                  ? rating.type === 'excellent'
+                    ? 'bg-green-500/20 text-green-400 border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)] scale-105'
+                    : rating.type === 'good'
                       ? 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.3)] scale-105'
                       : 'bg-red-500/20 text-red-400 border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)] scale-105'
-                    : 'bg-gray-800/50 text-gray-400 group-hover:bg-gray-700 active:scale-95 border border-gray-700'
-                }`}
+                  : 'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 active:scale-95 border border-gray-200 dark:border-gray-700'
+                  }`}
               >
                 <SmileyIcon color={rating.color} type={rating.type} />
                 <span className="hidden sm:inline">{rating.text}</span>

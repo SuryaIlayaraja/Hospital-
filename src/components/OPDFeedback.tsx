@@ -171,16 +171,16 @@ const OPDFeedback: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#0a0a0a] text-white">
+    <div className="w-full min-h-screen bg-white dark:bg-[#030303] text-gray-900 dark:text-white">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
-      
+
       <form onSubmit={handleSubmit} className="relative z-10 p-8 space-y-8 min-h-full max-w-7xl mx-auto">
-        <div className="text-center border-b border-gray-800 pb-8 bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl p-6">
+        <div className="text-center border-b border-gray-200 dark:border-white/10 pb-8 bg-gray-50 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 shadow-2xl">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent mb-3">
             {t("opd.title")}
           </h2>
-          <p className="text-gray-400 font-semibold text-lg">
+          <p className="text-gray-600 dark:text-white font-semibold text-lg">
             {t("opd.subtitle")}
           </p>
         </div>
@@ -193,7 +193,7 @@ const OPDFeedback: React.FC = () => {
         />
 
         {/* Patient Information */}
-        <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-800 shadow-lg hover:border-indigo-500/50 transition-all duration-500">
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-lg hover:border-indigo-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-indigo-400 mb-6 flex items-center gap-2">
             <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
             {t("opd.patient.info")}
@@ -234,7 +234,7 @@ const OPDFeedback: React.FC = () => {
         </div>
 
         {/* Overall Experience */}
-        <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-800 shadow-lg hover:border-purple-500/50 transition-all duration-500">
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-lg hover:border-purple-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-purple-400 mb-6 flex items-center gap-2">
             <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
             {t("opd.overall.experience")}
@@ -248,7 +248,7 @@ const OPDFeedback: React.FC = () => {
         </div>
 
         {/* Service Ratings */}
-        <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg hover:border-blue-500/50 transition-all duration-500">
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-lg hover:border-blue-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-blue-400 mb-8 flex items-center gap-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
             {t("opd.service.quality")}
@@ -329,15 +329,15 @@ const OPDFeedback: React.FC = () => {
 
         {/* Employee Nomination & Comments */}
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg hover:border-yellow-500/50 transition-all duration-500">
+          <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-lg hover:border-yellow-500/50 transition-all duration-500">
             <h3 className="text-xl font-bold text-yellow-400 mb-6 flex items-center gap-3">
               <Award className="h-6 w-6 text-yellow-400" />
               {t("opd.employee.recognition")}
             </h3>
             <div className="space-y-3">
-              <label className="block text-sm font-bold text-gray-300">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
                 {t("opd.employee.question")}{" "}
-                <span className="text-gray-500 font-normal">(Optional)</span>
+                <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
               </label>
               <textarea
                 value={formData.nominateEmployee}
@@ -345,27 +345,27 @@ const OPDFeedback: React.FC = () => {
                   updateField("nominateEmployee", e.target.value)
                 }
                 placeholder={t("opd.employee.placeholder")}
-                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-300 text-white placeholder-gray-500"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 rows={3}
               />
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg hover:border-green-500/50 transition-all duration-500">
+          <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-lg hover:border-green-500/50 transition-all duration-500">
             <h3 className="text-xl font-bold text-green-400 mb-6 flex items-center gap-3">
               <MessageSquare className="h-6 w-6 text-green-400" />
               {t("opd.additional.comments")}
             </h3>
             <div className="space-y-3">
-              <label className="block text-sm font-bold text-gray-300">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
                 {t("opd.comments.question")}{" "}
-                <span className="text-gray-500 font-normal">(Optional)</span>
+                <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
               </label>
               <textarea
                 value={formData.comments}
                 onChange={(e) => updateField("comments", e.target.value)}
                 placeholder={t("opd.comments.placeholder")}
-                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 text-white placeholder-gray-500"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 rows={4}
               />
             </div>
@@ -401,11 +401,10 @@ const OPDFeedback: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`flex items-center gap-3 px-12 py-4 rounded-2xl font-bold text-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transform transition-all duration-300 shadow-2xl ${
-              isSubmitting
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 hover:scale-105 hover:shadow-indigo-500/50"
-            }`}
+            className={`flex items-center gap-3 px-12 py-4 rounded-2xl font-bold text-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transform transition-all duration-300 shadow-2xl ${isSubmitting
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 hover:scale-105 hover:shadow-indigo-500/50"
+              }`}
           >
             <Send className="h-5 w-5" />
             {isSubmitting ? "Submitting..." : t("opd.submit.button")}

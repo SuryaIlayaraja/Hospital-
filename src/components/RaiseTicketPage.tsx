@@ -26,13 +26,11 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
   const [createdTicket, setCreatedTicket] = useState<Ticket | null>(null);
 
   const handleDownload = (ticket: Ticket) => {
-    const md = `# ${ticket.title}\n\n- Ticket ID: ${
-      ticket.id
-    }\n- Issue Category: ${ticket.issueCategory}\n- Severity: ${ticket.severity.toUpperCase()}\n- Department: ${
-      ticket.department
-    }\n- Date: ${new Date(
-      ticket.createdAt
-    ).toISOString()}\n\n## Description\n\n${ticket.description}\n`;
+    const md = `# ${ticket.title}\n\n- Ticket ID: ${ticket.id
+      }\n- Issue Category: ${ticket.issueCategory}\n- Severity: ${ticket.severity.toUpperCase()}\n- Department: ${ticket.department
+      }\n- Date: ${new Date(
+        ticket.createdAt
+      ).toISOString()}\n\n## Description\n\n${ticket.description}\n`;
     const blob = new Blob([md], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -79,17 +77,17 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#0a0a0a] text-white">
+    <div className="w-full min-h-screen bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
-      
+
       {/* Header with Back Button */}
-      <div className="relative z-10 bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-b border-gray-800 shadow-lg">
+      <div className="relative z-10 bg-gray-50 dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-lg">
         <div className="w-full px-6 py-6 max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             <button
               onClick={() => onNavigateBack?.("dashboard")}
-              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-300"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-lg transition-all duration-300"
             >
               <ArrowLeft className="h-5 w-5" />
               Back to Dashboard
@@ -108,12 +106,12 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
 
       {/* Main Content */}
       <div className="relative z-10 pt-8 pb-8 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-800">
+        <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-800">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title Field */}
             <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">
-                Ticket Title <span className="text-indigo-400">*</span>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                Ticket Title <span className="text-indigo-600 dark:text-indigo-400">*</span>
               </label>
               <input
                 type="text"
@@ -121,7 +119,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Brief summary of the issue"
                 required
-                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-white placeholder-gray-500"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
 
@@ -136,7 +134,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   placeholder="e.g., IT, Admin, Frontend, Backend"
-                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
@@ -149,7 +147,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                   onChange={(e) =>
                     setIssueCategory(e.target.value as "Delay" | "Misbehavior" | "Overcharging" | "Hygiene" | "Equipment")
                   }
-                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-white"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-gray-900 dark:text-white"
                 >
                   <option value="Delay">Delay</option>
                   <option value="Misbehavior">Misbehavior</option>
@@ -168,7 +166,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                   onChange={(e) =>
                     setSeverity(e.target.value as "low" | "medium" | "high")
                   }
-                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 text-white"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 text-gray-900 dark:text-white"
                 >
                   <option value="low">Low - Minor issue</option>
                   <option value="medium">Medium - Important issue</option>
@@ -187,7 +185,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Provide detailed information about the issue, including steps to reproduce if applicable (optional)"
                 rows={8}
-                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 text-white placeholder-gray-500"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
 
@@ -230,7 +228,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
               <button
                 type="button"
                 onClick={() => onNavigateBack?.("dashboard")}
-                className="px-6 py-3 rounded-xl font-bold text-gray-300 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 transition-all duration-300"
+                className="px-6 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 transition-all duration-300"
               >
                 {submitStatus === "success" ? "Back to Dashboard" : "Cancel"}
               </button>
@@ -238,11 +236,10 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`flex items-center gap-3 px-8 py-3 rounded-xl font-bold text-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transform transition-all duration-300 shadow-2xl ${
-                    isSubmitting
-                      ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 hover:scale-105 hover:shadow-indigo-500/50"
-                  }`}
+                  className={`flex items-center gap-3 px-8 py-3 rounded-xl font-bold text-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transform transition-all duration-300 shadow-2xl ${isSubmitting
+                    ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 hover:scale-105 hover:shadow-indigo-500/50"
+                    }`}
                 >
                   <Send className="h-5 w-5" />
                   {isSubmitting ? "Submitting..." : "Submit Ticket"}
