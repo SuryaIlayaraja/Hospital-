@@ -438,161 +438,476 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // If showing about screen, render about view
   if (showAbout) {
+    // About page images from Unsplash
+    const aboutImages = {
+      hero: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1920&q=80",
+      team: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=800&q=80",
+      mission: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80",
+      vision: "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=800&q=80",
+      facility1: "https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=600&q=80",
+      facility2: "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=600&q=80",
+      facility3: "https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?auto=format&fit=crop&w=600&q=80",
+      facility4: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=600&q=80",
+    };
+
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
+        <style>{`
+          @keyframes aboutFadeUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes aboutScaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+          }
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+          @keyframes floatBadge {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+          }
+          @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
+          }
+          @keyframes countSlide {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .about-animate { animation: aboutFadeUp 0.8s ease-out forwards; }
+          .about-animate-delay-1 { animation: aboutFadeUp 0.8s ease-out 0.1s forwards; opacity: 0; }
+          .about-animate-delay-2 { animation: aboutFadeUp 0.8s ease-out 0.2s forwards; opacity: 0; }
+          .about-animate-delay-3 { animation: aboutFadeUp 0.8s ease-out 0.3s forwards; opacity: 0; }
+          .about-animate-delay-4 { animation: aboutFadeUp 0.8s ease-out 0.4s forwards; opacity: 0; }
+          .about-scale-in { animation: aboutScaleIn 0.6s ease-out forwards; }
+          .shimmer-text {
+            background: linear-gradient(90deg, #818cf8, #c084fc, #818cf8);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+          }
+          .float-badge { animation: floatBadge 3s ease-in-out infinite; }
+          .pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+          .gallery-item:hover img { transform: scale(1.1); }
+          .gallery-item:hover .gallery-overlay { opacity: 1; }
+        `}</style>
 
-        {/* Navigation Header */}
-        <nav className="relative z-20 border-b border-gray-800/50 bg-black/20 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-6 w-6 text-indigo-500" />
-                <span className="text-lg font-bold">Vikram Hospital</span>
-              </div>
-              <button
-                onClick={() => setShowAbout(false)}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {t[language].backToHome}
-              </button>
-            </div>
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* CINEMATIC HERO BANNER */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <div className="relative w-full h-[70vh] min-h-[500px] overflow-hidden">
+          {/* Hero Background Image */}
+          <div className="absolute inset-0">
+            <img
+              src={aboutImages.hero}
+              alt="Vikram Hospital"
+              className="w-full h-full object-cover"
+              style={{ filter: "brightness(0.35)" }}
+            />
           </div>
-        </nav>
+          {/* Gradient Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]/60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/80 via-transparent to-[#0a0a0a]/80" />
+          {/* Floating Glow Orbs */}
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-purple-600/15 rounded-full blur-[80px] pointer-events-none" />
 
-        {/* About Content - Bento Grid Redesign */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-
-          {/* Header Section */}
-          <div className="text-center mb-16 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none" />
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6 hover:bg-white/10 transition-colors cursor-default">
-                <Building2 className="h-4 w-4 text-indigo-400" />
-                <span className="text-sm font-medium text-indigo-200">{t[language].about}</span>
+          {/* Navigation Header - Overlayed on Hero */}
+          <nav className="absolute top-0 left-0 right-0 z-30 bg-black/30 backdrop-blur-md border-b border-white/5">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/30 pulse-glow">
+                    <Building2 className="h-5 w-5 text-indigo-400" />
+                  </div>
+                  <span className="text-lg font-bold text-white">Vikram Hospital</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={toggleLanguage}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all duration-300"
+                  >
+                    <Globe className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-300">{language === "en" ? "EN" : "தமிழ்"}</span>
+                  </button>
+                  <button
+                    onClick={() => setShowAbout(false)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 border border-white/10"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t[language].backToHome}</span>
+                  </button>
+                </div>
               </div>
-              <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+            </div>
+          </nav>
+
+          {/* Hero Content */}
+          <div className="absolute inset-0 flex items-center justify-center z-20 px-4">
+            <div className="text-center max-w-4xl mx-auto">
+              <div className="about-animate inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 hover:bg-white/10 transition-colors cursor-default">
+                <Plus className="h-4 w-4 text-red-400" />
+                <span className="text-sm font-medium text-indigo-200 tracking-wider uppercase">
+                  {language === "en" ? "Est. 2010 • Excellence in ENT Care" : "2010 முதல் • ENT சிகிச்சையில் சிறந்தது"}
+                </span>
+              </div>
+              <h1 className="about-animate-delay-1 text-5xl sm:text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-[0.9]">
                 {language === "en" ? "Redefining" : "மருத்துவ"}{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 animate-gradient-x">
-                  {language === "en" ? "Healthcare" : "சேவை"}
+                <br className="hidden sm:block" />
+                <span className="shimmer-text">
+                  {language === "en" ? "Healthcare" : "சேவையை மறுவரையறை"}
                 </span>
               </h1>
-              <p className="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light">
+              <p className="about-animate-delay-2 text-gray-300/80 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-light">
                 {language === "en"
-                  ? "Experience the convergence of compassion and advanced medical technology. Vikram ENT Hospital sets the benchmark for excellence in patient care."
-                  : "கருணை மற்றும் மேம்பட்ட மருத்துவ தொழில்நுட்பத்தின் சங்கமத்தை அனுபவிக்கவும். விக்ரம் ENT மருத்துவமனை நோயாளி பராமரிப்பில் சிறந்து விளங்குவதற்கான அளவுகோலை அமைக்கிறது."}
+                  ? "Where compassion meets cutting-edge medical technology. Setting the benchmark for excellence in patient care since 2010."
+                  : "கருணை மற்றும் நவீன மருத்துவ தொழில்நுட்பம் சந்திக்கும் இடம். 2010 முதல் நோயாளி பராமரிப்பில் சிறப்பை நிலைநாட்டுகிறோம்."}
               </p>
+
+              {/* Floating Stats Badges */}
+              <div className="about-animate-delay-3 flex flex-wrap items-center justify-center gap-4 mt-10">
+                {[
+                  { value: "15+", label: language === "en" ? "Years" : "ஆண்டுகள்" },
+                  { value: "50K+", label: language === "en" ? "Patients" : "நோயாளிகள்" },
+                  { value: "30+", label: language === "en" ? "Doctors" : "மருத்துவர்கள்" },
+                  { value: "24/7", label: language === "en" ? "Emergency" : "அவசரம்" },
+                ].map((stat, idx) => (
+                  <div
+                    key={idx}
+                    className="float-badge bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-3 text-center hover:border-indigo-500/40 transition-all duration-300"
+                    style={{ animationDelay: `${idx * 0.5}s` }}
+                  >
+                    <div className="text-2xl font-bold text-white">{stat.value}</div>
+                    <div className="text-xs text-gray-400 uppercase tracking-wider">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-6 auto-rows-auto">
+          {/* Bottom Fade */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+        </div>
 
-            {/* 1. Mission Card - Large (4 cols) */}
-            <div className="md:col-span-4 bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:border-indigo-500/30 transition-all duration-500 group relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 blur-[80px] rounded-full group-hover:bg-indigo-600/20 transition-all duration-500" />
-              <div className="relative z-10 h-full flex flex-col justify-between">
-                <div className="mb-6">
-                  <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-indigo-500/30">
-                    <Star className="h-6 w-6 text-indigo-400" />
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* ABOUT STORY + IMAGE SECTION */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Text Side */}
+            <div className="about-animate-delay-1">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
+                <Heart className="h-4 w-4 text-indigo-400" />
+                <span className="text-sm font-medium text-indigo-300">
+                  {language === "en" ? "Our Story" : "எங்கள் கதை"}
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                {language === "en" ? (
+                  <>A Legacy of <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Healing</span></>
+                ) : (
+                  <>குணப்படுத்துதலின் <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">மரபு</span></>
+                )}
+              </h2>
+              <p className="text-gray-400 text-lg leading-relaxed mb-8">
+                {language === "en"
+                  ? "Vikram ENT Hospital is a premier healthcare facility dedicated to providing world-class medical services. With state-of-the-art infrastructure and a team of highly qualified medical professionals, we are committed to delivering exceptional patient care that transforms lives."
+                  : "விக்ரம் ENT மருத்துவமனை உலகத்தரம் வாய்ந்த மருத்துவ சேவைகளை வழங்குவதற்கு அர்ப்பணிக்கப்பட்ட ஒரு முன்னணி சுகாதார வசதி ஆகும். அதிநவீன உள்கட்டமைப்பு மற்றும் உயர் தகுதி வாய்ந்த மருத்துவ நிபுணர்கள் குழுவுடன், வாழ்க்கையை மாற்றும் விதிவிலக்கான நோயாளி பராமரிப்பை வழங்க நாங்கள் உறுதிபூண்டுள்ளோம்."}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { icon: Shield, text: language === "en" ? "NABH Accredited" : "NABH அங்கீகாரம்" },
+                  { icon: Activity, text: language === "en" ? "Advanced Technology" : "நவீன தொழில்நுட்பம்" },
+                  { icon: Users, text: language === "en" ? "Expert Team" : "நிபுணர் குழு" },
+                ].map((badge, idx) => (
+                  <div key={idx} className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10 hover:border-indigo-500/20 transition-all">
+                    <badge.icon className="h-4 w-4 text-indigo-400" />
+                    <span className="text-sm text-gray-300">{badge.text}</span>
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-4">{t[language].ourMission}</h3>
-                  <p className="text-gray-400 text-lg leading-relaxed max-w-2xl">
-                    {language === "en"
-                      ? "To provide accessible, affordable, and quality healthcare services to all sections of society with compassion and dedication. We believe in healing with a human touch."
-                      : "இரக்கம் மற்றும் அர்ப்பணிப்புடன் சமூகத்தின் அனைத்து பிரிவினருக்கும் அணுகக்கூடிய, மலிவு மற்றும் தரமான சுகாதார சேவைகளை வழங்குவது."}
-                  </p>
-                </div>
-                <div className="flex gap-4">
-                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/5 text-sm text-gray-300">
-                    {language === "en" ? "Compassion" : "கருணை"}
-                  </div>
-                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/5 text-sm text-gray-300">
-                    {language === "en" ? "Quality" : "தரம்"}
-                  </div>
-                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/5 text-sm text-gray-300">
-                    {language === "en" ? "Dedication" : "அர்ப்பணிப்பு"}
+                ))}
+              </div>
+            </div>
+
+            {/* Image Side */}
+            <div className="about-animate-delay-2 relative group">
+              <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-indigo-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
+                <img
+                  src={aboutImages.team}
+                  alt={language === "en" ? "Our Medical Team" : "எங்கள் மருத்துவ குழு"}
+                  className="w-full h-[400px] object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+                        <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                      </div>
+                      <div>
+                        <p className="text-white font-semibold text-sm">
+                          {language === "en" ? "24/7 Care Available" : "24/7 பராமரிப்பு"}
+                        </p>
+                        <p className="text-gray-400 text-xs">
+                          {language === "en" ? "Our team is always ready to serve" : "எங்கள் குழு எப்போதும் தயாராக உள்ளது"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* 2. Vision Card - Tall (2 cols) */}
-            <div className="md:col-span-2 bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:border-purple-500/30 transition-all duration-500 group relative overflow-hidden">
-              <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-purple-900/10 to-transparent opacity-50" />
-              <div className="relative z-10">
-                <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-purple-500/30">
-                  <Zap className="h-6 w-6 text-purple-400" />
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* MISSION & VISION WITH IMAGES - BENTO GRID */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              {language === "en" ? "Our Purpose" : "எங்கள் நோக்கம்"}
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto rounded-full" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Mission Card with Image */}
+            <div className="group relative overflow-hidden rounded-3xl border border-white/10 hover:border-indigo-500/30 transition-all duration-500 min-h-[400px]">
+              <img
+                src={aboutImages.mission}
+                alt="Mission"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/30" />
+              <div className="relative z-10 p-8 md:p-10 flex flex-col justify-end h-full">
+                <div className="w-14 h-14 bg-indigo-500/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30 group-hover:scale-110 transition-transform duration-500">
+                  <Star className="h-7 w-7 text-indigo-400" />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-4">{t[language].ourVision}</h3>
-                <p className="text-gray-400 leading-relaxed mb-6">
+                <h3 className="text-3xl font-bold text-white mb-4">{t[language].ourMission}</h3>
+                <p className="text-gray-300 text-lg leading-relaxed mb-6">
                   {language === "en"
-                    ? "To be recognized as a leading healthcare institution known for clinical excellence and innovation."
-                    : "மருத்துவ சிறப்பு மற்றும் புதுமைக்காக அறியப்பட்ட முன்னணி சுகாதார நிறுவனமாக அங்கீகரிக்கப்படுவது."}
+                    ? "To provide accessible, affordable, and quality healthcare services to all sections of society with compassion and dedication. We believe in healing with a human touch."
+                    : "இரக்கம் மற்றும் அர்ப்பணிப்புடன் சமூகத்தின் அனைத்து பிரிவினருக்கும் அணுகக்கூடிய, மலிவு மற்றும் தரமான சுகாதார சேவைகளை வழங்குவது."}
                 </p>
-                <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-purple-500 w-3/4 rounded-full animate-pulse" />
-                </div>
-                <div className="mt-2 text-right text-xs text-purple-400 font-mono">
-                  {language === "en" ? "GOAL IN PROGRESS" : "இலக்கு முன்னேற்றத்தில் உள்ளது"}
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    language === "en" ? "Compassion" : "கருணை",
+                    language === "en" ? "Quality" : "தரம்",
+                    language === "en" ? "Dedication" : "அர்ப்பணிப்பு"
+                  ].map((tag, i) => (
+                    <span key={i} className="px-4 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-sm text-gray-200 border border-white/10">
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* 3. Facilities Ticker - One-by-One Slider */}
-            <div className="md:col-span-6 h-24 overflow-hidden rounded-3xl bg-white/5 border border-white/10 relative flex items-center justify-center">
-              <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10" />
-              <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10" />
+            {/* Vision Card with Image */}
+            <div className="group relative overflow-hidden rounded-3xl border border-white/10 hover:border-purple-500/30 transition-all duration-500 min-h-[400px]">
+              <img
+                src={aboutImages.vision}
+                alt="Vision"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/30" />
+              <div className="relative z-10 p-8 md:p-10 flex flex-col justify-end h-full">
+                <div className="w-14 h-14 bg-purple-500/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30 group-hover:scale-110 transition-transform duration-500">
+                  <Zap className="h-7 w-7 text-purple-400" />
+                </div>
+                <h3 className="text-3xl font-bold text-white mb-4">{t[language].ourVision}</h3>
+                <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                  {language === "en"
+                    ? "To be recognized as a leading healthcare institution known for clinical excellence, patient satisfaction, and innovative medical practices that set new standards."
+                    : "மருத்துவ சிறப்பு, நோயாளி திருப்தி மற்றும் புதிய தரநிலைகளை அமைக்கும் புதுமையான மருத்துவ நடைமுறைகளுக்காக அறியப்பட்ட முன்னணி சுகாதார நிறுவனமாக அங்கீகரிக்கப்படுவது."}
+                </p>
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 w-4/5 rounded-full animate-pulse" />
+                </div>
+                <div className="mt-3 text-right text-xs text-purple-400 font-mono tracking-wider">
+                  {language === "en" ? "ADVANCING EVERY DAY →" : "ஒவ்வொரு நாளும் முன்னேறுகிறோம் →"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-              <div className="relative w-full h-full flex items-center justify-center">
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* ANIMATED STATS BAR */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <div className="relative overflow-hidden py-20 my-8">
+          {/* Background Image */}
+          <div className="absolute inset-0">
+            <img
+              src="https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=1920&q=80"
+              alt=""
+              className="w-full h-full object-cover"
+              style={{ filter: "brightness(0.15)" }}
+            />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/40 via-[#0a0a0a]/80 to-purple-900/40" />
+
+          <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                {language === "en" ? "Numbers That Speak" : "பேசும் எண்கள்"}
+              </h3>
+              <p className="text-gray-400">
+                {language === "en" ? "Our impact in numbers" : "எண்களில் எங்கள் தாக்கம்"}
+              </p>
+            </div>
+            <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { value: 15, suffix: "+", label: language === "en" ? "Years of Excellence" : "சிறப்பான ஆண்டுகள்", icon: Clock },
+                { value: 50000, suffix: "+", label: language === "en" ? "Patients Treated" : "சிகிச்சை பெற்ற நோயாளிகள்", icon: Users },
+                { value: 30, suffix: "+", label: language === "en" ? "Expert Doctors" : "நிபுணர் மருத்துவர்கள்", icon: Stethoscope },
+                { value: 12, suffix: "", label: language === "en" ? "Departments" : "துறைகள்", icon: Building2 },
+              ].map((stat, idx) => (
+                <div
+                  key={idx}
+                  className="text-center bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-indigo-500/30 transition-all duration-300 hover:transform hover:-translate-y-1"
+                  style={{ animation: `countSlide 0.6s ease-out ${idx * 0.15}s forwards`, opacity: 0 }}
+                >
+                  <stat.icon className="h-8 w-8 text-indigo-400 mx-auto mb-3" />
+                  <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                    {statsVisible ? <CountUpNumber endValue={stat.value} startTrigger={statsVisible} /> : "0"}
+                    <span className="text-indigo-400">{stat.suffix}</span>
+                  </div>
+                  <p className="text-sm text-gray-400">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* FACILITIES IMAGE GALLERY */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-6">
+              <Microscope className="h-4 w-4 text-indigo-400" />
+              <span className="text-sm font-medium text-indigo-200 tracking-wider uppercase">
+                {language === "en" ? "World-Class Facilities" : "உலகத்தரம் வாய்ந்த வசதிகள்"}
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              {language === "en" ? "State of the Art" : "நவீன வசதிகள்"}
+            </h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              {language === "en"
+                ? "Equipped with the latest medical technology and designed for patient comfort"
+                : "சமீபத்திய மருத்துவ தொழில்நுட்பம் மற்றும் நோயாளி வசதிக்காக வடிவமைக்கப்பட்டது"}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { img: aboutImages.facility1, title: language === "en" ? "Advanced Diagnostics" : "மேம்பட்ட நோயறிதல்", desc: language === "en" ? "Cutting-edge diagnostic equipment" : "நவீன நோயறிதல் கருவிகள்" },
+              { img: aboutImages.facility2, title: language === "en" ? "Emergency Services" : "அவசர சேவைகள்", desc: language === "en" ? "Round-the-clock emergency care" : "24 மணி நேர அவசர சிகிச்சை" },
+              { img: aboutImages.facility3, title: language === "en" ? "Operation Theaters" : "அறுவை சிகிச்சை அரங்கு", desc: language === "en" ? "Modern surgical suites" : "நவீன அறுவை சிகிச்சை அறைகள்" },
+              { img: aboutImages.facility4, title: language === "en" ? "Intensive Care" : "தீவிர சிகிச்சை", desc: language === "en" ? "24/7 monitored ICU beds" : "24/7 கண்காணிப்பு ICU படுக்கைகள்" },
+            ].map((facility, idx) => (
+              <div
+                key={idx}
+                className="gallery-item group relative overflow-hidden rounded-2xl border border-white/10 cursor-pointer hover:border-indigo-500/30 transition-all duration-500"
+                style={{ animation: `aboutFadeUp 0.6s ease-out ${idx * 0.1}s forwards`, opacity: 0 }}
+              >
+                <div className="aspect-[4/5] overflow-hidden">
+                  <img
+                    src={facility.img}
+                    alt={facility.title}
+                    className="w-full h-full object-cover transition-transform duration-700"
+                  />
+                </div>
+                <div className="gallery-overlay absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                  <h4 className="text-lg font-bold text-white mb-1">{facility.title}</h4>
+                  <p className="text-gray-300 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">{facility.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* FACILITIES TICKER */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="h-24 overflow-hidden rounded-3xl bg-white/5 border border-white/10 relative flex items-center justify-center">
+            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10" />
+            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10" />
+            <style>{`
+              .movecontinuous-about{
+                width: max-content;
+                animation: scrollLeftAbout 30s linear infinite;
+              }
+              @keyframes scrollLeftAbout {
+                from { transform: translateX(0); }
+                to { transform: translateX(-50%); }
+              }
+            `}</style>
+            <div className="relative w-full overflow-hidden">
+              <div className="flex items-center gap-8 movecontinuous-about">
                 {(t[language] as any).facilities.map((facility: string, index: number) => (
-                  <div
-                    key={index}
-                    className={`absolute flex items-center gap-4 bg-gray-900/80 border border-gray-800 px-8 py-4 rounded-full whitespace-nowrap transition-all duration-1000 ease-in-out
-                      ${index === facilityIndex
-                        ? "opacity-100 translate-x-0 scale-100 blur-0"
-                        : index < facilityIndex
-                          ? "opacity-0 -translate-x-full scale-95 blur-sm pointer-events-none"
-                          : "opacity-0 translate-x-full scale-95 blur-sm pointer-events-none"}`}
-                  >
+                  <div key={index} className="flex items-center gap-4 bg-gray-900/80 border border-gray-800 px-8 py-4 rounded-full whitespace-nowrap">
+                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
+                    <span className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{facility}</span>
+                  </div>
+                ))}
+                {(t[language] as any).facilities.map((facility: string, index: number) => (
+                  <div key={`dup-${index}`} className="flex items-center gap-4 bg-gray-900/80 border border-gray-800 px-8 py-4 rounded-full whitespace-nowrap">
                     <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
                     <span className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{facility}</span>
                   </div>
                 ))}
               </div>
             </div>
-
           </div>
+        </div>
 
-          {/* Our Values Section */}
-          <div className="mt-24">
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* OUR VALUES SECTION */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">{t[language].ourValues}</h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {(t[language] as any).valuesItems.slice(0, 3).map((item: any, idx: number) => (
+              <ValueCard key={idx} item={item} index={idx} />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 max-w-4xl mx-auto">
+            {(t[language] as any).valuesItems.slice(3, 5).map((item: any, idx: number) => (
+              <ValueCard key={idx + 3} item={item} index={idx + 3} />
+            ))}
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* VISIT & CONNECT FOOTER */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+          <div className="pt-16 border-t border-white/5">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">{t[language].ourValues}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                {language === "en" ? "Get In Touch" : "தொடர்பு கொள்ளுங்கள்"}
+              </h2>
               <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto rounded-full" />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {(t[language] as any).valuesItems.slice(0, 3).map((item: any, idx: number) => (
-                <ValueCard key={idx} item={item} index={idx} />
-              ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 max-w-4xl mx-auto">
-              {(t[language] as any).valuesItems.slice(3, 5).map((item: any, idx: number) => (
-                <ValueCard key={idx + 3} item={item} index={idx + 3} />
-              ))}
-            </div>
-          </div>
-
-          {/* Visit & Connect Section (Last) */}
-          <div className="mt-24 pt-16 border-t border-white/5">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Address */}
-              <div className="bg-white/5 rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all">
+              <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all duration-300 group">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
-                    <MapPin className="h-5 w-5 text-indigo-400" />
+                  <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-indigo-500/30">
+                    <MapPin className="h-6 w-6 text-indigo-400" />
                   </div>
                   <h3 className="text-xl font-bold text-white">{t[language].address}</h3>
                 </div>
@@ -604,39 +919,39 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               {/* Contact Info */}
-              <div className="bg-white/5 rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all">
+              <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all duration-300 group">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
-                    <Phone className="h-5 w-5 text-indigo-400" />
+                  <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-indigo-500/30">
+                    <Phone className="h-6 w-6 text-indigo-400" />
                   </div>
                   <h3 className="text-xl font-bold text-white">{t[language].contactInfo}</h3>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-gray-400 flex justify-between">
-                    <span>Emergency:</span>
-                    <span className="text-indigo-300 font-mono">+91 98765 43210</span>
+                <div className="space-y-3">
+                  <p className="text-gray-400 flex justify-between items-center">
+                    <span>{language === "en" ? "Emergency" : "அவசரம்"}:</span>
+                    <span className="text-indigo-300 font-mono bg-indigo-500/10 px-3 py-1 rounded-lg">+91 98765 43210</span>
                   </p>
-                  <p className="text-gray-400 flex justify-between">
-                    <span>Email:</span>
+                  <p className="text-gray-400 flex justify-between items-center">
+                    <span>{language === "en" ? "Email" : "மின்னஞ்சல்"}:</span>
                     <span className="text-indigo-300">info@vikramhospital.com</span>
                   </p>
                 </div>
               </div>
 
               {/* Social Media */}
-              <div className="bg-white/5 rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between">
+              <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all duration-300 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-6 underline decoration-indigo-500/50 underline-offset-8">
+                  <h3 className="text-xl font-bold text-white mb-6">
                     {language === "en" ? "Connect With Us" : "எங்களுடன் இணையுங்கள்"}
                   </h3>
                   <div className="flex gap-4">
-                    <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#1877F2]/20 border border-white/10 hover:border-[#1877F2]/50 transition-all text-gray-400 hover:text-[#1877F2]">
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#1877F2]/20 border border-white/10 hover:border-[#1877F2]/50 transition-all duration-300 text-gray-400 hover:text-[#1877F2] hover:scale-110">
                       <Facebook className="h-6 w-6" />
                     </a>
-                    <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#E4405F]/20 border border-white/10 hover:border-[#E4405F]/50 transition-all text-gray-400 hover:text-[#E4405F]">
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#E4405F]/20 border border-white/10 hover:border-[#E4405F]/50 transition-all duration-300 text-gray-400 hover:text-[#E4405F] hover:scale-110">
                       <Instagram className="h-6 w-6" />
                     </a>
-                    <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#1DA1F2]/20 border border-white/10 hover:border-[#1DA1F2]/50 transition-all text-gray-400 hover:text-[#1DA1F2]">
+                    <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#1DA1F2]/20 border border-white/10 hover:border-[#1DA1F2]/50 transition-all duration-300 text-gray-400 hover:text-[#1DA1F2] hover:scale-110">
                       <Twitter className="h-6 w-6" />
                     </a>
                   </div>
