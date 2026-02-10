@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { 
-  getDaywiseAnalysis, 
-  getMonthlyAnalysis, 
+import {
+  getDaywiseAnalysis,
+  getMonthlyAnalysis,
   getYearlyAnalysis,
   DaywiseAnalysis,
   MonthlyAnalysis,
@@ -37,7 +37,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [feedbackType, setFeedbackType] = useState<"all" | "opd" | "ipd">("all");
   const [analysisView, setAnalysisView] = useState<"day" | "monthDetail" | "month" | "year">("day");
-  
+
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
 
@@ -46,7 +46,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
       try {
         setLoading(true);
         setError(null);
-        
+
         let startStr, endStr;
 
         if (analysisView === "day") {
@@ -89,10 +89,10 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-[#0a0a0a] p-8 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-4 border-gray-800 border-t-indigo-500 animate-spin"></div>
-          <div className="text-xl text-gray-400 font-bold tracking-widest animate-pulse">GENERATING ANALYTICS...</div>
+          <div className="w-12 h-12 rounded-full border-4 border-gray-200 dark:border-gray-800 border-t-indigo-500 animate-spin"></div>
+          <div className="text-xl text-gray-600 dark:text-gray-400 font-bold tracking-widest animate-pulse">GENERATING ANALYTICS...</div>
         </div>
       </div>
     );
@@ -101,27 +101,27 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
   const currentMonthName = new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] p-8 text-white">
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] p-8 text-gray-900 dark:text-white">
       <div className="max-w-7xl mx-auto">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent">
-              {analysisView === 'day' ? 'Daily Analysis (Recent)' : 
-               analysisView === 'monthDetail' ? `${currentMonthName} ${selectedYear} Detail` :
-               analysisView === 'month' ? `Monthly Trends (${selectedYear})` : 
-               'Yearly Progress'}
+              {analysisView === 'day' ? 'Daily Analysis (Recent)' :
+                analysisView === 'monthDetail' ? `${currentMonthName} ${selectedYear} Detail` :
+                  analysisView === 'month' ? `Monthly Trends (${selectedYear})` :
+                    'Yearly Progress'}
             </h1>
-            <p className="text-gray-400 mt-2 font-medium">
-              {analysisView === 'day' ? 'Quick overview of sentiment from the past 6 days' : 
-               analysisView === 'monthDetail' ? `Day-by-day analysis for the month of ${currentMonthName}` :
-               analysisView === 'month' ? `Recommendation trends for each month in ${selectedYear}` : 
-               'Long-term hospital performance tracking'}
+            <p className="text-gray-600 dark:text-gray-400 mt-2 font-medium">
+              {analysisView === 'day' ? 'Quick overview of sentiment from the past 6 days' :
+                analysisView === 'monthDetail' ? `Day-by-day analysis for the month of ${currentMonthName}` :
+                  analysisView === 'month' ? `Recommendation trends for each month in ${selectedYear}` :
+                    'Long-term hospital performance tracking'}
             </p>
           </div>
           <button
             onClick={onBack}
-            className="px-6 py-2 bg-gray-800/50 text-gray-300 border border-gray-700 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200 font-medium backdrop-blur-sm"
+            className="px-6 py-2 bg-gray-100 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200 font-medium backdrop-blur-sm shadow-sm"
           >
             ← Back to Admin
           </button>
@@ -129,46 +129,42 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
 
         {/* View Switcher, Selectors and Feedback Type Toggle */}
         <div className="mb-8 space-y-4">
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl shadow-xl p-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-6">
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex bg-black/40 p-1 rounded-xl border border-gray-700">
                 <button
                   onClick={() => setAnalysisView("day")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${
-                    analysisView === "day"
+                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${analysisView === "day"
                       ? "bg-indigo-500 text-white shadow-lg"
                       : "text-gray-500 hover:text-gray-300"
-                  }`}
+                    }`}
                 >
                   Recent
                 </button>
                 <button
                   onClick={() => setAnalysisView("monthDetail")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${
-                    analysisView === "monthDetail"
+                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${analysisView === "monthDetail"
                       ? "bg-indigo-500 text-white shadow-lg"
                       : "text-gray-500 hover:text-gray-300"
-                  }`}
+                    }`}
                 >
                   Month Detail
                 </button>
                 <button
                   onClick={() => setAnalysisView("month")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${
-                    analysisView === "month"
+                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${analysisView === "month"
                       ? "bg-indigo-500 text-white shadow-lg"
                       : "text-gray-500 hover:text-gray-300"
-                  }`}
+                    }`}
                 >
                   Yearly Trends
                 </button>
                 <button
                   onClick={() => setAnalysisView("year")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${
-                    analysisView === "year"
+                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${analysisView === "year"
                       ? "bg-indigo-500 text-white shadow-lg"
                       : "text-gray-500 hover:text-gray-300"
-                  }`}
+                    }`}
                 >
                   Year-over-Year
                 </button>
@@ -180,7 +176,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="bg-gray-800 border border-gray-700 text-white px-3 py-2 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                 >
                   {[2023, 2024, 2025, 2026].map((y) => (
                     <option key={y} value={y}>{y}</option>
@@ -192,7 +188,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                     setSelectedMonth(parseInt(e.target.value));
                     if (analysisView === "year") setAnalysisView("month");
                   }}
-                  className="bg-gray-800 border border-gray-700 text-white px-3 py-2 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                     <option key={m} value={m}>
@@ -208,31 +204,28 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
               <div className="flex bg-black/40 p-1 rounded-xl border border-gray-700">
                 <button
                   onClick={() => setFeedbackType("all")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${
-                    feedbackType === "all"
+                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${feedbackType === "all"
                       ? "bg-blue-600 text-white"
                       : "text-gray-500 hover:text-gray-300"
-                  }`}
+                    }`}
                 >
                   All
                 </button>
                 <button
                   onClick={() => setFeedbackType("opd")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${
-                    feedbackType === "opd"
+                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${feedbackType === "opd"
                       ? "bg-cyan-600 text-white"
                       : "text-gray-500 hover:text-gray-300"
-                  }`}
+                    }`}
                 >
                   OPD
                 </button>
                 <button
                   onClick={() => setFeedbackType("ipd")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${
-                    feedbackType === "ipd"
+                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${feedbackType === "ipd"
                       ? "bg-purple-600 text-white"
                       : "text-gray-500 hover:text-gray-300"
-                  }`}
+                    }`}
                 >
                   IPD
                 </button>
@@ -244,8 +237,8 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
         {/* Error Message */}
         {error && (
           <div className="bg-red-500/10 border border-red-500 text-red-500 px-6 py-4 rounded-xl mb-8 flex items-center gap-3">
-             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-             <p className="font-semibold">{error}</p>
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+            <p className="font-semibold">{error}</p>
           </div>
         )}
 
@@ -277,10 +270,10 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                 ];
                 const dateObj = new Date(d.day);
                 return (
-                  <div key={d.day} className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-gray-800 p-8 rounded-3xl shadow-2xl flex flex-col items-center group hover:border-indigo-500/30 transition-all duration-500">
-                    <h3 className="text-2xl font-black text-white mb-1">{dateObj.toLocaleDateString('en-US', { weekday: 'long' })}</h3>
+                  <div key={d.day} className="bg-white dark:bg-gradient-to-br dark:from-gray-800/40 dark:to-gray-900/40 backdrop-blur-sm border border-gray-200 dark:border-gray-800 p-8 rounded-3xl shadow-xl flex flex-col items-center group hover:border-indigo-500/30 transition-all duration-500">
+                    <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1">{dateObj.toLocaleDateString('en-US', { weekday: 'long' })}</h3>
                     <p className="text-gray-500 font-bold mb-6">{dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                    
+
                     {d.total === 0 ? (
                       <div className="h-[250px] flex items-center justify-center">
                         <div className="text-gray-600 font-bold italic">No feedback today</div>
@@ -300,14 +293,14 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                               <Cell key={`cell-${index}`} fill={COLORS[index]} />
                             ))}
                           </Pie>
-                          <Tooltip 
+                          <Tooltip
                             contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '12px' }}
                             itemStyle={{ fontWeight: 'bold' }}
                           />
                         </PieChart>
                       </ResponsiveContainer>
                     )}
-                    
+
                     <div className="w-full mt-6 pt-6 border-t border-gray-800">
                       <p className="text-center text-gray-400 font-bold mb-4">Responses: <span className="text-white">{d.total}</span></p>
                       <div className="space-y-2">
@@ -359,14 +352,14 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                 <ResponsiveContainer width="100%" height={500}>
                   <BarChart data={displayDays} margin={{ bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                    <XAxis 
-                      dataKey="day" 
-                      stroke="#999" 
-                      tickFormatter={(v) => new Date(v).getDate().toString()} 
+                    <XAxis
+                      dataKey="day"
+                      stroke="#999"
+                      tickFormatter={(v) => new Date(v).getDate().toString()}
                       label={{ value: 'Day of Month', position: 'insideBottom', offset: -10, fill: '#666', fontWeight: 'bold' }}
                     />
                     <YAxis stroke="#999" unit="%" />
-                    <Tooltip 
+                    <Tooltip
                       cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                       contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '12px' }}
                       labelFormatter={(label) => new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -383,66 +376,66 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
 
         {analysisView === "month" && (
           <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-gray-800 p-8 rounded-3xl shadow-2xl">
-             <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
-               <div className="w-2 h-8 bg-indigo-500 rounded-full"></div>
-               Monthly Trends for {selectedYear}
-             </h2>
-             {(() => {
-                // Ensure all 12 months are present for the selected year
-                const fullMonthData = Array.from({ length: 12 }, (_, i) => {
-                  const m = String(i + 1).padStart(2, '0');
-                  const monthKey = `${selectedYear}-${m}`;
-                  const existing = monthData.find(d => d.month === monthKey);
-                  return existing || {
-                    month: monthKey,
-                    willRecommend: "0.0",
-                    mayRecommend: "0.0",
-                    willNotRecommend: "0.0",
-                    total: 0
-                  };
-                });
+            <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
+              <div className="w-2 h-8 bg-indigo-500 rounded-full"></div>
+              Monthly Trends for {selectedYear}
+            </h2>
+            {(() => {
+              // Ensure all 12 months are present for the selected year
+              const fullMonthData = Array.from({ length: 12 }, (_, i) => {
+                const m = String(i + 1).padStart(2, '0');
+                const monthKey = `${selectedYear}-${m}`;
+                const existing = monthData.find(d => d.month === monthKey);
+                return existing || {
+                  month: monthKey,
+                  willRecommend: "0.0",
+                  mayRecommend: "0.0",
+                  willNotRecommend: "0.0",
+                  total: 0
+                };
+              });
 
-                const hasData = monthData.length > 0;
+              const hasData = monthData.length > 0;
 
-                return !hasData ? (
-                  <div className="h-[400px] flex items-center justify-center text-gray-500 font-bold border border-dashed border-gray-700 rounded-2xl">
-                    No records found for the year {selectedYear}
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart data={fullMonthData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                      <XAxis dataKey="month" stroke="#999" tickFormatter={(v) => new Date(v).toLocaleDateString('en-US', { month: 'short' })} />
-                      <YAxis stroke="#999" unit="%" />
-                      <Tooltip 
-                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                        contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '12px' }}
-                      />
-                      <Bar dataKey="willRecommend" name="Will Recommend" fill={COLORS[2]} stackId="a" />
-                      <Bar dataKey="mayRecommend" name="May Recommend" fill={COLORS[1]} stackId="a" />
-                      <Bar dataKey="willNotRecommend" name="Will Not Recommend" fill={COLORS[0]} stackId="a" radius={[10, 10, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                );
-             })()}
+              return !hasData ? (
+                <div className="h-[400px] flex items-center justify-center text-gray-500 font-bold border border-dashed border-gray-700 rounded-2xl">
+                  No records found for the year {selectedYear}
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={fullMonthData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                    <XAxis dataKey="month" stroke="#999" tickFormatter={(v) => new Date(v).toLocaleDateString('en-US', { month: 'short' })} />
+                    <YAxis stroke="#999" unit="%" />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                      contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '12px' }}
+                    />
+                    <Bar dataKey="willRecommend" name="Will Recommend" fill={COLORS[2]} stackId="a" />
+                    <Bar dataKey="mayRecommend" name="May Recommend" fill={COLORS[1]} stackId="a" />
+                    <Bar dataKey="willNotRecommend" name="Will Not Recommend" fill={COLORS[0]} stackId="a" radius={[10, 10, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              );
+            })()}
           </div>
         )}
 
         {analysisView === "year" && (
           <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-gray-800 p-8 rounded-3xl shadow-2xl">
-             <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
-               <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
-               Yearly Progress Comparison
-             </h2>
-             {yearData.length === 0 ? (
-               <div className="h-[400px] flex items-center justify-center text-gray-500 font-bold">No yearly data available</div>
-             ) : (
-             <ResponsiveContainer width="100%" height={400}>
+            <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
+              <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
+              Yearly Progress Comparison
+            </h2>
+            {yearData.length === 0 ? (
+              <div className="h-[400px] flex items-center justify-center text-gray-500 font-bold">No yearly data available</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={yearData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
                   <XAxis type="number" stroke="#999" unit="%" />
                   <YAxis dataKey="year" type="category" stroke="#999" />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                     contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '12px' }}
                   />
@@ -450,8 +443,8 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                   <Bar dataKey="mayRecommend" name="May Recommend" fill={COLORS[1]} radius={[0, 10, 10, 0]} />
                   <Bar dataKey="willNotRecommend" name="Will Not Recommend" fill={COLORS[0]} radius={[0, 10, 10, 0]} />
                 </BarChart>
-             </ResponsiveContainer>
-             )}
+              </ResponsiveContainer>
+            )}
           </div>
         )}
 

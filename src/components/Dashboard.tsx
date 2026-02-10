@@ -31,6 +31,8 @@ import {
   Twitter,
 } from "lucide-react";
 import { getActiveDoctors, Doctor } from "../services/apiService";
+import ThemeToggle from "./ThemeToggle";
+
 
 const CountUpNumber = ({
   endValue,
@@ -84,16 +86,16 @@ const ValueCard = ({ item, index }: { item: any; index: number }) => {
   const Icon = icons[index % icons.length];
 
   return (
-    <div className="bg-gradient-to-br from-gray-900/50 to-black/50 backdrop-blur-md border border-white/5 rounded-2xl p-6 hover:border-indigo-500/30 transition-all duration-500 group">
+    <div className="bg-white/70 dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 hover:border-indigo-500/30 transition-all duration-500 group">
       <div className="flex items-start gap-4">
-        <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-indigo-500/10 transition-colors">
-          <Icon className="h-6 w-6 text-gray-400 group-hover:text-indigo-400 transition-colors" />
+        <div className="w-12 h-12 bg-gray-100 dark:bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-indigo-500/10 transition-colors">
+          <Icon className="h-6 w-6 text-gray-600 dark:text-gray-400 group-hover:text-indigo-400 transition-colors" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">{item.title}</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-indigo-300 transition-colors">{item.title}</h3>
           <ul className="space-y-2">
             {item.desc.map((bullet: string, i: number) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-400 leading-snug">
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 leading-snug">
                 <span className="text-indigo-500 mt-1">›</span>
                 {bullet}
               </li>
@@ -909,9 +911,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-indigo-500/30">
                     <MapPin className="h-6 w-6 text-indigo-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white">{t[language].address}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t[language].address}</h3>
                 </div>
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                   {language === "en"
                     ? "123 Medical District, Healthcare City, State - 600001"
                     : "123 மருத்துவ மாவட்டம், சுகாதார நகரம், மாநிலம் - 600001"}
@@ -924,7 +926,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-indigo-500/30">
                     <Phone className="h-6 w-6 text-indigo-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white">{t[language].contactInfo}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t[language].contactInfo}</h3>
                 </div>
                 <div className="space-y-3">
                   <p className="text-gray-400 flex justify-between items-center">
@@ -970,12 +972,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   // If showing doctors screen, render doctors view
   if (showDoctors) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
+      <div className="min-h-screen bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white relative overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
 
         {/* Navigation Header */}
-        <nav className="relative z-20 border-b border-gray-800/50 bg-black/20 backdrop-blur-sm">
+        <nav className="relative z-20 border-b border-gray-200 dark:border-gray-800/50 bg-white/20 dark:bg-black/20 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-2">
@@ -984,7 +986,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <button
                 onClick={() => setShowDoctors(false)}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-all duration-300"
               >
                 <ArrowLeft className="h-4 w-4" />
                 {t[language].backToHome}
@@ -1006,7 +1008,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {t[language].expertDoctorsTitle}
               </span>
             </h1>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
               {t[language].teamDesc}
             </p>
           </div>
@@ -1027,7 +1029,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               {doctors.map((doctor, index) => (
                 <div
                   key={doctor._id}
-                  className="group bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden hover:border-indigo-500/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/10"
+                  className="group bg-white dark:bg-gradient-to-b dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:border-indigo-500/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/10"
                   style={{
                     animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
                   }}
@@ -1065,7 +1067,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       </p>
                     )}
                     {doctor.studies && (
-                      <p className="text-gray-400 text-sm leading-relaxed">
+                      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
                         {doctor.studies}
                       </p>
                     )}
@@ -1094,7 +1096,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Main dashboard view
   return (
-    <div className="min-h-screen bg-[#030303] text-white relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#030303] text-gray-900 dark:text-white relative overflow-hidden">
       {/* Muted Sophisticated Background */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Animated Subtle Orbs */}
@@ -1181,38 +1183,38 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Sticky Top Header (Nav + Notice Bar) */}
       <div className="sticky top-0 z-50 w-full">
         {/* Navigation Header */}
-        <nav className="border-b border-gray-800/50 bg-black/60 backdrop-blur-lg">
+        <nav className="border-b border-gray-200 dark:border-gray-800/50 bg-white/60 dark:bg-black/60 backdrop-blur-lg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
               <div className="flex items-center gap-2">
                 <Building2 className="h-6 w-6 text-indigo-500" />
-                <span className="text-lg font-bold text-white">Vikram Hospital</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">Vikram Hospital</span>
               </div>
 
               {/* Navigation Links */}
               <div className="hidden md:flex items-center gap-8">
                 <button
                   onClick={() => onNavigate?.("opd")}
-                  className="text-gray-300 hover:text-white transition-all duration-200 font-medium"
+                  className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-all duration-200 font-medium"
                 >
                   {t[language].opdFeedback}
                 </button>
                 <button
                   onClick={() => onNavigate?.("ipd")}
-                  className="text-gray-300 hover:text-white transition-all duration-200 font-medium"
+                  className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-all duration-200 font-medium"
                 >
                   {t[language].ipdFeedback}
                 </button>
                 <button
                   onClick={() => onNavigate?.("admin")}
-                  className="text-gray-300 hover:text-white transition-all duration-200 font-medium"
+                  className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-all duration-200 font-medium"
                 >
                   {t[language].admin}
                 </button>
                 <button
                   onClick={() => setShowAbout(true)}
-                  className="text-gray-300 hover:text-white transition-all duration-200 font-medium"
+                  className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-all duration-200 font-medium"
                 >
                   {t[language].about}
                 </button>
@@ -1220,9 +1222,10 @@ const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Mobile Language Toggle */}
               <div className="md:hidden flex items-center gap-2">
+                <ThemeToggle />
                 <button
                   onClick={toggleLanguage}
-                  className="p-2 text-gray-300 hover:text-white transition-colors"
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   <Globe className="h-5 w-5" />
                 </button>
@@ -1230,35 +1233,36 @@ const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Desktop Actions */}
               <div className="hidden md:flex items-center gap-4">
+                <ThemeToggle />
                 <button
                   onClick={onNavigateToTicket}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-400 border border-red-600/20 rounded-lg hover:bg-red-600/20 hover:border-red-600/40 transition-all duration-300"
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-600 dark:text-red-400 border border-red-600/20 rounded-lg hover:bg-red-600/20 hover:border-red-600/40 transition-all duration-300"
                 >
                   <Ticket className="h-4 w-4" />
                   <span className="text-sm font-medium">{t[language].raiseTicket}</span>
                 </button>
                 <button
                   onClick={toggleLanguage}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all duration-300 group"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg transition-all duration-300 group"
                 >
-                  <Globe className="h-4 w-4 text-gray-400 group-hover:text-white" />
-                  <span className="text-sm font-medium text-gray-300 group-hover:text-white">{language === "en" ? "EN" : "தமிழ்"}</span>
+                  <Globe className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white" />
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-white">{language === "en" ? "EN" : "தமிழ்"}</span>
                 </button>
               </div>
             </div>
 
             {/* Mobile Navigation */}
-            <div className="md:hidden py-4 border-t border-gray-800/50 flex flex-wrap gap-4">
-              <button onClick={() => onNavigate?.("opd")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">{t[language].opdFeedback}</button>
-              <button onClick={() => onNavigate?.("ipd")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">{t[language].ipdFeedback}</button>
-              <button onClick={() => onNavigate?.("admin")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">{t[language].admin}</button>
-              <button onClick={() => setShowAbout(true)} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">{t[language].about}</button>
+            <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-800/50 flex flex-wrap gap-4">
+              <button onClick={() => onNavigate?.("opd")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t[language].opdFeedback}</button>
+              <button onClick={() => onNavigate?.("ipd")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t[language].ipdFeedback}</button>
+              <button onClick={() => onNavigate?.("admin")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t[language].admin}</button>
+              <button onClick={() => setShowAbout(true)} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t[language].about}</button>
             </div>
           </div>
         </nav>
 
         {/* 3️⃣ Rotating Notice Bar */}
-        <div className="relative w-full h-[52px] bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center justify-center overflow-hidden">
+        <div className="relative w-full h-[52px] bg-gray-100/40 dark:bg-black/40 backdrop-blur-md border-b border-gray-200 dark:border-white/5 flex items-center justify-center overflow-hidden">
           {/* Subtle Gradient Glow */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-500/5 to-transparent opacity-30" />
 
@@ -1271,7 +1275,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     ? "opacity-100 translate-y-0 scale-100 blur-0"
                     : "opacity-0 -translate-y-4 scale-95 blur-sm pointer-events-none"}`}
               >
-                <span className="text-base font-semibold text-indigo-200/90 tracking-[0.1em] text-center uppercase drop-shadow-[0_0_8px_rgba(129,140,248,0.3)]">
+                <span className="text-base font-semibold text-indigo-800 dark:text-indigo-200/90 tracking-[0.1em] text-center uppercase drop-shadow-[0_0_8px_rgba(129,140,248,0.3)]">
                   {msg}
                 </span>
               </div>
@@ -1301,7 +1305,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <span
                       key={idx}
                       className={`absolute inset-0 text-xs sm:text-sm font-semibold tracking-wide whitespace-nowrap transition-all duration-1000 ease-in-out flex items-center ${idx === badgeIndex
-                        ? "opacity-100 translate-y-0 text-indigo-200"
+                        ? "opacity-100 translate-y-0 text-indigo-700 dark:text-indigo-200"
                         : "opacity-0 translate-y-4 text-white/0"
                         }`}
                     >
@@ -1320,14 +1324,14 @@ const Dashboard: React.FC<DashboardProps> = ({
               <TypewriterText
                 typingSpeed={80}
                 segments={[
-                  { text: t[language].elevateYour + " ", className: "text-white" },
+                  { text: t[language].elevateYour + " ", className: "text-gray-900 dark:text-white" },
                   { text: t[language].healthcare, className: "bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent" }
                 ]}
               />
             </h1>
 
             {/* Subtitle */}
-            <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-400 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed">
               {t[language].subtitle}
             </p>
 
@@ -1335,7 +1339,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
               <button
                 onClick={() => onNavigate?.("opd")}
-                className="group flex items-center gap-3 px-10 py-5 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-100 transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                className="group flex items-center gap-3 px-10 py-5 bg-indigo-600 dark:bg-white text-white dark:text-black rounded-xl font-bold text-lg hover:bg-indigo-700 dark:hover:bg-gray-100 transition-all duration-300 hover:scale-105 hover:shadow-2xl"
               >
                 {t[language].shareFeedback}
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -1484,7 +1488,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             }`}
         >
           {/* Fast Shipping -> 24/7 Emergency Services */}
-          <div className="group bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-indigo-500/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/10">
+          <div className="group bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-8 hover:border-indigo-500/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/10">
             <div className="flex justify-center mb-6">
               <div className="p-3 bg-indigo-500/10 rounded-xl group-hover:bg-indigo-500/20 transition-all duration-300">
                 <Zap className="h-8 w-8 text-indigo-400" />
@@ -1497,7 +1501,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Quality Guarantee -> Expert Doctors */}
-          <div className="group bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-purple-500/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/10">
+          <div className="group bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-8 hover:border-purple-500/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/10">
             <div className="flex justify-center mb-6">
               <div className="p-3 bg-purple-500/10 rounded-xl group-hover:bg-purple-500/20 transition-all duration-300">
                 <Shield className="h-8 w-8 text-purple-400" />
@@ -1510,7 +1514,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Premium Selection -> Quality Healthcare */}
-          <div className="group bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-pink-500/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/10">
+          <div className="group bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-8 hover:border-pink-500/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/10">
             <div className="flex justify-center mb-6">
               <div className="p-3 bg-pink-500/10 rounded-xl group-hover:bg-pink-500/20 transition-all duration-300">
                 <Star className="h-8 w-8 text-pink-400" />
@@ -1533,12 +1537,12 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div
           onMouseEnter={() => setHoveredBanner('black')}
           onMouseLeave={() => setHoveredBanner(null)}
-          className={`absolute w-[260%] h-28 bg-black border-y-2 border-white/10 -rotate-[18deg] flex items-center shadow-[0_0_60px_rgba(0,0,0,0.6)] z-10 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'accent' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
+          className={`absolute w-[260%] h-28 bg-[#1e1b4b] border-y-2 border-white/10 -rotate-[18deg] flex items-center shadow-[0_0_60px_rgba(30,27,75,0.4)] z-10 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'accent' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
             }`}
         >
           <div className="flex whitespace-nowrap animate-marquee">
             {[...Array(8)].map((_, i) => (
-              <span key={i} className="text-5xl font-bold text-white/20 px-16 flex items-center gap-8 uppercase tracking-tighter">
+              <span key={i} className="text-5xl font-bold text-white/30 px-16 flex items-center gap-8 uppercase tracking-tighter">
                 VIKRAM HOSPITAL <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> EXPERT CARE <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> ADVANCED TECHNOLOGY <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> TRUSTED HEALING
               </span>
             ))}
@@ -1565,7 +1569,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Centres Of Excellence Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl font-bold mb-6">
+          <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
             Centres Of <span className="text-[#d946ef] drop-shadow-[0_0_15px_rgba(217,70,239,0.3)]">Excellence</span>
           </h2>
           <p className="text-gray-400 text-lg max-w-3xl mx-auto">
@@ -1580,7 +1584,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-red-500/10 text-red-500 group-hover:bg-red-500/20 transition-colors duration-500">
                 <Heart className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-white/90">Cardiology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Cardiology</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-all duration-500" />
@@ -1592,7 +1596,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20 transition-colors duration-500">
                 <Bone className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-white/90">Orthopedics</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Orthopedics</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-yellow-500/10 rounded-full blur-3xl group-hover:bg-yellow-500/20 transition-all duration-500" />
@@ -1604,7 +1608,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors duration-500">
                 <Microscope className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-white/90">Oncology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Oncology</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-500" />
@@ -1616,7 +1620,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-500 group-hover:bg-purple-500/20 transition-colors duration-500">
                 <Brain className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-white/90">Neurology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Neurology</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-all duration-500" />
@@ -1628,7 +1632,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 transition-colors duration-500">
                 <Activity className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-white/90">Gastroenterology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Gastroenterology</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-500" />
@@ -1640,7 +1644,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-cyan-500/10 text-cyan-500 group-hover:bg-cyan-500/20 transition-colors duration-500">
                 <Droplets className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-white/90">Nephrology & Urology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Nephrology & Urology</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl group-hover:bg-cyan-500/20 transition-all duration-500" />
@@ -1651,7 +1655,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Welcome To Vikram ENT Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 relative z-10 border-t border-white/5">
         <div className="text-center mb-20">
-          <h2 className="text-4xl sm:text-5xl font-bold mb-8">
+          <h2 className="text-4xl sm:text-5xl font-bold mb-8 text-gray-900 dark:text-white">
             Welcome To <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">Vikram ENT</span> —
             <br className="hidden sm:block" /> The International Leader in <span className="text-[#d946ef]">ENT Care</span>
           </h2>
@@ -1669,10 +1673,10 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Stat 1: Years of Experience */}
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-indigo-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
-                <div className="text-6xl font-bold text-white mb-2 group-hover/stat:text-indigo-400 transition-colors">
+                <div className="text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-indigo-400 transition-colors">
                   <CountUpNumber endValue={55} startTrigger={statsVisible} />+
                 </div>
-                <div className="text-gray-400 text-lg font-medium leading-tight">Years of <br /> Experience</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">Years of <br /> Experience</div>
               </div>
               <div className="p-5 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover/stat:bg-indigo-500/20 group-hover/stat:scale-110 transition-all duration-500">
                 <Clock className="h-10 w-10" />
@@ -1683,10 +1687,10 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Stat 2: Doctors */}
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-purple-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
-                <div className="text-6xl font-bold text-white mb-2 group-hover/stat:text-purple-400 transition-colors">
+                <div className="text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-purple-400 transition-colors">
                   <CountUpNumber endValue={20} startTrigger={statsVisible} />+
                 </div>
-                <div className="text-gray-400 text-lg font-medium leading-tight">Expert <br /> Doctors</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">Expert <br /> Doctors</div>
               </div>
               <div className="p-5 rounded-2xl bg-purple-500/10 text-purple-400 group-hover/stat:bg-purple-500/20 group-hover/stat:scale-110 transition-all duration-500">
                 <Users className="h-10 w-10" />
@@ -1697,10 +1701,10 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Stat 3: Procedures */}
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-pink-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
-                <div className="text-5xl font-bold text-white mb-2 group-hover/stat:text-pink-400 transition-colors">
+                <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-pink-400 transition-colors">
                   <CountUpNumber endValue={500000} startTrigger={statsVisible} />+
                 </div>
-                <div className="text-gray-400 text-lg font-medium leading-tight">Successful <br /> Procedures</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">Successful <br /> Procedures</div>
               </div>
               <div className="p-5 rounded-2xl bg-pink-500/10 text-pink-400 group-hover/stat:bg-pink-500/20 group-hover/stat:scale-110 transition-all duration-500">
                 <Activity className="h-10 w-10" />
@@ -1711,10 +1715,10 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Stat 4: Lives Touched */}
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-cyan-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
-                <div className="text-5xl font-bold text-white mb-2 group-hover/stat:text-cyan-400 transition-colors">
+                <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-cyan-400 transition-colors">
                   <CountUpNumber endValue={5000000} startTrigger={statsVisible} />+
                 </div>
-                <div className="text-gray-400 text-lg font-medium leading-tight">Lives <br /> Touched</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">Lives <br /> Touched</div>
               </div>
               <div className="p-5 rounded-2xl bg-cyan-500/10 text-cyan-400 group-hover/stat:bg-cyan-500/20 group-hover/stat:scale-110 transition-all duration-500">
                 <UserCheck className="h-10 w-10" />
@@ -1731,7 +1735,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <Heart className="h-4 w-4 text-red-500" />
           <span className="text-sm font-semibold text-red-400 uppercase tracking-widest">Patient Lifeline</span>
         </div>
-        <h2 className="text-4xl sm:text-5xl font-bold mb-6">
+        <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
           Committed to the <span className="bg-gradient-to-r from-red-500 to-rose-600 bg-clip-text text-transparent">Flow of Healing</span>
         </h2>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">

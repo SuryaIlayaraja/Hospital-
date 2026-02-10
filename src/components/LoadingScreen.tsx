@@ -77,7 +77,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
 
     const startHeartbeat = () => {
       playHeartbeat();
-      heartbeatInterval = setInterval(playHeartbeat, 1100); 
+      heartbeatInterval = setInterval(playHeartbeat, 1100);
     };
 
     // Aggressive resume on any interaction
@@ -113,10 +113,10 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   if (!isVisible) return null;
 
   return (
-    <div className={`fixed inset-0 bg-[#0a0a0a] z-50 flex items-center justify-center transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`fixed inset-0 bg-white dark:bg-[#0a0a0a] z-50 flex items-center justify-center transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-20">
-        <div 
+        <div
           className="w-full h-full bg-no-repeat"
           style={{
             backgroundImage: `url(/images/doctor1.jpg), url(${FALLBACK_BACKGROUND})`,
@@ -133,16 +133,16 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           <div className="inline-flex items-center justify-center w-24 h-24 bg-[#2563eb] rounded-full shadow-lg mb-4 shadow-[#2563eb]/20">
             <Building2 className="w-12 h-12 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">Vikram Hospital</h1>
-          <p className="text-gray-400 text-lg">Patient Feedback Management System</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Vikram Hospital</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">Patient Feedback Management System</p>
         </div>
 
         {/* Doctor Image */}
         <div className="mb-8">
           <div className="relative">
             <div className="w-48 h-48 mx-auto rounded-full overflow-hidden shadow-2xl border-4 border-gray-800 animate-pulse">
-              <img 
-                src="/images/doctor1.jpg" 
+              <img
+                src="/images/doctor1.jpg"
                 alt="Doctor"
                 className="w-full h-full object-cover object-center"
                 style={{
@@ -173,22 +173,20 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           <div className="flex items-center justify-center mb-4">
             {steps.map((step, index) => (
               <div key={index} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
-                  index <= currentStep 
-                    ? 'bg-[#2563eb] text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' 
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${index <= currentStep
+                    ? 'bg-[#2563eb] text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
                     : 'bg-gray-800 text-gray-500'
-                }`}>
+                  }`}>
                   <step.icon className="w-5 h-5" />
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`w-16 h-1 mx-2 transition-all duration-500 ${
-                    index < currentStep ? 'bg-[#2563eb]' : 'bg-gray-800'
-                  }`} />
+                  <div className={`w-16 h-1 mx-2 transition-all duration-500 ${index < currentStep ? 'bg-[#2563eb]' : 'bg-gray-800'
+                    }`} />
                 )}
               </div>
             ))}
           </div>
-          <p className="text-gray-300 text-lg font-medium">
+          <p className="text-gray-700 dark:text-gray-300 text-lg font-medium">
             {steps[currentStep].text}
           </p>
         </div>
@@ -209,7 +207,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
               stroke="rgba(37, 99, 235, 0.1)"
               strokeWidth="2"
             />
-            
+
             {/* Animated heartbeat path */}
             <use
               href="#heartbeat-path-id"
@@ -233,7 +231,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
               />
             </g>
           </svg>
-          
+
           <style>{`
             .heartbeat-path {
               stroke-dasharray: 1000;
