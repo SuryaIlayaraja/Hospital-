@@ -164,7 +164,7 @@ const IPDFeedback: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
 
       <form onSubmit={handleSubmit} className="relative z-10 p-8 space-y-8 min-h-full max-w-7xl mx-auto">
-        <div className="text-center border-b border-gray-200 dark:border-white/10 pb-8 bg-gray-50 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 shadow-2xl">
+        <div className="text-center border-b border-gray-200 dark:border-white/10 pb-8 bg-gray-50 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 shadow-none dark:shadow-2xl">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent mb-3">
             {t("ipd.title")}
           </h2>
@@ -181,7 +181,7 @@ const IPDFeedback: React.FC = () => {
         />
 
         {/* Patient Information */}
-        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-lg hover:border-indigo-500/50 transition-all duration-500">
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-indigo-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-indigo-400 mb-6 flex items-center gap-2">
             <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
             {t("ipd.patient.info")}
@@ -222,7 +222,7 @@ const IPDFeedback: React.FC = () => {
         </div>
 
         {/* Overall Experience */}
-        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-lg hover:border-purple-500/50 transition-all duration-500">
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-purple-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-purple-400 mb-6 flex items-center gap-2">
             <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
             {t("ipd.overall.experience")}
@@ -236,7 +236,7 @@ const IPDFeedback: React.FC = () => {
         </div>
 
         {/* Service Ratings */}
-        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-lg hover:border-blue-500/50 transition-all duration-500">
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-none dark:shadow-lg hover:border-blue-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-blue-400 mb-8 flex items-center gap-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
             {t("ipd.service.quality")}
@@ -302,7 +302,7 @@ const IPDFeedback: React.FC = () => {
 
         {/* Employee Nomination & Comments */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-lg hover:border-yellow-500/50 transition-all duration-500">
+          <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-none dark:shadow-lg hover:border-yellow-500/50 transition-all duration-500">
             <h3 className="text-xl font-bold text-yellow-400 mb-6 flex items-center gap-3">
               <Award className="h-6 w-6 text-yellow-400" />
               {t("ipd.employee.recognition")}
@@ -324,7 +324,7 @@ const IPDFeedback: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-lg hover:border-green-500/50 transition-all duration-500">
+          <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-none dark:shadow-lg hover:border-green-500/50 transition-all duration-500">
             <h3 className="text-xl font-bold text-green-400 mb-6 flex items-center gap-3">
               <MessageSquare className="h-6 w-6 text-green-400" />
               {t("ipd.additional.comments")}
