@@ -81,28 +81,102 @@ const CountUpNumber = ({
   return <span>{count.toLocaleString()}</span>;
 };
 
+const VALUE_THEMES = [
+  {
+    gradient: "from-blue-500 to-cyan-400",
+    glow: "rgba(59,130,246,0.35)",
+    border: "hover:border-blue-500/40",
+    bg: "from-blue-500/10 via-cyan-400/5 to-transparent",
+    iconBg: "bg-blue-500/15",
+    iconBorder: "border-blue-500/30",
+    iconColor: "text-blue-400",
+    bullet: "text-blue-400",
+  },
+  {
+    gradient: "from-emerald-500 to-teal-400",
+    glow: "rgba(16,185,129,0.35)",
+    border: "hover:border-emerald-500/40",
+    bg: "from-emerald-500/10 via-teal-400/5 to-transparent",
+    iconBg: "bg-emerald-500/15",
+    iconBorder: "border-emerald-500/30",
+    iconColor: "text-emerald-400",
+    bullet: "text-emerald-400",
+  },
+  {
+    gradient: "from-violet-500 to-purple-400",
+    glow: "rgba(139,92,246,0.35)",
+    border: "hover:border-violet-500/40",
+    bg: "from-violet-500/10 via-purple-400/5 to-transparent",
+    iconBg: "bg-violet-500/15",
+    iconBorder: "border-violet-500/30",
+    iconColor: "text-violet-400",
+    bullet: "text-violet-400",
+  },
+  {
+    gradient: "from-orange-500 to-amber-400",
+    glow: "rgba(249,115,22,0.35)",
+    border: "hover:border-orange-500/40",
+    bg: "from-orange-500/10 via-amber-400/5 to-transparent",
+    iconBg: "bg-orange-500/15",
+    iconBorder: "border-orange-500/30",
+    iconColor: "text-orange-400",
+    bullet: "text-orange-400",
+  },
+  {
+    gradient: "from-pink-500 to-rose-400",
+    glow: "rgba(236,72,153,0.35)",
+    border: "hover:border-pink-500/40",
+    bg: "from-pink-500/10 via-rose-400/5 to-transparent",
+    iconBg: "bg-pink-500/15",
+    iconBorder: "border-pink-500/30",
+    iconColor: "text-pink-400",
+    bullet: "text-pink-400",
+  },
+];
+
 const ValueCard = ({ item, index }: { item: any; index: number }) => {
   const icons = [UserCheck, Shield, Users, Target, Lightbulb];
   const Icon = icons[index % icons.length];
+  const theme = VALUE_THEMES[index % VALUE_THEMES.length];
 
   return (
-    <div className="bg-white/70 dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 hover:border-indigo-500/30 transition-all duration-500 group">
-      <div className="flex items-start gap-4">
-        <div className="w-12 h-12 bg-gray-100 dark:bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-indigo-500/10 transition-colors">
-          <Icon className="h-6 w-6 text-gray-600 dark:text-gray-400 transition-colors" />
+    <div
+      className={`group relative overflow-hidden rounded-2xl p-6 bg-white/5 dark:bg-white/[0.03] backdrop-blur-xl border border-white/10 ${theme.border} transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl`}
+      style={{ transition: 'all 0.4s ease' }}
+      onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 20px 60px ${theme.glow}`)}
+      onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}
+    >
+      {/* Background gradient sweep on hover */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${theme.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
+
+      {/* Subtle top-left corner glow */}
+      <div className={`absolute -top-6 -left-6 w-24 h-24 bg-gradient-to-br ${theme.gradient} rounded-full blur-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none`} />
+
+      <div className="relative z-10 flex items-start gap-4">
+        {/* Icon container with gradient ring */}
+        <div className={`relative w-12 h-12 ${theme.iconBg} border ${theme.iconBorder} rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+          <Icon className={`h-6 w-6 ${theme.iconColor}`} />
+          {/* Gradient shimmer on icon */}
+          <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${theme.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-300`} />
         </div>
-        <div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3  transition-colors">{item.title}</h3>
+
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-bold text-white mb-3 group-hover:text-white transition-colors">
+            {item.title}
+          </h3>
           <ul className="space-y-2">
             {item.desc.map((bullet: string, i: number) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 leading-snug">
-                <span className="text-indigo-500 mt-1">›</span>
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-400 group-hover:text-gray-300 leading-snug transition-colors duration-300">
+                <span className={`${theme.bullet} mt-0.5 font-bold text-base leading-none`}>›</span>
                 {bullet}
               </li>
             ))}
           </ul>
         </div>
       </div>
+
+      {/* Bottom gradient line */}
+      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${theme.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
     </div>
   );
 };
@@ -742,7 +816,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* ═══════════════════════════════════════════════════════ */}
         {/* ANIMATED STATS BAR */}
         {/* ═══════════════════════════════════════════════════════ */}
-        
+
 
         {/* ═══════════════════════════════════════════════════════ */}
         {/* FACILITIES IMAGE GALLERY */}
@@ -831,22 +905,57 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* ═══════════════════════════════════════════════════════ */}
-        {/* OUR VALUES SECTION */}
+        {/* OUR VALUES SECTION — PREMIUM REDESIGN */}
         {/* ═══════════════════════════════════════════════════════ */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">{t[language].ourValues}</h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto rounded-full" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {(t[language] as any).valuesItems.slice(0, 3).map((item: any, idx: number) => (
-              <ValueCard key={idx} item={item} index={idx} />
-            ))}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 max-w-4xl mx-auto">
-            {(t[language] as any).valuesItems.slice(3, 5).map((item: any, idx: number) => (
-              <ValueCard key={idx + 3} item={item} index={idx + 3} />
-            ))}
+        <div className="relative z-10 py-24 overflow-hidden">
+          {/* Ambient background glow orbs */}
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-blue-900/10 rounded-full blur-[150px] pointer-events-none" />
+
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Section Header */}
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
+                <Star className="h-4 w-4 text-indigo-400" />
+                <span className="text-sm font-medium text-indigo-300 uppercase tracking-wider">
+                  {language === "en" ? "What We Stand For" : "நாங்கள் எதை பிரதிநிதித்துவப்படுகிறோம்"}
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                <span className="text-white">{t[language].ourValues.split(' ')[0]} </span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+                  {t[language].ourValues.split(' ').slice(1).join(' ')}
+                </span>
+              </h2>
+              <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+                {language === "en"
+                  ? "The principles that guide every decision we make and every life we touch."
+                  : "நாங்கள் எடுக்கும் ஒவ்வொரு முடிவையும் நாங்கள் சிகிச்சையளிக்கும் ஒவ்வொரு உயிரையும் வழிநடத்தும் கோட்பாடுகள்."}
+              </p>
+              {/* Decorative line */}
+              <div className="flex items-center justify-center gap-3 mt-8">
+                <div className="h-px w-16 bg-gradient-to-r from-transparent to-indigo-500" />
+                <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                <div className="h-px w-24 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+                <div className="w-2 h-2 rounded-full bg-pink-500" />
+                <div className="h-px w-16 bg-gradient-to-r from-pink-500 to-transparent" />
+              </div>
+            </div>
+
+            {/* Top row — 3 cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+              {(t[language] as any).valuesItems.slice(0, 3).map((item: any, idx: number) => (
+                <ValueCard key={idx} item={item} index={idx} />
+              ))}
+            </div>
+
+            {/* Bottom row — 2 cards centered */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+              {(t[language] as any).valuesItems.slice(3, 5).map((item: any, idx: number) => (
+                <ValueCard key={idx + 3} item={item} index={idx + 3} />
+              ))}
+            </div>
           </div>
         </div>
 
