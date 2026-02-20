@@ -89,10 +89,10 @@ const ValueCard = ({ item, index }: { item: any; index: number }) => {
     <div className="bg-white/70 dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 hover:border-indigo-500/30 transition-all duration-500 group">
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 bg-gray-100 dark:bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-indigo-500/10 transition-colors">
-          <Icon className="h-6 w-6 text-gray-600 dark:text-gray-400 group-hover:text-indigo-400 transition-colors" />
+          <Icon className="h-6 w-6 text-gray-600 dark:text-gray-400 transition-colors" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-indigo-300 transition-colors">{item.title}</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3  transition-colors">{item.title}</h3>
           <ul className="space-y-2">
             {item.desc.map((bullet: string, i: number) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 leading-snug">
@@ -742,50 +742,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* ═══════════════════════════════════════════════════════ */}
         {/* ANIMATED STATS BAR */}
         {/* ═══════════════════════════════════════════════════════ */}
-        <div className="relative overflow-hidden py-20 my-8">
-          {/* Background Image */}
-          <div className="absolute inset-0">
-            <img
-              src="https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=1920&q=80"
-              alt=""
-              className="w-full h-full object-cover"
-              style={{ filter: "brightness(0.15)" }}
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/40 via-[#0a0a0a]/80 to-purple-900/40" />
-
-          <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                {language === "en" ? "Numbers That Speak" : "பேசும் எண்கள்"}
-              </h3>
-              <p className="text-gray-400">
-                {language === "en" ? "Our impact in numbers" : "எண்களில் எங்கள் தாக்கம்"}
-              </p>
-            </div>
-            <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                { value: 15, suffix: "+", label: language === "en" ? "Years of Excellence" : "சிறப்பான ஆண்டுகள்", icon: Clock },
-                { value: 50000, suffix: "+", label: language === "en" ? "Patients Treated" : "சிகிச்சை பெற்ற நோயாளிகள்", icon: Users },
-                { value: 30, suffix: "+", label: language === "en" ? "Expert Doctors" : "நிபுணர் மருத்துவர்கள்", icon: Stethoscope },
-                { value: 12, suffix: "", label: language === "en" ? "Departments" : "துறைகள்", icon: Building2 },
-              ].map((stat, idx) => (
-                <div
-                  key={idx}
-                  className="text-center bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-indigo-500/30 transition-all duration-300 hover:transform hover:-translate-y-1"
-                  style={{ animation: `countSlide 0.6s ease-out ${idx * 0.15}s forwards`, opacity: 0 }}
-                >
-                  <stat.icon className="h-8 w-8 text-indigo-400 mx-auto mb-3" />
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                    {statsVisible ? <CountUpNumber endValue={stat.value} startTrigger={statsVisible} /> : "0"}
-                    <span className="text-indigo-400">{stat.suffix}</span>
-                  </div>
-                  <p className="text-sm text-gray-400">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        
 
         {/* ═══════════════════════════════════════════════════════ */}
         {/* FACILITIES IMAGE GALLERY */}
@@ -911,7 +868,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-indigo-500/30">
                     <MapPin className="h-6 w-6 text-indigo-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t[language].address}</h3>
+                  <h3 className="text-xl font-bold text-white mb-6">{t[language].address}</h3>
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                   {language === "en"
@@ -926,7 +883,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-indigo-500/30">
                     <Phone className="h-6 w-6 text-indigo-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t[language].contactInfo}</h3>
+                  <h3 className="text-xl font-bold text-white mb-6">{t[language].contactInfo}</h3>
                 </div>
                 <div className="space-y-3">
                   <p className="text-gray-400 flex justify-between items-center">
@@ -1058,7 +1015,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                   )}
                   <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-indigo-400 transition-colors duration-300">
+                    <h3 className="text-xl font-bold mb-2  transition-colors duration-300">
                       {doctor.name}
                     </h3>
                     {doctor.specialization && (
@@ -1245,8 +1202,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                   onClick={toggleLanguage}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg transition-all duration-300 group"
                 >
-                  <Globe className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white" />
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-white">{language === "en" ? "EN" : "தமிழ்"}</span>
+                  <Globe className="h-4 w-4 text-gray-500 dark:text-gray-400  dark:group-hover:text-white" />
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300  dark:group-hover:text-white">{language === "en" ? "EN" : "தமிழ்"}</span>
                 </button>
               </div>
             </div>
