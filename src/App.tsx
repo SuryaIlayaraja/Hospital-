@@ -5,6 +5,11 @@ import {
   UserCheck,
   Settings,
   Home,
+  Calendar,
+  MessageCircle,
+  Phone,
+  Mail,
+  ArrowUp,
 } from "lucide-react";
 import Dashboard from "./components/Dashboard";
 import OPDFeedback from "./components/OPDFeedback";
@@ -20,6 +25,16 @@ import RaiseTicketPage from "./components/RaiseTicketPage";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
+const WhatsappIcon = ({ className, fill = "currentColor" }: { className?: string; fill?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill={fill}
+    className={className}
+  >
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+  </svg>
+);
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -139,12 +154,68 @@ const AppContent: React.FC = () => {
           )}
         </main>
 
-        {/* Footer */}
-        <footer className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-0">
-          <div className="w-full px-6 py-6 text-center text-gray-600 dark:text-gray-400">
-            <p className="font-medium">{t("footer.copyright")}</p>
+        {/* Custom Application Footer */}
+        <div className="relative mt-auto">
+          {/* CTA Banner Section */}
+          <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 dark:from-indigo-900 dark:via-purple-900 dark:to-indigo-950 py-16 relative overflow-hidden">
+            {/* Background effects */}
+            <div className="absolute inset-0 bg-[url('https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg')] opacity-10 bg-cover bg-center mix-blend-overlay pointer-events-none" />
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-black/20 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="max-w-4xl mx-auto text-center px-4 relative z-10">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-md">
+                Elevate Your Healthcare Experience
+              </h2>
+              <p className="text-blue-50 dark:text-indigo-200 text-lg md:text-xl mb-10 font-medium drop-shadow">
+                Connect with our expert medical team today
+              </p>
+              
+              <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+                {[
+                  { icon: Calendar, label: "Book Appointment" },
+                  { icon: WhatsappIcon, label: "Chat Support" },
+                  { icon: Phone, label: "Call Us" },
+                  { icon: Mail, label: "Email Us" }
+                ].map((item, idx) => (
+                  <button 
+                    key={idx}
+                    className="group flex flex-col items-center justify-center p-4 w-16 h-16 sm:w-20 sm:h-20 bg-white/10 hover:bg-white/25 dark:bg-black/20 dark:hover:bg-black/40 backdrop-blur-md rounded-2xl border border-white/20 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_10px_30px_rgba(255,255,255,0.2)]"
+                    title={item.label}
+                  >
+                    <item.icon className="h-7 w-7 text-white group-hover:scale-110 transition-transform duration-300 drop-shadow-md" />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </footer>
+
+          {/* Copyright Section */}
+          <footer className="bg-white dark:bg-[#060606] border-t border-gray-100 dark:border-white/5 py-6">
+            <div className="w-full px-6 flex flex-col sm:flex-row items-center justify-between text-gray-500 dark:text-gray-400 text-sm max-w-7xl mx-auto">
+              <p className="font-medium mb-4 sm:mb-0">
+                {t("footer.copyright")}
+              </p>
+              <button 
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-700 dark:text-gray-300 font-medium"
+              >
+                Back to top
+                <ArrowUp className="h-4 w-4" />
+              </button>
+            </div>
+          </footer>
+        </div>
+
+        {/* Floating WhatsApp Button */}
+        <a 
+          href="https://wa.me/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 left-6 bg-gradient-to-br from-green-400 to-green-600 text-white p-4 rounded-full shadow-[0_8px_30px_rgb(34,197,94,0.3)] hover:shadow-[0_8px_30px_rgb(34,197,94,0.5)] transition-all duration-300 hover:-translate-y-1 hover:scale-110 z-50 flex items-center justify-center border border-green-300/20"
+        >
+          <WhatsappIcon className="h-7 w-7" fill="white" />
+        </a>
       </div>
     </>
   );
