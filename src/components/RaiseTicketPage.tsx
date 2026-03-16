@@ -10,11 +10,14 @@ import { useTickets, Ticket } from "../hooks/useTickets";
 import TicketChat from "./TicketChat";
 import PatientLoginModal from "./PatientLoginModal";
 
+import { useLanguage } from "../contexts/LanguageContext";
+
 interface Props {
   onNavigateBack?: (tab: "dashboard") => void;
 }
 
 const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
+  const { t } = useLanguage();
   const { addTicket } = useTickets();
   const [title, setTitle] = useState("");
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("medium");
@@ -109,15 +112,15 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
               className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-lg transition-all duration-300"
             >
               <ArrowLeft className="h-5 w-5" />
-              Back to Dashboard
+              {t("ticket.back")}
             </button>
           </div>
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent mb-2">
-              Raise an Issue Ticket
+              {t("ticket.title")}
             </h1>
             <p className="text-gray-500 dark:text-gray-400">
-              Report a problem or issue with the hospital system
+              {t("ticket.subtitle")}
             </p>
           </div>
         </div>
@@ -134,13 +137,13 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
             {/* Title Field */}
             <div>
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                Ticket Title <span className="text-indigo-600 dark:text-indigo-400">*</span>
+                {t("ticket.form.title")} <span className="text-indigo-600 dark:text-indigo-400">*</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Brief summary of the issue"
+                placeholder={t("ticket.form.titlePlaceholder")}
                 required
                 className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
@@ -150,35 +153,35 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Department <span className="text-indigo-400">*</span>
+                  {t("ticket.form.department")} <span className="text-indigo-400">*</span>
                 </label>
                 <select
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-gray-900 dark:text-white"
                 >
-                  <option value="Nursing">Nursing</option>
-                  <option value="Operations">Operations</option>
-                  <option value="House Keeping">House Keeping</option>
-                  <option value="Maintenance">Maintenance</option>
-                  <option value="Medical">Medical</option>
-                  <option value="F&B">F&B</option>
-                  <option value="Security">Security</option>
-                  <option value="Transport">Transport</option>
-                  <option value="IT">IT</option>
-                  <option value="Laundry">Laundry</option>
-                  <option value="Billing">Billing</option>
-                  <option value="Insurance / TPA">Insurance / TPA</option>
-                  <option value="MRD">MRD</option>
-                  <option value="Lab">Lab</option>
-                  <option value="Radiology">Radiology</option>
-                  <option value="Blood Bank">Blood Bank</option>
+                  <option value="Nursing">{t("ticket.dept.nursing")}</option>
+                  <option value="Operations">{t("ticket.dept.operations")}</option>
+                  <option value="House Keeping">{t("ticket.dept.housekeeping")}</option>
+                  <option value="Maintenance">{t("ticket.dept.maintenance")}</option>
+                  <option value="Medical">{t("ticket.dept.medical")}</option>
+                  <option value="F&B">{t("ticket.dept.fb")}</option>
+                  <option value="Security">{t("ticket.dept.security")}</option>
+                  <option value="Transport">{t("ticket.dept.transport")}</option>
+                  <option value="IT">{t("ticket.dept.it")}</option>
+                  <option value="Laundry">{t("ticket.dept.laundry")}</option>
+                  <option value="Billing">{t("ticket.dept.billing")}</option>
+                  <option value="Insurance / TPA">{t("ticket.dept.insurance")}</option>
+                  <option value="MRD">{t("ticket.dept.mrd")}</option>
+                  <option value="Lab">{t("ticket.dept.lab")}</option>
+                  <option value="Radiology">{t("ticket.dept.radiology")}</option>
+                  <option value="Blood Bank">{t("ticket.dept.bloodbank")}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Issue Category <span className="text-indigo-400">*</span>
+                  {t("ticket.form.category")} <span className="text-indigo-400">*</span>
                 </label>
                 <select
                   value={issueCategory}
@@ -187,17 +190,17 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                   }
                   className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-gray-900 dark:text-white"
                 >
-                  <option value="Delay">Delay</option>
-                  <option value="Misbehavior">Misbehavior</option>
-                  <option value="Overcharging">Overcharging</option>
-                  <option value="Hygiene">Hygiene</option>
-                  <option value="Equipment">Equipment</option>
+                  <option value="Delay">{t("ticket.category.delay")}</option>
+                  <option value="Misbehavior">{t("ticket.category.misbehavior")}</option>
+                  <option value="Overcharging">{t("ticket.category.overcharging")}</option>
+                  <option value="Hygiene">{t("ticket.category.hygiene")}</option>
+                  <option value="Equipment">{t("ticket.category.equipment")}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Severity Level <span className="text-indigo-400">*</span>
+                  {t("ticket.form.severity")} <span className="text-indigo-400">*</span>
                 </label>
                 <select
                   value={severity}
@@ -206,9 +209,9 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                   }
                   className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 text-gray-900 dark:text-white"
                 >
-                  <option value="low">Low - Minor issue</option>
-                  <option value="medium">Medium - Important issue</option>
-                  <option value="high">High - Critical issue</option>
+                  <option value="low">{t("ticket.severity.low")}</option>
+                  <option value="medium">{t("ticket.severity.medium")}</option>
+                  <option value="high">{t("ticket.severity.high")}</option>
                 </select>
               </div>
             </div>
@@ -216,12 +219,12 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
             {/* Description Field */}
             <div>
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                Detailed Description <span className="text-gray-500 text-xs">(Optional)</span>
+                {t("ticket.form.description")} <span className="text-gray-500 text-xs">({t("ticket.form.optional")})</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Provide detailed information about the issue, including steps to reproduce if applicable (optional)"
+                placeholder={t("ticket.form.descriptionPlaceholder")}
                 rows={8}
                 className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
@@ -233,7 +236,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-6 w-6 flex-shrink-0" />
                   <div>
-                    <p className="font-bold">Ticket Submitted Successfully!</p>
+                    <p className="font-bold">{t("ticket.success.title")}</p>
                     <p className="text-sm text-green-300">
                       Ticket ID: {createdTicket.id}
                     </p>
@@ -244,14 +247,14 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 text-green-400 rounded-xl font-bold transition-colors duration-150"
                 >
                   <Download className="h-5 w-5" />
-                  Download Ticket as Markdown
+                  {t("ticket.success.download")}
                 </button>
 
                 <button
                   onClick={() => setIsChatOpen(true)}
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/50 text-indigo-200 rounded-xl font-bold transition-colors duration-150"
                 >
-                  Open Chat Sidebar
+                  {t("ticket.success.chat")}
                 </button>
               </div>
             )}
@@ -285,9 +288,9 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
               <div className="flex items-center gap-3 bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-500/50 text-red-400 px-6 py-4 rounded-2xl backdrop-blur-sm">
                 <AlertCircle className="h-6 w-6 flex-shrink-0" />
                 <div>
-                  <p className="font-bold">Error Submitting Ticket</p>
+                  <p className="font-bold">{t("ticket.error.title")}</p>
                   <p className="text-sm text-red-300">
-                    Please fill all required fields and try again.
+                    {t("ticket.error.desc")}
                   </p>
                 </div>
               </div>
@@ -300,7 +303,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                 onClick={() => onNavigateBack?.("dashboard")}
                 className="px-6 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 transition-all duration-300"
               >
-                {submitStatus === "success" ? "Back to Dashboard" : "Cancel"}
+                {submitStatus === "success" ? t("ticket.back") : t("ticket.form.cancel")}
               </button>
               {submitStatus !== "success" && (
                 <button
@@ -312,7 +315,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                     }`}
                 >
                   <Send className="h-5 w-5" />
-                  {isSubmitting ? "Submitting..." : "Submit Ticket"}
+                  {isSubmitting ? "Submitting..." : t("ticket.form.submit")}
                 </button>
               )}
             </div>
