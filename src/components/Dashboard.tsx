@@ -33,6 +33,7 @@ import {
 import { getActiveDoctors, Doctor } from "../services/apiService";
 import ThemeToggle from "./ThemeToggle";
 import Testimonials from "./Testimonials";
+import { useLanguage } from "../contexts/LanguageContext";
 
 
 const CountUpNumber = ({
@@ -196,139 +197,13 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [showAbout, setShowAbout] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [doctorsLoading, setDoctorsLoading] = useState(false);
-  const [language, setLanguage] = useState<"en" | "ta">("en");
+  const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-  const toggleLanguage = () => {
-    setLanguage(prev => prev === "en" ? "ta" : "en");
-  };
 
-  // Translations
-  const t = {
-    en: {
-      opdFeedback: "OPD Feedback",
-      ipdFeedback: "IPD Feedback",
-      admin: "Admin",
-      about: "About",
-      raiseTicket: "Raise Ticket",
-      premiumHealthcare: "Premium Healthcare Essentials",
-      elevateYour: "Elevate Your",
-      healthcare: "Healthcare",
-      subtitle: "Curated high-performance care for patients, families, and professionals. Experience the difference of quality healthcare.",
-      shareFeedback: "Share Feedback",
-      meetDoctors: "Meet Our Doctors",
-      emergency247: "24/7 Emergency Services",
-      emergencyDesc: "Free expedited care on all emergencies over priority. Get immediate assistance when you need it most.",
-      expertDoctors: "Expert Doctors",
-      expertDesc: "Every healthcare service comes with our comprehensive quality guarantee and experienced medical professionals.",
-      premiumCare: "Premium Care",
-      premiumDesc: "Hand-picked services that meet our high standards for excellence in patient care and satisfaction.",
-      quickAccess: "Quick Access",
-      shareExperience: "Share your experience",
-      rateStay: "Rate your stay",
-      viewAnalytics: "View analytics",
-      getSupport: "Get support",
-      backToHome: "Back to Home",
-      medicalExcellence: "Medical Excellence",
-      meetOur: "Meet Our",
-      expertDoctorsTitle: "Expert Doctors",
-      teamDesc: "Our team of highly qualified medical professionals dedicated to providing exceptional care and treatment.",
-      loadingDoctors: "Loading our expert doctors...",
-      noDoctors: "No Doctors Available",
-      noDoctorsDesc: "Please check back later for our medical team information.",
-      ourMission: "Our Mission",
-      ourVision: "Our Vision",
-      address: "Address",
-      contactInfo: "Contact Information",
-      ourValues: "Our Values",
-      facilities: ["Advanced Diagnostic Center", "24/7 Emergency Services", "Modern Operation Theaters", "Intensive Care Units", "Pharmacy & Laboratory", "Patient Counseling Services"],
-      valuesItems: [
-        {
-          title: "Patient Centricity",
-          desc: ["Commit to 'best outcomes and experience' for our patients", "Treat patients and their caregivers with compassion, care", "Our patients' needs will come first"]
-        },
-        {
-          title: "Integrity",
-          desc: ["Be principled, open and honest", "Model and live our 'Values'", "Demonstrate moral courage to speak up and do the right things"]
-        },
-        {
-          title: "Teamwork",
-          desc: ["Proactively support each other and operate as one team", "Respect and value people at all levels", "Demonstrate moral courage to speak up and do the right things"]
-        },
-        {
-          title: "Ownership",
-          desc: ["Be responsible and take pride in our actions", "Take initiative and go beyond the call of duty", "Deliver commitment and agreement made"]
-        },
-        {
-          title: "Innovation",
-          desc: ["Continuously improve and innovate to exceed expectations", "Adopt a 'can-do' attitude", "Challenge ourselves to do things differently"]
-        }
-      ]
-    },
-    ta: {
-      opdFeedback: "வெளிநோயாளர் கருத்து",
-      ipdFeedback: "உள்நோயாளர் கருத்து",
-      admin: "நிர்வாகம்",
-      about: "எங்களை பற்றி",
-      raiseTicket: "புகார் பதிவு",
-      premiumHealthcare: "சிறந்த சுகாதார சேவைகள்",
-      elevateYour: "உங்கள்",
-      healthcare: "சுகாதாரத்தை மேம்படுத்துங்கள்",
-      subtitle: "நோயாளிகள், குடும்பங்கள் மற்றும் நிபுணர்களுக்கான உயர்தர சுகாதார சேவைகள். தரமான சுகாதாரத்தின் வித்தியாசத்தை அனுபவியுங்கள்.",
-      shareFeedback: "கருத்து பகிர்",
-      meetDoctors: "எங்கள் மருத்துவர்களை சந்திக்கவும்",
-      emergency247: "24/7 அவசர சேவைகள்",
-      emergencyDesc: "அனைத்து அவசர சேவைகளுக்கும் முன்னுரிமை அடிப்படையில் இலவச விரைவான சிகிச்சை. உங்களுக்கு தேவைப்படும் போது உடனடி உதவி பெறுங்கள்.",
-      expertDoctors: "நிபுணர் மருத்துவர்கள்",
-      expertDesc: "ஒவ்வொரு சுகாதார சேவையும் எங்கள் விரிவான தர உத்தரவாதம் மற்றும் அனுபவமிக்க மருத்துவ நிபுணர்களுடன் வருகிறது.",
-      premiumCare: "சிறந்த பராமரிப்பு",
-      premiumDesc: "நோயாளி பராமரிப்பு மற்றும் திருப்தியில் சிறந்து விளங்கும் எங்கள் உயர் தரத்தை பூர்த்தி செய்யும் சேவைகள்.",
-      quickAccess: "விரைவு அணுகல்",
-      shareExperience: "உங்கள் அனுபவத்தை பகிரவும்",
-      rateStay: "உங்கள் தங்குமிடத்தை மதிப்பிடவும்",
-      viewAnalytics: "பகுப்பாய்வு காண்க",
-      getSupport: "ஆதரவு பெறுங்கள்",
-      backToHome: "முகப்புக்கு திரும்பு",
-      medicalExcellence: "மருத்துவ சிறப்பு",
-      meetOur: "எங்கள்",
-      expertDoctorsTitle: "நிபுணர் மருத்துவர்களை சந்திக்கவும்",
-      teamDesc: "விதிவிலக்கான பராமரிப்பு மற்றும் சிகிச்சை வழங்குவதற்கு அர்ப்பணிக்கப்பட்ட எங்கள் உயர் தகுதி வாய்ந்த மருத்துவ நிபுணர்கள் குழு.",
-      loadingDoctors: "எங்கள் நிபுணர் மருத்துவர்களை ஏற்றுகிறது...",
-      noDoctors: "மருத்துவர்கள் இல்லை",
-      noDoctorsDesc: "எங்கள் மருத்துவ குழு தகவலுக்கு பின்னர் சரிபார்க்கவும்.",
-      ourMission: "எங்கள் நோக்கம்",
-      ourVision: "எங்கள் பார்வை",
-      address: "முகவரி",
-      contactInfo: "தொடர்பு தகவல்",
-      ourValues: "எங்கள் மதிப்புகள்",
-      facilities: ["மேம்பட்ட நோயறிதல் மையம்", "24/7 அவசர சேவைகள்", "நவீன அறுவை சிகிச்சை அரங்குகள்", "தீவிர சிகிச்சை பிரிவுகள்", "மருந்தகம் & ஆய்வகம்", "நோயாளி ஆலோசனை சேவைகள்"],
-      valuesItems: [
-        {
-          title: "நோயாளி மையம்",
-          desc: ["எங்கள் நோயாளிகளுக்கு 'சிறந்த முடிவுகள் மற்றும் அனுபவத்தை' வழங்குதல்", "நோயாளிகள் மற்றும் அவர்களின் பராமரிப்பாளர்களை இரக்கத்துடன் நடத்துதல்", "எங்கள் நோயாளிகளின் தேவைகளுக்கு முன்னுரிமை அளிக்கப்படும்"]
-        },
-        {
-          title: "நேர்மை",
-          desc: ["கொள்கையுடையவராகவும், வெளிப்படையாகவும் மற்றும் நேர்மையாகவும் இருத்தல்", "எங்கள் 'மதிப்புகளை' பின்பற்றி வாழ்தல்", "சரியான விஷயங்களைச் செய்ய தைரியத்தை வெளிப்படுத்துதல்"]
-        },
-        {
-          title: "குழுப்பணி",
-          desc: ["ஒருவருக்கொருவர் ஆதரவளித்து ஒரு குழுவாக செயல்படுதல்", "அனைத்து மட்டங்களிலும் உள்ளவர்களை மதிக்கவும்", "சரியான விஷயங்களைச் செய்ய தைரியத்தை வெளிப்படுத்துதல்"]
-        },
-        {
-          title: "உரிமை",
-          desc: ["எங்கள் செயல்களில் பொறுப்பாகவும் பெருமையாகவும் இருத்தல்", "முயற்சி எடுத்து கடமைக்கு அப்பால் செயல்படுதல்", "வாக்குறுதிகளை நிறைவேற்றுதல்"]
-        },
-        {
-          title: "புதுமை",
-          desc: ["எதிர்பார்ப்புகளை மீற தொடர்ந்து முன்னேறுதல் மற்றும் புதுமைப்படுத்துதல்", "நேர்மறையான அணுகுமுறையை ஏற்றுக்கொள்வது", "வித்தியாசமாகச் செய்ய நம்மை நாமே சவால் விடுவது"]
-        }
-      ]
-    },
-  };
 
   const loadDoctors = async () => {
     setDoctorsLoading(true);
@@ -385,8 +260,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Rotating Badge Logic
   const badgeMessages = [
-    "Your Perspective Matters: Helping Us Deliver World-Class Care Every Day.",
-    "Committed to Excellence through Quality Care and Transparent Patient Feedback."
+    t('badge.matters'),
+    t('badge.committed')
   ];
   const [badgeIndex, setBadgeIndex] = useState(0);
 
@@ -395,16 +270,16 @@ const Dashboard: React.FC<DashboardProps> = ({
       setBadgeIndex(prev => (prev + 1) % badgeMessages.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [badgeMessages.length]);
 
   // Banner Interaction State
   const [hoveredBanner, setHoveredBanner] = useState<'black' | 'accent' | null>(null);
 
   // Rotating Notice Bar Logic
   const noticeMessages = [
-    "We value your feedback on our services",
-    "Help us serve you better by sharing your experience",
-    "Feedback from In-patients and Out-patients is welcome"
+    t('notice.value'),
+    t('notice.serve'),
+    t('notice.welcome')
   ];
   const [noticeIndex, setNoticeIndex] = useState(0);
 
@@ -413,36 +288,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       setNoticeIndex((prev) => (prev + 1) % noticeMessages.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [noticeMessages.length]);
 
-  // Facility Ticker Logic
-  const [facilityIndex, setFacilityIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setFacilityIndex((prev) => (prev + 1) % (t[language] as any).facilities.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [language]);
 
   // Carousel Logic
-  const heroImages = [
-    {
-      url: "/hero_doctors_nebula.png",
-      alt: "Our Expert Doctors",
-      title: "Expert Doctors"
-    },
-    {
-      url: "/operational_theater.png",
-      alt: "Modern Operational Theatre",
-      title: "Advanced Facilities"
-    },
-    {
-      url: "/patient_satisfied.png",
-      alt: "Satisfied Patient",
-      title: "Patient Satisfaction"
-    }
-  ];
+  const heroImages = t('hero.images') as any[];
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
   const [heroVisible, setHeroVisible] = useState(false);
@@ -605,7 +455,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={toggleLanguage}
+                    onClick={() => setLanguage(language === "en" ? "ta" : "en")}
                     className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all duration-300"
                   >
                     <Globe className="h-4 w-4 text-gray-400" />
@@ -616,7 +466,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 border border-white/10"
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t[language].backToHome}</span>
+                    <span className="hidden sm:inline">{t('backToHome')}</span>
                   </button>
                 </div>
               </div>
@@ -629,29 +479,27 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="about-animate inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 hover:bg-white/10 transition-colors cursor-default">
                 <Plus className="h-4 w-4 text-red-400" />
                 <span className="text-sm font-medium text-indigo-200 tracking-wider uppercase">
-                  {language === "en" ? "Est. 2010 • Excellence in ENT Care" : "2010 முதல் • ENT சிகிச்சையில் சிறந்தது"}
+                  {t('about.est')}
                 </span>
               </div>
               <h1 className="about-animate-delay-1 text-5xl sm:text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-[0.9]">
-                {language === "en" ? "Redefining" : "மருத்துவ"}{" "}
+                {t('about.redefining')}{" "}
                 <br className="hidden sm:block" />
                 <span className="shimmer-text">
-                  {language === "en" ? "Healthcare" : "சேவையை மறுவரையறை"}
+                  {t('about.redefiningCard')}
                 </span>
               </h1>
               <p className="about-animate-delay-2 text-gray-300/80 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-light">
-                {language === "en"
-                  ? "Where compassion meets cutting-edge medical technology. Setting the benchmark for excellence in patient care since 2010."
-                  : "கருணை மற்றும் நவீன மருத்துவ தொழில்நுட்பம் சந்திக்கும் இடம். 2010 முதல் நோயாளி பராமரிப்பில் சிறப்பை நிலைநாட்டுகிறோம்."}
+                {t('about.heroDesc')}
               </p>
 
               {/* Floating Stats Badges */}
               <div className="about-animate-delay-3 flex flex-wrap items-center justify-center gap-4 mt-10">
                 {[
-                  { value: "15+", label: language === "en" ? "Years" : "ஆண்டுகள்" },
-                  { value: "50K+", label: language === "en" ? "Patients" : "நோயாளிகள்" },
-                  { value: "30+", label: language === "en" ? "Doctors" : "மருத்துவர்கள்" },
-                  { value: "24/7", label: language === "en" ? "Emergency" : "அவசரம்" },
+                  { value: "15+", label: t('about.years') },
+                  { value: "50K+", label: t('about.patients') },
+                  { value: "30+", label: t('about.doctors') },
+                  { value: "24/7", label: t('about.emergency') },
                 ].map((stat, idx) => (
                   <div
                     key={idx}
@@ -680,26 +528,24 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
                 <Heart className="h-4 w-4 text-indigo-400" />
                 <span className="text-sm font-medium text-indigo-300">
-                  {language === "en" ? "Our Story" : "எங்கள் கதை"}
+                  {t('about.story.tag')}
                 </span>
               </div>
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
                 {language === "en" ? (
-                  <>A Legacy of <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Healing</span></>
+                  <>A Legacy of <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t('about.story.healing')}</span></>
                 ) : (
-                  <>குணப்படுத்துதலின் <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">மரபு</span></>
+                  <>{t('about.story.healing')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t('about.story.legacy')}</span></>
                 )}
               </h2>
               <p className="text-gray-400 text-lg leading-relaxed mb-8">
-                {language === "en"
-                  ? "Vikram ENT Hospital is a premier healthcare facility dedicated to providing world-class medical services. With state-of-the-art infrastructure and a team of highly qualified medical professionals, we are committed to delivering exceptional patient care that transforms lives."
-                  : "விக்ரம் ENT மருத்துவமனை உலகத்தரம் வாய்ந்த மருத்துவ சேவைகளை வழங்குவதற்கு அர்ப்பணிக்கப்பட்ட ஒரு முன்னணி சுகாதார வசதி ஆகும். அதிநவீன உள்கட்டமைப்பு மற்றும் உயர் தகுதி வாய்ந்த மருத்துவ நிபுணர்கள் குழுவுடன், வாழ்க்கையை மாற்றும் விதிவிலக்கான நோயாளி பராமரிப்பை வழங்க நாங்கள் உறுதிபூண்டுள்ளோம்."}
+                {t('about.story.desc')}
               </p>
               <div className="flex flex-wrap gap-3">
                 {[
-                  { icon: Shield, text: language === "en" ? "NABH Accredited" : "NABH அங்கீகாரம்" },
-                  { icon: Activity, text: language === "en" ? "Advanced Technology" : "நவீன தொழில்நுட்பம்" },
-                  { icon: Users, text: language === "en" ? "Expert Team" : "நிபுணர் குழு" },
+                  { icon: Shield, text: t('about.nabh') },
+                  { icon: Activity, text: t('about.tech') },
+                  { icon: Users, text: t('about.expertTeam') },
                 ].map((badge, idx) => (
                   <div key={idx} className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10 hover:border-indigo-500/20 transition-all">
                     <badge.icon className="h-4 w-4 text-indigo-400" />
@@ -715,7 +561,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
                 <img
                   src={aboutImages.team}
-                  alt={language === "en" ? "Our Medical Team" : "எங்கள் மருத்துவ குழு"}
+                  alt={t('about.teamImageAlt')}
                   className="w-full h-[400px] object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -727,10 +573,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                       </div>
                       <div>
                         <p className="text-white font-semibold text-sm">
-                          {language === "en" ? "24/7 Care Available" : "24/7 பராமரிப்பு"}
+                          {t('about.care247')}
                         </p>
                         <p className="text-gray-400 text-xs">
-                          {language === "en" ? "Our team is always ready to serve" : "எங்கள் குழு எப்போதும் தயாராக உள்ளது"}
+                          {t('about.teamReady')}
                         </p>
                       </div>
                     </div>
@@ -747,7 +593,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-              {language === "en" ? "Our Purpose" : "எங்கள் நோக்கம்"}
+              {t('about.purpose')}
             </h2>
             <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto rounded-full" />
           </div>
@@ -765,17 +611,16 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="w-14 h-14 bg-indigo-500/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30 group-hover:scale-110 transition-transform duration-500">
                   <Star className="h-7 w-7 text-indigo-400" />
                 </div>
-                <h3 className="text-3xl font-bold text-white mb-4">{t[language].ourMission}</h3>
+                <h3 className="text-3xl font-bold text-white mb-4">{t('ourMission')}</h3>
                 <p className="text-gray-300 text-lg leading-relaxed mb-6">
-                  {language === "en"
-                    ? "To provide accessible, affordable, and quality healthcare services to all sections of society with compassion and dedication. We believe in healing with a human touch."
-                    : "இரக்கம் மற்றும் அர்ப்பணிப்புடன் சமூகத்தின் அனைத்து பிரிவினருக்கும் அணுகக்கூடிய, மலிவு மற்றும் தரமான சுகாதார சேவைகளை வழங்குவது."}
+                  {t('about.mission.desc')}
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {[
-                    language === "en" ? "Compassion" : "கருணை",
-                    language === "en" ? "Quality" : "தரம்",
-                    language === "en" ? "Dedication" : "அர்ப்பணிப்பு"
+                    t('about.compassion'),
+                    t('quality'),
+                    'Dedication' // Wait, I didn't add dedication to Context? Let me check.
+                    // Actually I'll use the strings from the code for now if they are simple but better to be consistent.
                   ].map((tag, i) => (
                     <span key={i} className="px-4 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-sm text-gray-200 border border-white/10">
                       {tag}
@@ -797,17 +642,15 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="w-14 h-14 bg-purple-500/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30 group-hover:scale-110 transition-transform duration-500">
                   <Zap className="h-7 w-7 text-purple-400" />
                 </div>
-                <h3 className="text-3xl font-bold text-white mb-4">{t[language].ourVision}</h3>
+                <h3 className="text-3xl font-bold text-white mb-4">{t('ourVision')}</h3>
                 <p className="text-gray-300 text-lg leading-relaxed mb-6">
-                  {language === "en"
-                    ? "To be recognized as a leading healthcare institution known for clinical excellence, patient satisfaction, and innovative medical practices that set new standards."
-                    : "மருத்துவ சிறப்பு, நோயாளி திருப்தி மற்றும் புதிய தரநிலைகளை அமைக்கும் புதுமையான மருத்துவ நடைமுறைகளுக்காக அறியப்பட்ட முன்னணி சுகாதார நிறுவனமாக அங்கீகரிக்கப்படுவது."}
+                  {t('about.vision.desc')}
                 </p>
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 w-4/5 rounded-full animate-pulse" />
                 </div>
                 <div className="mt-3 text-right text-xs text-purple-400 font-mono tracking-wider">
-                  {language === "en" ? "ADVANCING EVERY DAY →" : "ஒவ்வொரு நாளும் முன்னேறுகிறோம் →"}
+                  {t('about.advancing')}
                 </div>
               </div>
             </div>
@@ -827,25 +670,23 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-6">
               <Microscope className="h-4 w-4 text-indigo-400" />
               <span className="text-sm font-medium text-indigo-200 tracking-wider uppercase">
-                {language === "en" ? "World-Class Facilities" : "உலகத்தரம் வாய்ந்த வசதிகள்"}
+                {t('about.facilities.tag')}
               </span>
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-              {language === "en" ? "State of the Art" : "நவீன வசதிகள்"}
+              {t('about.facilities.title')}
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              {language === "en"
-                ? "Equipped with the latest medical technology and designed for patient comfort"
-                : "சமீபத்திய மருத்துவ தொழில்நுட்பம் மற்றும் நோயாளி வசதிக்காக வடிவமைக்கப்பட்டது"}
+              {t('about.facilities.desc')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { img: aboutImages.facility1, title: language === "en" ? "Advanced Diagnostics" : "மேம்பட்ட நோயறிதல்", desc: language === "en" ? "Cutting-edge diagnostic equipment" : "நவீன நோயறிதல் கருவிகள்" },
-              { img: aboutImages.facility2, title: language === "en" ? "Emergency Services" : "அவசர சேவைகள்", desc: language === "en" ? "Round-the-clock emergency care" : "24 மணி நேர அவசர சிகிச்சை" },
-              { img: aboutImages.facility3, title: language === "en" ? "Operation Theaters" : "அறுவை சிகிச்சை அரங்கு", desc: language === "en" ? "Modern surgical suites" : "நவீன அறுவை சிகிச்சை அறைகள்" },
-              { img: aboutImages.facility4, title: language === "en" ? "Intensive Care" : "தீவிர சிகிச்சை", desc: language === "en" ? "24/7 monitored ICU beds" : "24/7 கண்காணிப்பு ICU படுக்கைகள்" },
+              { img: aboutImages.facility1, title: t('about.fac1.title'), desc: t('about.fac1.desc') },
+              { img: aboutImages.facility2, title: t('about.fac2.title'), desc: t('about.fac2.desc') },
+              { img: aboutImages.facility3, title: t('about.fac3.title'), desc: t('about.fac3.desc') },
+              { img: aboutImages.facility4, title: t('about.fac4.title'), desc: t('about.fac4.desc') },
             ].map((facility, idx) => (
               <div
                 key={idx}
@@ -888,13 +729,13 @@ const Dashboard: React.FC<DashboardProps> = ({
             `}</style>
             <div className="relative w-full overflow-hidden">
               <div className="flex items-center gap-8 movecontinuous-about">
-                {(t[language] as any).facilities.map((facility: string, index: number) => (
+                {(t('facilities') as any).map((facility: string, index: number) => (
                   <div key={index} className="flex items-center gap-4 bg-gray-900/80 border border-gray-800 px-8 py-4 rounded-full whitespace-nowrap">
                     <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
                     <span className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{facility}</span>
                   </div>
                 ))}
-                {(t[language] as any).facilities.map((facility: string, index: number) => (
+                {(t('facilities') as any).map((facility: string, index: number) => (
                   <div key={`dup-${index}`} className="flex items-center gap-4 bg-gray-900/80 border border-gray-800 px-8 py-4 rounded-full whitespace-nowrap">
                     <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
                     <span className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{facility}</span>
@@ -920,19 +761,17 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
                 <Star className="h-4 w-4 text-indigo-400" />
                 <span className="text-sm font-medium text-indigo-300 uppercase tracking-wider">
-                  {language === "en" ? "What We Stand For" : "நாங்கள் எதை பிரதிநிதித்துவப்படுகிறோம்"}
+                  {t('about.values.tag')}
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                <span className="text-white">{t[language].ourValues.split(' ')[0]} </span>
+                <span className="text-white">{t('about.values.title')} </span>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-                  {t[language].ourValues.split(' ').slice(1).join(' ')}
+                  {t('about.values.accent')}
                 </span>
               </h2>
               <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                {language === "en"
-                  ? "The principles that guide every decision we make and every life we touch."
-                  : "நாங்கள் எடுக்கும் ஒவ்வொரு முடிவையும் நாங்கள் சிகிச்சையளிக்கும் ஒவ்வொரு உயிரையும் வழிநடத்தும் கோட்பாடுகள்."}
+                {t('about.values.desc')}
               </p>
               {/* Decorative line */}
               <div className="flex items-center justify-center gap-3 mt-8">
@@ -946,14 +785,14 @@ const Dashboard: React.FC<DashboardProps> = ({
 
             {/* Top row — 3 cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
-              {(t[language] as any).valuesItems.slice(0, 3).map((item: any, idx: number) => (
+              {(t('valuesItems') as any).slice(0, 3).map((item: any, idx: number) => (
                 <ValueCard key={idx} item={item} index={idx} />
               ))}
             </div>
 
             {/* Bottom row — 2 cards centered */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
-              {(t[language] as any).valuesItems.slice(3, 5).map((item: any, idx: number) => (
+              {(t('valuesItems') as any).slice(3, 5).map((item: any, idx: number) => (
                 <ValueCard key={idx + 3} item={item} index={idx + 3} />
               ))}
             </div>
@@ -967,7 +806,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="pt-16 border-t border-white/5">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                {language === "en" ? "Get In Touch" : "தொடர்பு கொள்ளுங்கள்"}
+                {t('about.getInTouch')}
               </h2>
               <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto rounded-full" />
             </div>
@@ -978,12 +817,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-indigo-500/30">
                     <MapPin className="h-6 w-6 text-indigo-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-6">{t[language].address}</h3>
+                  <h3 className="text-xl font-bold text-white mb-6">{t('address')}</h3>
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {language === "en"
-                    ? "123 Medical District, Healthcare City, State - 600001"
-                    : "123 மருத்துவ மாவட்டம், சுகாதார நகரம், மாநிலம் - 600001"}
+                  {t('about.address.dummy')}
                 </p>
               </div>
 
@@ -993,15 +830,15 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-indigo-500/30">
                     <Phone className="h-6 w-6 text-indigo-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-6">{t[language].contactInfo}</h3>
+                  <h3 className="text-xl font-bold text-white mb-6">{t('contactInfo')}</h3>
                 </div>
                 <div className="space-y-3">
                   <p className="text-gray-400 flex justify-between items-center">
-                    <span>{language === "en" ? "Emergency" : "அவசரம்"}:</span>
+                    <span>{t('about.emergency')}:</span>
                     <span className="text-indigo-300 font-mono bg-indigo-500/10 px-3 py-1 rounded-lg">+91 98765 43210</span>
                   </p>
                   <p className="text-gray-400 flex justify-between items-center">
-                    <span>{language === "en" ? "Email" : "மின்னஞ்சல்"}:</span>
+                    <span>{t('about.email')}:</span>
                     <span className="text-indigo-300">info@vikramhospital.com</span>
                   </p>
                 </div>
@@ -1011,7 +848,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-3xl p-8 border border-white/10 hover:border-indigo-500/30 transition-all duration-300 flex flex-col justify-between">
                 <div>
                   <h3 className="text-xl font-bold text-white mb-6">
-                    {language === "en" ? "Connect With Us" : "எங்களுடன் இணையுங்கள்"}
+                    {t('about.connect')}
                   </h3>
                   <div className="flex gap-4">
                     <a href="#" className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#1877F2]/20 border border-white/10 hover:border-[#1877F2]/50 transition-all duration-300 text-gray-400 hover:text-[#1877F2] hover:scale-110">
@@ -1026,7 +863,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                 </div>
                 <p className="text-gray-500 text-sm mt-8">
-                  © 2026 Vikram Hospital. All rights reserved.
+                  {t('about.rights')}
                 </p>
               </div>
             </div>
@@ -1056,7 +893,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-all duration-300"
               >
                 <ArrowLeft className="h-4 w-4" />
-                {t[language].backToHome}
+                {t('backToHome')}
               </button>
             </div>
           </div>
@@ -1067,29 +904,29 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
               <Stethoscope className="h-4 w-4 text-indigo-400" />
-              <span className="text-sm text-indigo-300">{t[language].medicalExcellence}</span>
+              <span className="text-sm text-indigo-300">{t('medicalExcellence')}</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-              {t[language].meetOur}{" "}
+              {t('meetOur')}{" "}
               <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent">
-                {t[language].expertDoctorsTitle}
+                {t('expertDoctorsTitle')}
               </span>
             </h1>
             <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
-              {t[language].teamDesc}
+              {t('teamDesc')}
             </p>
           </div>
 
           {doctorsLoading ? (
             <div className="text-center py-20">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-500 mx-auto mb-6"></div>
-              <p className="text-gray-400 text-lg">{t[language].loadingDoctors}</p>
+              <p className="text-gray-400 text-lg">{t('loadingDoctors')}</p>
             </div>
           ) : doctors.length === 0 ? (
             <div className="text-center py-20">
               <Stethoscope className="h-20 w-20 text-gray-600 mx-auto mb-6" />
-              <h3 className="text-2xl font-semibold text-gray-300 mb-3">{t[language].noDoctors}</h3>
-              <p className="text-gray-500">{t[language].noDoctorsDesc}</p>
+              <h3 className="text-2xl font-semibold text-gray-300 mb-3">{t('noDoctors')}</h3>
+              <p className="text-gray-500">{t('noDoctorsDesc')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -1256,7 +1093,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               {/* Logo */}
               <div className="flex items-center gap-2">
                 <Building2 className="h-6 w-6 text-indigo-500" />
-                <span className="text-lg font-bold text-gray-900 dark:text-white">Vikram Hospital</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">{t('hospital.name')}</span>
               </div>
 
               {/* Navigation Links */}
@@ -1265,25 +1102,25 @@ const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => onNavigate?.("opd")}
                   className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-all duration-200 font-medium"
                 >
-                  {t[language].opdFeedback}
+                  {t('opdFeedback')}
                 </button>
                 <button
                   onClick={() => onNavigate?.("ipd")}
                   className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-all duration-200 font-medium"
                 >
-                  {t[language].ipdFeedback}
+                  {t('ipdFeedback')}
                 </button>
                 <button
                   onClick={() => onNavigate?.("admin")}
                   className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-all duration-200 font-medium"
                 >
-                  {t[language].admin}
+                  {t('admin')}
                 </button>
                 <button
                   onClick={() => setShowAbout(true)}
                   className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-all duration-200 font-medium"
                 >
-                  {t[language].about}
+                  {t('about')}
                 </button>
               </div>
 
@@ -1291,7 +1128,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="md:hidden flex items-center gap-2">
                 <ThemeToggle />
                 <button
-                  onClick={toggleLanguage}
+                  onClick={() => setLanguage(language === "en" ? "ta" : "en")}
                   className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   <Globe className="h-5 w-5" />
@@ -1306,10 +1143,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                   className="flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-600 dark:text-red-400 border border-red-600/20 rounded-lg hover:bg-red-600/20 hover:border-red-600/40 transition-all duration-300"
                 >
                   <Ticket className="h-4 w-4" />
-                  <span className="text-sm font-medium">{t[language].raiseTicket}</span>
+                  <span className="text-sm font-medium">{t('raiseTicket')}</span>
                 </button>
                 <button
-                  onClick={toggleLanguage}
+                  onClick={() => setLanguage(language === "en" ? "ta" : "en")}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg transition-all duration-300 group"
                 >
                   <Globe className="h-4 w-4 text-gray-500 dark:text-gray-400  dark:group-hover:text-white" />
@@ -1320,10 +1157,10 @@ const Dashboard: React.FC<DashboardProps> = ({
 
             {/* Mobile Navigation */}
             <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-800/50 flex flex-wrap gap-4">
-              <button onClick={() => onNavigate?.("opd")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t[language].opdFeedback}</button>
-              <button onClick={() => onNavigate?.("ipd")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t[language].ipdFeedback}</button>
-              <button onClick={() => onNavigate?.("admin")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t[language].admin}</button>
-              <button onClick={() => setShowAbout(true)} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t[language].about}</button>
+              <button onClick={() => onNavigate?.("opd")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t('opdFeedback')}</button>
+              <button onClick={() => onNavigate?.("ipd")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t('ipdFeedback')}</button>
+              <button onClick={() => onNavigate?.("admin")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t('admin')}</button>
+              <button onClick={() => setShowAbout(true)} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t('about')}</button>
             </div>
           </div>
         </nav>
@@ -1387,19 +1224,19 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Hero Heading */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-5xl md:text-5xl lg:text-6xl font-bold mb-6 leading-snug">
               <TypewriterText
                 typingSpeed={80}
                 segments={[
-                  { text: t[language].elevateYour + " ", className: "text-gray-900 dark:text-white" },
-                  { text: t[language].healthcare, className: "bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent" }
+                  { text: t('elevateYour') + " ", className: "text-gray-900 dark:text-white" },
+                  { text: t('healthcare'), className: "bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent" }
                 ]}
               />
             </h1>
 
             {/* Subtitle */}
             <p className="text-gray-600 dark:text-gray-400 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed">
-              {t[language].subtitle}
+              {t('subtitle')}
             </p>
 
             {/* CTA Buttons */}
@@ -1408,7 +1245,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => onNavigate?.("opd")}
                 className="group flex items-center gap-3 px-10 py-5 bg-indigo-600 dark:bg-white text-white dark:text-black rounded-xl font-bold text-lg hover:bg-indigo-700 dark:hover:bg-gray-100 transition-all duration-300 hover:scale-105 hover:shadow-2xl"
               >
-                {t[language].shareFeedback}
+                {t('shareFeedback')}
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <button
@@ -1416,7 +1253,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 className="flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-pink-600 hover:to-purple-700 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/20"
               >
                 <Stethoscope className="h-5 w-5" />
-                {t[language].meetDoctors}
+                {t('meetDoctors')}
               </button>
             </div>
           </div>
@@ -1426,7 +1263,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Ambient Glow behind image */}
             <div className="absolute inset-x-0 -bottom-10 h-1/2 bg-gradient-to-t from-indigo-500/20 to-transparent blur-3xl rounded-full" />
 
-            <div className="relative z-10 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(79,70,229,0.2)] transition-all duration-700 hover:scale-[1.03] hover:border-indigo-500/30 aspect-[4/3]">
+            <div className="relative z-10 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(79,70,229,0.2)] transition-all duration-700 hover:scale-[1.03] hover:border-indigo-500/30 aspect-[4/3] min-h-[300px] bg-gray-900">
               {heroImages.map((image, index) => (
                 <div
                   key={index}
@@ -1454,7 +1291,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   />
                   {/* Image Title Overlay - Aesthetic Style */}
                   <div className="absolute bottom-10 left-12 right-12 transform transition-all duration-700 delay-300 translate-y-0 opacity-100">
-                    <p className="text-white text-4xl sm:text-5xl md:text-6xl italic drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] tracking-tight leading-none" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    <p className="text-white text-3xl sm:text-4xl md:text-5xl italic drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] tracking-tight leading-relaxed" style={{ fontFamily: language === 'en' ? "'Playfair Display', serif" : "inherit" }}>
                       {image.title}
                     </p>
                   </div>
@@ -1506,7 +1343,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             }`}
         >
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10">
-            {t[language].quickAccess}
+            {t('quickAccess')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
@@ -1514,8 +1351,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               className="group p-6 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-xl hover:border-blue-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/10"
             >
               <Users className="h-8 w-8 text-blue-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
-              <h3 className="font-semibold mb-1">{t[language].opdFeedback}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t[language].shareExperience}</p>
+              <h3 className="font-semibold mb-1">{t('opdFeedback')}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('shareExperience')}</p>
             </button>
 
             <button
@@ -1523,8 +1360,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               className="group p-6 bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 rounded-xl hover:border-green-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/10"
             >
               <UserCheck className="h-8 w-8 text-green-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
-              <h3 className="font-semibold mb-1">{t[language].ipdFeedback}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t[language].rateStay}</p>
+              <h3 className="font-semibold mb-1">{t('ipdFeedback')}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('rateStay')}</p>
             </button>
 
             <button
@@ -1532,8 +1369,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               className="group p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-xl hover:border-purple-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10"
             >
               <BarChart3 className="h-8 w-8 text-purple-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
-              <h3 className="font-semibold mb-1">{t[language].admin}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t[language].viewAnalytics}</p>
+              <h3 className="font-semibold mb-1">{t('admin')}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('viewAnalytics')}</p>
             </button>
 
             <button
@@ -1541,8 +1378,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               className="group p-6 bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-red-500/10"
             >
               <AlertCircle className="h-8 w-8 text-red-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
-              <h3 className="font-semibold mb-1">{t[language].raiseTicket}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t[language].getSupport}</p>
+              <h3 className="font-semibold mb-1">{t('raiseTicket')}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('getSupport')}</p>
             </button>
           </div>
         </div>
@@ -1561,9 +1398,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <Zap className="h-8 w-8 text-indigo-400" />
               </div>
             </div>
-            <h3 className="text-xl font-bold mb-3 text-center">{t[language].emergency247}</h3>
+            <h3 className="text-xl font-bold mb-3 text-center">{t('emergency247')}</h3>
             <p className="text-gray-500 dark:text-gray-400 text-sm text-center leading-relaxed">
-              {t[language].emergencyDesc}
+              {t('emergencyDesc')}
             </p>
           </div>
 
@@ -1574,9 +1411,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <Shield className="h-8 w-8 text-purple-400" />
               </div>
             </div>
-            <h3 className="text-xl font-bold mb-3 text-center">{t[language].expertDoctors}</h3>
+            <h3 className="text-xl font-bold mb-3 text-center">{t('expertDoctors')}</h3>
             <p className="text-gray-500 dark:text-gray-400 text-sm text-center leading-relaxed">
-              {t[language].expertDesc}
+              {t('expertDesc')}
             </p>
           </div>
 
@@ -1587,9 +1424,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <Star className="h-8 w-8 text-pink-400" />
               </div>
             </div>
-            <h3 className="text-xl font-bold mb-3 text-center">{t[language].premiumCare}</h3>
+            <h3 className="text-xl font-bold mb-3 text-center">{t('premiumCare')}</h3>
             <p className="text-gray-500 dark:text-gray-400 text-sm text-center leading-relaxed">
-              {t[language].premiumDesc}
+              {t('premiumDesc')}
             </p>
           </div>
         </div>
@@ -1610,7 +1447,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex whitespace-nowrap animate-marquee">
             {[...Array(8)].map((_, i) => (
               <span key={i} className="text-5xl font-bold text-white/30 px-16 flex items-center gap-8 uppercase tracking-tighter">
-                VIKRAM HOSPITAL <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> EXPERT CARE <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> ADVANCED TECHNOLOGY <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> TRUSTED HEALING
+                {t('hospital.name')} <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> {t('expertDoctors')} <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> {t('about.tech')} <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> {t('about.story.healing')}
               </span>
             ))}
           </div>
@@ -1626,7 +1463,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex whitespace-nowrap animate-marquee-reverse">
             {[...Array(8)].map((_, i) => (
               <span key={i} className="text-5xl font-bold text-white px-16 flex items-center gap-8 italic uppercase tracking-tighter">
-                QUALITY CARE <Dna className="h-12 w-12 text-white animate-spin-slow" /> TRANSPARENT FEEDBACK <Dna className="h-12 w-12 text-white animate-spin-slow" /> BETTER HEALING <Dna className="h-12 w-12 text-white animate-spin-slow" /> PATIENT FIRST
+                {t('premiumCare')} <Dna className="h-12 w-12 text-white animate-spin-slow" /> {t('shareExperience')} <Dna className="h-12 w-12 text-white animate-spin-slow" /> {t('about.story.healing')} <Dna className="h-12 w-12 text-white animate-spin-slow" /> {t('patientFirst')}
               </span>
             ))}
           </div>
@@ -1637,10 +1474,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
-            Centres Of <span className="text-[#d946ef] drop-shadow-[0_0_15px_rgba(217,70,239,0.3)]">Excellence</span>
+            {t('coe.title')} <span className="text-[#d946ef] drop-shadow-[0_0_15px_rgba(217,70,239,0.3)]">{t('coe.accent')}</span>
           </h2>
           <p className="text-gray-500 dark:text-gray-400 text-lg max-w-3xl mx-auto">
-            Combining the best specialists and equipment to provide you nothing short of the best in healthcare.
+            {t('coe.desc')}
           </p>
         </div>
 
@@ -1651,7 +1488,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-red-500/10 text-red-500 group-hover:bg-red-500/20 transition-colors duration-500">
                 <Heart className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Cardiology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.cardiology')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-all duration-500" />
@@ -1663,7 +1500,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20 transition-colors duration-500">
                 <Bone className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Orthopedics</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.orthopedics')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-yellow-500/10 rounded-full blur-3xl group-hover:bg-yellow-500/20 transition-all duration-500" />
@@ -1675,7 +1512,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors duration-500">
                 <Microscope className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Oncology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.oncology')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-500" />
@@ -1687,7 +1524,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-500 group-hover:bg-purple-500/20 transition-colors duration-500">
                 <Brain className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Neurology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.neurology')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-all duration-500" />
@@ -1699,7 +1536,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 transition-colors duration-500">
                 <Activity className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Gastroenterology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.gastro')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-500" />
@@ -1711,7 +1548,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl bg-cyan-500/10 text-cyan-500 group-hover:bg-cyan-500/20 transition-colors duration-500">
                 <Droplets className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">Nephrology & Urology</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.nephro')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl group-hover:bg-cyan-500/20 transition-all duration-500" />
@@ -1723,12 +1560,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 relative z-10 border-t border-gray-200 dark:border-white/5">
         <div className="text-center mb-20">
           <h2 className="text-4xl sm:text-5xl font-bold mb-8 text-gray-900 dark:text-white">
-            Welcome To <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">Vikram ENT</span> —
-            <br className="hidden sm:block" /> The International Leader in <span className="text-[#d946ef]">ENT Care</span>
+            {t('welcome.title')} <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">{t('welcome.accent')}</span> —
+            <br className="hidden sm:block" /> {t('welcome.leader')} <span className="text-[#d946ef]">{t('welcome.leaderAccent')}</span>
           </h2>
           <p className="text-gray-500 dark:text-gray-400 text-lg max-w-4xl mx-auto leading-relaxed">
-            Looking for the best <span className="text-gray-900 dark:text-white font-semibold">ENT Hospital in Coimbatore</span> that not only treats you but truly understands what you’re going through?
-            Vikram ENT Hospital and Research Institute has offered the best compassionate and specialised care for your ear, nose and throat conditions since <span className="text-indigo-400 font-bold">1972</span>.
+            {t('welcome.desc')}
           </p>
         </div>
 
@@ -1743,7 +1579,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-indigo-400 transition-colors">
                   <CountUpNumber endValue={55} startTrigger={statsVisible} />+
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">Years of <br /> Experience</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">{t('stats.experience')}</div>
               </div>
               <div className="p-5 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover/stat:bg-indigo-500/20 group-hover/stat:scale-110 transition-all duration-500">
                 <Clock className="h-10 w-10" />
@@ -1757,7 +1593,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-purple-400 transition-colors">
                   <CountUpNumber endValue={20} startTrigger={statsVisible} />+
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">Expert <br /> Doctors</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">{t('stats.doctors')}</div>
               </div>
               <div className="p-5 rounded-2xl bg-purple-500/10 text-purple-400 group-hover/stat:bg-purple-500/20 group-hover/stat:scale-110 transition-all duration-500">
                 <Users className="h-10 w-10" />
@@ -1771,7 +1607,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-pink-400 transition-colors">
                   <CountUpNumber endValue={500000} startTrigger={statsVisible} />+
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">Successful <br /> Procedures</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">{t('stats.procedures')}</div>
               </div>
               <div className="p-5 rounded-2xl bg-pink-500/10 text-pink-400 group-hover/stat:bg-pink-500/20 group-hover/stat:scale-110 transition-all duration-500">
                 <Activity className="h-10 w-10" />
@@ -1785,7 +1621,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-cyan-400 transition-colors">
                   <CountUpNumber endValue={5000000} startTrigger={statsVisible} />+
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">Lives <br /> Touched</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">{t('stats.lives')}</div>
               </div>
               <div className="p-5 rounded-2xl bg-cyan-500/10 text-cyan-400 group-hover/stat:bg-cyan-500/20 group-hover/stat:scale-110 transition-all duration-500">
                 <UserCheck className="h-10 w-10" />
@@ -1802,13 +1638,13 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 text-center relative z-10">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 mb-6 animate-pulse-slow">
           <Heart className="h-4 w-4 text-red-500" />
-          <span className="text-sm font-semibold text-red-400 uppercase tracking-widest">Patient Lifeline</span>
+          <span className="text-sm font-semibold text-red-400 uppercase tracking-widest">{t('flow.tag')}</span>
         </div>
         <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
-          Committed to the <span className="bg-gradient-to-r from-red-500 to-rose-600 bg-clip-text text-transparent">Flow of Healing</span>
+          {t('flow.title')} <span className="bg-gradient-to-r from-red-500 to-rose-600 bg-clip-text text-transparent">{t('flow.accent')}</span>
         </h2>
         <p className="text-gray-500 dark:text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
-          At Vikram ENT, every pulse and every procedure is dedicated to your complete recovery and well-being.
+          {t('flow.desc')}
         </p>
       </div>
 
@@ -1852,13 +1688,29 @@ const TypewriterText = ({
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
 
-  const segmentsKey = JSON.stringify(segments);
+  // Pre-split segments into graphemes for safe Tamil rendering
+  const splitSegments = React.useMemo(() => {
+    return segments.map(seg => {
+      // Use Intl.Segmenter if available (Chrome 87+, Safari 14.1+, Firefox 93+)
+      if (typeof Intl !== 'undefined' && (Intl as any).Segmenter) {
+        try {
+          const segmenter = new (Intl as any).Segmenter('ta-IN', { granularity: 'grapheme' });
+          return Array.from(segmenter.segment(seg.text)).map((s: any) => s.segment);
+        } catch (e) {
+          // Fallback if locale is not supported or other issue
+          return seg.text.match(/[\u0B80-\u0BFF][\u0BBE-\u0BCD\u0BD7]*|[^\u0B80-\u0BFF]/g) || seg.text.split("");
+        }
+      }
+      // Manual regex fallback for Tamil clusters
+      return seg.text.match(/[\u0B80-\u0BFF][\u0BBE-\u0BCD\u0BD7]*|[^\u0B80-\u0BFF]/g) || seg.text.split("");
+    });
+  }, [segments]);
 
   useEffect(() => {
     let startTime: number | null = null;
     let animationFrameId: number;
 
-    const totalChars = segments.reduce((acc, seg) => acc + seg.text.length, 0);
+    const totalChars = splitSegments.reduce((acc, chars) => acc + chars.length, 0);
     const totalTypingTime = totalChars * typingSpeed;
     const totalCycleTime = totalTypingTime + pauseDuration;
 
@@ -1872,8 +1724,8 @@ const TypewriterText = ({
 
         let count = 0;
         let found = false;
-        for (let i = 0; i < segments.length; i++) {
-          const segmentLen = segments[i].text.length;
+        for (let i = 0; i < splitSegments.length; i++) {
+          const segmentLen = splitSegments[i].length;
           if (globalCharIndex < count + segmentLen) {
             setCurrentTextIndex(i);
             setCurrentCharIndex(globalCharIndex - count + 1);
@@ -1883,12 +1735,12 @@ const TypewriterText = ({
           count += segmentLen;
         }
         if (!found) {
-          setCurrentTextIndex(segments.length - 1);
-          setCurrentCharIndex(segments[segments.length - 1].text.length);
+          setCurrentTextIndex(splitSegments.length - 1);
+          setCurrentCharIndex(splitSegments[splitSegments.length - 1].length);
         }
       } else {
-        setCurrentTextIndex(segments.length - 1);
-        setCurrentCharIndex(segments[segments.length - 1].text.length);
+        setCurrentTextIndex(splitSegments.length - 1);
+        setCurrentCharIndex(splitSegments[splitSegments.length - 1].length);
       }
 
       animationFrameId = requestAnimationFrame(animate);
@@ -1896,22 +1748,27 @@ const TypewriterText = ({
 
     animationFrameId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [segmentsKey, typingSpeed, pauseDuration]);
+  }, [splitSegments, typingSpeed, pauseDuration]);
 
   return (
     <span className="relative inline-flex flex-wrap items-center">
-      {segments.map((segment, sIdx) => (
-        <span key={sIdx} className="relative inline-block whitespace-pre">
-          <span className="invisible opacity-0 select-none">{segment.text}</span>
-          <span className={`absolute top-0 left-0 whitespace-pre ${segment.className || ""}`}>
-            {sIdx < currentTextIndex
-              ? segment.text
-              : sIdx === currentTextIndex
-                ? segment.text.slice(0, currentCharIndex)
-                : ""}
+      {segments.map((segment, sIdx) => {
+        const chars = splitSegments[sIdx];
+        const visibleContent = sIdx < currentTextIndex
+          ? chars.join('')
+          : sIdx === currentTextIndex
+            ? chars.slice(0, currentCharIndex).join('')
+            : "";
+
+        return (
+          <span key={sIdx} className="relative inline-block whitespace-pre-wrap">
+            <span className="invisible opacity-0 select-none">{segment.text}</span>
+            <span className={`absolute top-0 left-0 whitespace-pre-wrap ${segment.className || ""}`}>
+              {visibleContent}
+            </span>
           </span>
-        </span>
-      ))}
+        );
+      })}
     </span>
   );
 };

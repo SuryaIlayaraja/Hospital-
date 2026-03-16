@@ -1,67 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Quote } from "lucide-react";
-
-const testimonials = [
-  {
-    id: 1,
-    name: "Dr. Pradnya Gajallewar",
-    role: "Consultant and Anesthesiologist",
-    hospital: "Bethany Hospital Thane",
-    image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=150&q=80",
-    text: "I thank Dr.Vishal Jadhav for your Knowledge and guidance in bringing my project to a good shape. I have already had some positive feedback about my project from some of my friends. I'll be surely recommending your services."
-  },
-  {
-    id: 2,
-    name: "Dr. Rajesh Kumar",
-    role: "Senior Surgeon",
-    hospital: "City Medical Center",
-    image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=150&q=80",
-    text: "The clinical management system has significantly improved our workflow. The attention to detail and professional support provided by the team at Vikram ENT is exceptional."
-  },
-  {
-    id: 3,
-    name: "Dr. Anita Sharma",
-    role: "ENT Specialist",
-    hospital: "Global Health Hospital",
-    image: "https://images.unsplash.com/photo-1559839734-2b71f1536783?auto=format&fit=crop&w=150&q=80",
-    text: "I highly recommend the specialized training and facilities at Vikram ENT. It has been a pleasure collaborating on complex cases and witnessing the 'Flow of Healing' firsthand."
-  },
-  {
-    id: 4,
-    name: "Dr. Sanjay Gupta",
-    role: "Neurologist",
-    hospital: "Apex Neuro Center",
-    image: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=150&q=80",
-    text: "Working with the Vikram ENT team has been a revelation in inter-disciplinary care. Their use of advanced diagnostics for complex cases is truly world-class."
-  },
-  {
-    id: 5,
-    name: "Dr. Priya Varma",
-    role: "Pediatrician",
-    hospital: "Little Hearts Clinic",
-    image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=150&q=80",
-    text: "The patient care at Vikram ENT is second to none. They treat every child with extraordinary compassion and patience, making them the best ENT facility for families."
-  },
-  {
-    id: 6,
-    name: "Dr. Mohamed Ibrahim",
-    role: "Cardiologist",
-    hospital: "Unity Health Institute",
-    image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=150&q=80",
-    text: "Integrity and innovation are at the core of Vikram ENT. Their commitment to continuous improvement ensures that patients always receive the best possible medical outcomes."
-  }
-];
+import { useLanguage } from "../contexts/LanguageContext";
 
 const Testimonials: React.FC = () => {
+  const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const testimonials = t('testimonials.list') as any[];
 
   useEffect(() => {
+    if (!testimonials || testimonials.length === 0) return;
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % testimonials.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [testimonials]);
 
+  if (!testimonials || testimonials.length === 0) return null;
   const current = testimonials[currentIndex];
 
   return (
@@ -70,7 +24,7 @@ const Testimonials: React.FC = () => {
         {/* Section Header */}
         <div className="text-center mb-16 relative">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white inline-block relative">
-            Our <span className="text-indigo-600 dark:text-indigo-400">Testimonials</span>
+            {t('testimonials.title')} <span className="text-indigo-600 dark:text-indigo-400">{t('testimonials.accent')}</span>
             <div className="mt-4 flex justify-center">
               <div className="h-1.5 w-48 bg-gray-800 dark:bg-gray-700 rounded-full relative overflow-hidden">
                 <div className="absolute top-0 left-1/3 w-1/3 h-full bg-yellow-500" />
