@@ -12,7 +12,7 @@ const ReportTicket: React.FC<Props> = ({ isOpen, onClose }) => {
   const [title, setTitle] = useState("");
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("medium");
   const [description, setDescription] = useState("");
-  const [department, setDepartment] = useState("General");
+  const [department, setDepartment] = useState("Nursing");
   const [issueCategory, setIssueCategory] = useState<"Delay" | "Misbehavior" | "Overcharging" | "Hygiene" | "Equipment">("Delay");
 
   if (!isOpen) return null;
@@ -45,7 +45,7 @@ const ReportTicket: React.FC<Props> = ({ isOpen, onClose }) => {
       setTitle("");
       setDescription("");
       setSeverity("medium");
-      setDepartment("General");
+      setDepartment("Nursing");
       setIssueCategory("Delay");
       onClose();
     }, 1000);
@@ -89,11 +89,28 @@ const ReportTicket: React.FC<Props> = ({ isOpen, onClose }) => {
             </div>
             <div>
               <label className="block text-sm font-medium">Department</label>
-              <input
+              <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="w-full px-3 py-2 border rounded"
-              />
+              >
+                <option value="Nursing">Nursing</option>
+                <option value="Operations">Operations</option>
+                <option value="House Keeping">House Keeping</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Medical">Medical</option>
+                <option value="F&B">F&B</option>
+                <option value="Security">Security</option>
+                <option value="Transport">Transport</option>
+                <option value="IT">IT</option>
+                <option value="Laundry">Laundry</option>
+                <option value="Billing">Billing</option>
+                <option value="Insurance / TPA">Insurance / TPA</option>
+                <option value="MRD">MRD</option>
+                <option value="Lab">Lab</option>
+                <option value="Radiology">Radiology</option>
+                <option value="Blood Bank">Blood Bank</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium">Severity</label>

@@ -3,7 +3,19 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const dns = require("dns");
+const http = require("http");
+const jwt = require("jsonwebtoken");
+const { Server } = require("socket.io");
+const path = require("path");
+const fs = require("fs");
+const crypto = require("crypto");
 require("dotenv").config();
+
+// Fix for DNS resolution issues with MongoDB Atlas on some Windows environments
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 const feedbackRoutes = require("./routes/feedback");
 const ticketRoutes = require("./routes/tickets");
@@ -11,6 +23,10 @@ const floorRoutes = require("./routes/floors");
 const doctorRoutes = require("./routes/doctors");
 const departmentRoutes = require("./routes/departments");
 const authRoutes = require("./routes/auth");
+const chatRoutes = require("./routes/chat");
+const ChatMessage = require("./models/ChatMessage");
+const Ticket = require("./models/Ticket");
+const patientAuthRoutes = require("./routes/patientAuth");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -53,6 +69,13 @@ app.use("/api/", limiter);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Ensure uploads directory exists and serve it
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use("/uploads", express.static(uploadsDir));
+
 // MongoDB connection
 const connectDB = async () => {
   try {
@@ -71,11 +94,13 @@ connectDB();
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/patient-auth", patientAuthRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/floors", floorRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/departments", departmentRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -168,8 +193,215 @@ app.use("*", (req, res) => {
   });
 });
 
+const httpServer = http.createServer(app);
+
+// Socket.IO setup
+const io = new Server(httpServer, {
+  cors: corsOptions,
+});
+
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
+
+const getAdminFromHandshake = (socket) => {
+  try {
+    const authHeader =
+      socket.handshake.auth?.token ||
+      socket.handshake.headers?.authorization ||
+      "";
+
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : authHeader;
+
+    if (!token) return null;
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+      departmentName: decoded.departmentName,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const getPatientTokenFromHandshake = (socket) => {
+  const t = socket.handshake.auth?.chatToken;
+  return typeof t === "string" ? t : "";
+};
+
+const getPatientJwtFromHandshake = (socket) => {
+  const t = socket.handshake.auth?.patientToken;
+  return typeof t === "string" ? t : "";
+};
+
+const cryptoHash = (token) => {
+  return crypto.createHash("sha256").update(token).digest("hex");
+};
+
+io.on("connection", (socket) => {
+  const admin = getAdminFromHandshake(socket);
+  socket.data.role = admin ? "admin" : "patient";
+  socket.data.userId = admin?.userId;
+  socket.data.chatToken = admin ? null : getPatientTokenFromHandshake(socket);
+  socket.data.patientToken = admin ? null : getPatientJwtFromHandshake(socket);
+  socket.data.patientId = null;
+
+  if (admin) {
+    socket.join("admins");
+  }
+
+  socket.on("join_ticket", async ({ ticketId }) => {
+    try {
+      if (!ticketId) return;
+
+      // Patient must prove access token for this ticket
+      if (socket.data.role === "patient") {
+        // Prefer patient JWT (phone OTP login)
+        if (socket.data.patientToken) {
+          const decoded = jwt.verify(socket.data.patientToken, JWT_SECRET);
+          if (decoded?.role !== "Patient" || !decoded?.patientId) return;
+          socket.data.patientId = decoded.patientId;
+          const t = await Ticket.findOne({ id: ticketId });
+          if (!t || !t.patientId || String(t.patientId) !== String(decoded.patientId)) return;
+        } else {
+          // Fallback: ticket chat token
+          const token = socket.data.chatToken;
+          if (!token) return;
+          const tokenHash = cryptoHash(token);
+          const t = await Ticket.findOne({ id: ticketId }).select("+patientChatTokenHash");
+          if (!t || !t.patientChatTokenHash || t.patientChatTokenHash !== tokenHash) return;
+        }
+      }
+
+      socket.join(`ticket:${ticketId}`);
+      io.to(`ticket:${ticketId}`).emit("presence", {
+        ticketId,
+        adminOnline: getRoomCount(io, `ticket:${ticketId}`, "admin") > 0,
+        patientOnline: getRoomCount(io, `ticket:${ticketId}`, "patient") > 0,
+      });
+    } catch (error) {
+      console.error("join_ticket error:", error);
+    }
+  });
+
+  socket.on("leave_ticket", ({ ticketId }) => {
+    if (!ticketId) return;
+    socket.leave(`ticket:${ticketId}`);
+    io.to(`ticket:${ticketId}`).emit("presence", {
+      ticketId,
+      adminOnline: getRoomCount(io, `ticket:${ticketId}`, "admin") > 0,
+      patientOnline: getRoomCount(io, `ticket:${ticketId}`, "patient") > 0,
+    });
+  });
+
+  socket.on("typing", ({ ticketId, isTyping }) => {
+    if (!ticketId) return;
+    socket.to(`ticket:${ticketId}`).emit("typing", {
+      ticketId,
+      from: socket.data.role,
+      isTyping: !!isTyping,
+    });
+  });
+
+  socket.on("mark_read", async ({ ticketId }) => {
+    try {
+      if (!ticketId) return;
+      const now = new Date();
+      const role = socket.data.role;
+      const field =
+        role === "admin" ? "readBy.adminAt" : role === "patient" ? "readBy.patientAt" : null;
+      if (!field) return;
+
+      await ChatMessage.updateMany(
+        { ticketId },
+        { $set: { [field]: now } }
+      );
+
+      io.to(`ticket:${ticketId}`).emit("read_receipt", {
+        ticketId,
+        role,
+        readAt: now.toISOString(),
+      });
+    } catch (error) {
+      console.error("Socket mark_read error:", error);
+    }
+  });
+
+  socket.on("send_message", async ({ ticketId, message, attachments }) => {
+    try {
+      const cleanMessage = typeof message === "string" ? message.trim() : "";
+      const cleanAttachments = Array.isArray(attachments) ? attachments : [];
+      if (!ticketId || (!cleanMessage && cleanAttachments.length === 0)) return;
+
+      // Patient must be authorized for this ticket
+      if (socket.data.role === "patient") {
+        if (socket.data.patientToken) {
+          const decoded = jwt.verify(socket.data.patientToken, JWT_SECRET);
+          if (decoded?.role !== "Patient" || !decoded?.patientId) return;
+          const t = await Ticket.findOne({ id: ticketId });
+          if (!t || !t.patientId || String(t.patientId) !== String(decoded.patientId)) return;
+        } else {
+          const token = socket.data.chatToken;
+          if (!token) return;
+          const tokenHash = cryptoHash(token);
+          const t = await Ticket.findOne({ id: ticketId }).select("+patientChatTokenHash");
+          if (!t || !t.patientChatTokenHash || t.patientChatTokenHash !== tokenHash) return;
+        }
+      }
+
+      const senderType = socket.data.role === "admin" ? "admin" : "patient";
+
+      const doc = await ChatMessage.create({
+        ticketId,
+        senderType,
+        senderId: socket.data.userId,
+        message: cleanMessage,
+        attachments: cleanAttachments,
+      });
+
+      io.to(`ticket:${ticketId}`).emit("new_message", doc);
+      io.to("admins").emit("ticket_message", { ticketId, message: doc });
+    } catch (error) {
+      console.error("Socket send_message error:", error);
+      socket.emit("chat_error", { message: "Failed to send message" });
+    }
+  });
+
+  socket.on("disconnect", () => {
+    // broadcast presence updates for any joined ticket rooms
+    try {
+      for (const room of socket.rooms) {
+        if (typeof room === "string" && room.startsWith("ticket:")) {
+          const ticketId = room.substring("ticket:".length);
+          io.to(room).emit("presence", {
+            ticketId,
+            adminOnline: getRoomCount(io, room, "admin") > 0,
+            patientOnline: getRoomCount(io, room, "patient") > 0,
+          });
+        }
+      }
+    } catch {
+      // ignore
+    }
+  });
+});
+
+function getRoomCount(ioInstance, roomName, role) {
+  const room = ioInstance.sockets.adapter.rooms.get(roomName);
+  if (!room) return 0;
+  let count = 0;
+  for (const socketId of room) {
+    const s = ioInstance.sockets.sockets.get(socketId);
+    if (s?.data?.role === role) count += 1;
+  }
+  return count;
+}
+
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(

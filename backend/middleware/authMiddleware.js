@@ -29,6 +29,8 @@ const authenticate = (req, res, next) => {
       role: decoded.role,
       department: decoded.department,
       departmentName: decoded.departmentName,
+      patientId: decoded.patientId,
+      phone: decoded.phone,
     };
 
     next();

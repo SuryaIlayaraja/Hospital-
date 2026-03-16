@@ -5,6 +5,8 @@ import {
   MessageSquare,
   CheckCircle,
   AlertCircle,
+  EyeOff,
+  Eye,
 } from "lucide-react";
 import RatingSelector from "./RatingSelector";
 import FormInput from "./FormInput";
@@ -18,6 +20,7 @@ const OPDFeedback: React.FC = () => {
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     uhid: "",
@@ -69,13 +72,9 @@ const OPDFeedback: React.FC = () => {
 
   // Calculate form progress
   const formProgress = useMemo(() => {
-    const requiredFields = [
-      "name",
-      "uhid",
-      "date",
-      "mobile",
-      "overallExperience",
-    ];
+    const requiredFields = isAnonymous
+      ? ["date", "overallExperience"]
+      : ["name", "uhid", "date", "mobile", "overallExperience"];
 
     const ratingFields = [
       "appointmentBooking",
@@ -102,7 +101,7 @@ const OPDFeedback: React.FC = () => {
     const progress = (completedFields / totalFields) * 100;
 
     return { progress, totalFields, completedFields };
-  }, [formData]);
+  }, [formData, isAnonymous]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +112,11 @@ const OPDFeedback: React.FC = () => {
       // Map form data to backend format (convert rating values)
       const submitData = {
         ...formData,
+        // Anonymous: override patient info
+        name: isAnonymous ? "Anonymous" : formData.name,
+        uhid: isAnonymous ? "" : formData.uhid,
+        mobile: isAnonymous ? "" : formData.mobile,
+        isAnonymous,
         overallExperience: mapRatingToBackend(formData.overallExperience),
         // Map other rating fields as well
         appointmentBooking: formData.appointmentBooking ? mapRatingToBackend(formData.appointmentBooking) : "",
@@ -192,7 +196,58 @@ const OPDFeedback: React.FC = () => {
           completedFields={formProgress.completedFields}
         />
 
-        {/* Patient Information */}
+        {/* Anonymous Feedback Toggle */}
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-5 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-gray-400/50 dark:hover:border-gray-500/50 transition-all duration-500">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {isAnonymous ? (
+                <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
+                  <EyeOff className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+              ) : (
+                <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Eye className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                </div>
+              )}
+              <div>
+                <p className="font-bold text-gray-800 dark:text-white text-sm">
+                  Submit Anonymously
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {isAnonymous
+                    ? "Your identity will not be recorded"
+                    : "Toggle on to hide your personal details"}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAnonymous(!isAnonymous);
+                if (!isAnonymous) {
+                  // Switching to anonymous → clear personal fields
+                  updateField("name", "");
+                  updateField("uhid", "");
+                  updateField("mobile", "");
+                }
+              }}
+              className={`relative w-12 h-7 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                isAnonymous
+                  ? "bg-indigo-500"
+                  : "bg-gray-300 dark:bg-gray-700"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
+                  isAnonymous ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Patient Information — hidden when anonymous */}
+        {!isAnonymous && (
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-indigo-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-indigo-400 mb-6 flex items-center gap-2">
             <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
@@ -232,7 +287,26 @@ const OPDFeedback: React.FC = () => {
             />
           </div>
         </div>
+        )}
 
+        {/* Date-only input when anonymous */}
+        {isAnonymous && (
+          <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-indigo-500/50 transition-all duration-500">
+            <h3 className="text-xl font-bold text-indigo-400 mb-6 flex items-center gap-2">
+              <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+              {t("common.date")}
+            </h3>
+            <div className="max-w-xs">
+              <FormInput
+                label={t("common.date")}
+                type="date"
+                value={formData.date}
+                onChange={(value) => updateField("date", value)}
+                required
+              />
+            </div>
+          </div>
+        )}
         {/* Overall Experience */}
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-purple-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-purple-400 mb-6 flex items-center gap-2">
@@ -335,9 +409,11 @@ const OPDFeedback: React.FC = () => {
               {t("opd.employee.recognition")}
             </h3>
             <div className="space-y-3">
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
-                {t("opd.employee.question")}{" "}
-                <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+              <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300">
+                {t("opd.employee.question")}
+                <span className="px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] uppercase tracking-wider font-black border border-red-100 dark:border-red-500/20">
+                  Optional
+                </span>
               </label>
               <textarea
                 value={formData.nominateEmployee}
@@ -357,9 +433,11 @@ const OPDFeedback: React.FC = () => {
               {t("opd.additional.comments")}
             </h3>
             <div className="space-y-3">
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
-                {t("opd.comments.question")}{" "}
-                <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+              <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300">
+                {t("opd.comments.question")}
+                <span className="px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] uppercase tracking-wider font-black border border-red-100 dark:border-red-500/20">
+                  Optional
+                </span>
               </label>
               <textarea
                 value={formData.comments}

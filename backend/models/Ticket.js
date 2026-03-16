@@ -49,6 +49,25 @@ const ticketSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    // Patient chat access (hash of secret token returned at ticket creation)
+    patientChatTokenHash: {
+      type: String,
+      required: false,
+      select: false,
+      index: true,
+    },
+    patientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Patient",
+      required: false,
+      index: true,
+    },
+    patientPhone: {
+      type: String,
+      required: false,
+      trim: true,
+      index: true,
+    },
   },
   {
     timestamps: true,

@@ -2,11 +2,41 @@ const express = require("express");
 const router = express.Router();
 const { OPDFeedback, IPDFeedback } = require("../models/Feedback");
 
+// Department → feedback field mapping for filtering
+// When a department is selected, only records where that field exists & is non-empty are included.
+const DEPARTMENT_FIELD_MAP = {
+  "Nursing":         "nursingCare",
+  "Operations":      "appointmentBooking",
+  "House Keeping":   "hospitalCleanliness",
+  "Maintenance":     "hospitalCleanliness",
+  "Medical":         "counsellingSession",
+  "F&B":             null, // no direct field
+  "Security":        null,
+  "Transport":       null,
+  "IT":              null,
+  "Laundry":         null,
+  "Billing":         "billingProcess",
+  "Insurance / TPA": "billingProcess",
+  "MRD":             "registrationProcess",
+  "Lab":             "labStaffSkilled",
+  "Radiology":       "radiologyStaffSkilled",
+  "Blood Bank":      "labStaffSkilled",
+  "Pharmacy":        "pharmacyWaitingTime",
+};
+
+// Build an extra $match stage for department filtering
+const buildDeptMatch = (department) => {
+  if (!department || department === "all") return null;
+  const field = DEPARTMENT_FIELD_MAP[department];
+  if (!field) return null; // departments without a mapped field → no filter
+  return { [field]: { $exists: true, $ne: "" } };
+};
+
 // Day-wise analysis for a particular week
-// GET /feedback/daywise?start=YYYY-MM-DD&end=YYYY-MM-DD&type=all|opd|ipd
+// GET /feedback/daywise?start=YYYY-MM-DD&end=YYYY-MM-DD&type=all|opd|ipd&department=<name>
 router.get("/daywise", async (req, res) => {
   try {
-    const { start, end, type = "all" } = req.query;
+    const { start, end, type = "all", department } = req.query;
     if (!start || !end) {
       return res
         .status(400)
@@ -21,14 +51,14 @@ router.get("/daywise", async (req, res) => {
     const endDate = new Date(end);
     endDate.setHours(23, 59, 59, 999); // include the whole end day
 
+    // Build department-specific field filter (if any)
+    const deptMatch = buildDeptMatch(department);
+    const baseMatch = { timestamp: { $gte: startDate, $lte: endDate }, ...(deptMatch || {}) };
+
     // Helper to aggregate for a model
     const aggregateDaywise = (Model) =>
       Model.aggregate([
-        {
-          $match: {
-            timestamp: { $gte: startDate, $lte: endDate },
-          },
-        },
+        { $match: baseMatch },
         {
           $group: {
             _id: {
@@ -42,11 +72,20 @@ router.get("/daywise", async (req, res) => {
         },
       ]);
 
-    // Determine which models to query based on type
+    // Determine which models to query based on type.
+    // Departments tied to OPD-only fields → skip IPD when filtering.
+    const deptField = department ? DEPARTMENT_FIELD_MAP[department] : null;
+    const ipdFields = ["registrationProcess", "roomReadiness", "roomCleanliness",
+      "doctorExplanation", "nurseCommunication", "planExplanation",
+      "promptnessAttending", "pharmacyTimeliness", "billingCourtesy",
+      "operationsHospitality", "dischargeProcess"];
+    const opdOnlyField = deptField && !ipdFields.includes(deptField);
+    const ipdOnlyField = deptField && ipdFields.includes(deptField);
+
     let all = [];
-    if (type === "opd") {
+    if (type === "opd" || (type === "all" && opdOnlyField)) {
       all = await aggregateDaywise(OPDFeedback);
-    } else if (type === "ipd") {
+    } else if (type === "ipd" || (type === "all" && ipdOnlyField)) {
       all = await aggregateDaywise(IPDFeedback);
     } else {
       // Default: combine both OPD and IPD
@@ -108,20 +147,19 @@ router.get("/daywise", async (req, res) => {
 });
 
 // Monthly analysis for a particular year
-// GET /feedback/monthly?year=YYYY&type=all|opd|ipd
+// GET /feedback/monthly?year=YYYY&type=all|opd|ipd&department=<name>
 router.get("/monthly", async (req, res) => {
   try {
-    const { year = new Date().getFullYear(), type = "all" } = req.query;
+    const { year = new Date().getFullYear(), type = "all", department } = req.query;
     const startDate = new Date(`${year}-01-01`);
     const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
 
+    const deptMatch = buildDeptMatch(department);
+    const baseMatch = { timestamp: { $gte: startDate, $lte: endDate }, ...(deptMatch || {}) };
+
     const aggregateMonthly = (Model) =>
       Model.aggregate([
-        {
-          $match: {
-            timestamp: { $gte: startDate, $lte: endDate },
-          },
-        },
+        { $match: baseMatch },
         {
           $group: {
             _id: {
@@ -135,10 +173,18 @@ router.get("/monthly", async (req, res) => {
         },
       ]);
 
+    const deptField = department ? DEPARTMENT_FIELD_MAP[department] : null;
+    const ipdFields = ["registrationProcess", "roomReadiness", "roomCleanliness",
+      "doctorExplanation", "nurseCommunication", "planExplanation",
+      "promptnessAttending", "pharmacyTimeliness", "billingCourtesy",
+      "operationsHospitality", "dischargeProcess"];
+    const opdOnlyField = deptField && !ipdFields.includes(deptField);
+    const ipdOnlyField = deptField && ipdFields.includes(deptField);
+
     let all = [];
-    if (type === "opd") {
+    if (type === "opd" || (type === "all" && opdOnlyField)) {
       all = await aggregateMonthly(OPDFeedback);
-    } else if (type === "ipd") {
+    } else if (type === "ipd" || (type === "all" && ipdOnlyField)) {
       all = await aggregateMonthly(IPDFeedback);
     } else {
       const [opd, ipd] = await Promise.all([
@@ -192,30 +238,41 @@ router.get("/monthly", async (req, res) => {
 });
 
 // Yearly analysis
-// GET /feedback/yearly?type=all|opd|ipd
+// GET /feedback/yearly?type=all|opd|ipd&department=<name>
 router.get("/yearly", async (req, res) => {
   try {
-    const { type = "all" } = req.query;
+    const { type = "all", department } = req.query;
 
-    const aggregateYearly = (Model) =>
-      Model.aggregate([
-        {
-          $group: {
-            _id: {
-              year: {
-                $dateToString: { format: "%Y", date: "$timestamp" },
-              },
-              overallExperience: "$overallExperience",
-            },
-            count: { $sum: 1 },
+    const deptMatch = buildDeptMatch(department);
+    const baseMatch = deptMatch ? { ...deptMatch } : {};
+
+    const aggregateYearly = (Model) => {
+      const pipeline = [];
+      if (Object.keys(baseMatch).length > 0) pipeline.push({ $match: baseMatch });
+      pipeline.push({
+        $group: {
+          _id: {
+            year: { $dateToString: { format: "%Y", date: "$timestamp" } },
+            overallExperience: "$overallExperience",
           },
+          count: { $sum: 1 },
         },
-      ]);
+      });
+      return Model.aggregate(pipeline);
+    };
+
+    const deptField = department ? DEPARTMENT_FIELD_MAP[department] : null;
+    const ipdFields = ["registrationProcess", "roomReadiness", "roomCleanliness",
+      "doctorExplanation", "nurseCommunication", "planExplanation",
+      "promptnessAttending", "pharmacyTimeliness", "billingCourtesy",
+      "operationsHospitality", "dischargeProcess"];
+    const opdOnlyField = deptField && !ipdFields.includes(deptField);
+    const ipdOnlyField = deptField && ipdFields.includes(deptField);
 
     let all = [];
-    if (type === "opd") {
+    if (type === "opd" || (type === "all" && opdOnlyField)) {
       all = await aggregateYearly(OPDFeedback);
-    } else if (type === "ipd") {
+    } else if (type === "ipd" || (type === "all" && ipdOnlyField)) {
       all = await aggregateYearly(IPDFeedback);
     } else {
       const [opd, ipd] = await Promise.all([

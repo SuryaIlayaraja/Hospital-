@@ -1514,7 +1514,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             >
               <Users className="h-8 w-8 text-blue-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">{t[language].opdFeedback}</h3>
-              <p className="text-sm text-gray-400">{t[language].shareExperience}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t[language].shareExperience}</p>
             </button>
 
             <button
@@ -1523,7 +1523,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             >
               <UserCheck className="h-8 w-8 text-green-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">{t[language].ipdFeedback}</h3>
-              <p className="text-sm text-gray-400">{t[language].rateStay}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t[language].rateStay}</p>
             </button>
 
             <button
@@ -1532,7 +1532,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             >
               <BarChart3 className="h-8 w-8 text-purple-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">{t[language].admin}</h3>
-              <p className="text-sm text-gray-400">{t[language].viewAnalytics}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t[language].viewAnalytics}</p>
             </button>
 
             <button
@@ -1541,7 +1541,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             >
               <AlertCircle className="h-8 w-8 text-red-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">{t[language].raiseTicket}</h3>
-              <p className="text-sm text-gray-400">{t[language].getSupport}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t[language].getSupport}</p>
             </button>
           </div>
         </div>
@@ -1561,7 +1561,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
             <h3 className="text-xl font-bold mb-3 text-center">{t[language].emergency247}</h3>
-            <p className="text-gray-400 text-sm text-center leading-relaxed">
+            <p className="text-gray-500 dark:text-gray-400 text-sm text-center leading-relaxed">
               {t[language].emergencyDesc}
             </p>
           </div>
@@ -1574,7 +1574,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
             <h3 className="text-xl font-bold mb-3 text-center">{t[language].expertDoctors}</h3>
-            <p className="text-gray-400 text-sm text-center leading-relaxed">
+            <p className="text-gray-500 dark:text-gray-400 text-sm text-center leading-relaxed">
               {t[language].expertDesc}
             </p>
           </div>
@@ -1587,7 +1587,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
             <h3 className="text-xl font-bold mb-3 text-center">{t[language].premiumCare}</h3>
-            <p className="text-gray-400 text-sm text-center leading-relaxed">
+            <p className="text-gray-500 dark:text-gray-400 text-sm text-center leading-relaxed">
               {t[language].premiumDesc}
             </p>
           </div>
@@ -1638,14 +1638,14 @@ const Dashboard: React.FC<DashboardProps> = ({
           <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
             Centres Of <span className="text-[#d946ef] drop-shadow-[0_0_15px_rgba(217,70,239,0.3)]">Excellence</span>
           </h2>
-          <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+          <p className="text-gray-500 dark:text-gray-400 text-lg max-w-3xl mx-auto">
             Combining the best specialists and equipment to provide you nothing short of the best in healthcare.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Cardiology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-[#1a1a1a]/40 backdrop-blur-md border border-white/5 hover:border-red-500/30 transition-all duration-500 hover:-translate-y-2">
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-red-500/30 transition-all duration-500 hover:-translate-y-2">
             <div className="relative z-10 flex items-center gap-6">
               <div className="p-4 rounded-2xl bg-red-500/10 text-red-500 group-hover:bg-red-500/20 transition-colors duration-500">
                 <Heart className="h-10 w-10" />
@@ -1657,7 +1657,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Orthopedics */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-[#1a1a1a]/40 backdrop-blur-md border border-white/5 hover:border-yellow-500/30 transition-all duration-500 hover:-translate-y-2">
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-yellow-500/30 transition-all duration-500 hover:-translate-y-2">
             <div className="relative z-10 flex items-center gap-6">
               <div className="p-4 rounded-2xl bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20 transition-colors duration-500">
                 <Bone className="h-10 w-10" />
@@ -1669,7 +1669,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Oncology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-[#1a1a1a]/40 backdrop-blur-md border border-white/5 hover:border-emerald-500/30 transition-all duration-500 hover:-translate-y-2">
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-emerald-500/30 transition-all duration-500 hover:-translate-y-2">
             <div className="relative z-10 flex items-center gap-6">
               <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors duration-500">
                 <Microscope className="h-10 w-10" />
@@ -1681,7 +1681,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Neurology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-[#1a1a1a]/40 backdrop-blur-md border border-white/5 hover:border-purple-500/30 transition-all duration-500 hover:-translate-y-2">
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-purple-500/30 transition-all duration-500 hover:-translate-y-2">
             <div className="relative z-10 flex items-center gap-6">
               <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-500 group-hover:bg-purple-500/20 transition-colors duration-500">
                 <Brain className="h-10 w-10" />
@@ -1693,7 +1693,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Gastroenterology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-[#1a1a1a]/40 backdrop-blur-md border border-white/5 hover:border-blue-500/30 transition-all duration-500 hover:-translate-y-2">
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-blue-500/30 transition-all duration-500 hover:-translate-y-2">
             <div className="relative z-10 flex items-center gap-6">
               <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 transition-colors duration-500">
                 <Activity className="h-10 w-10" />
@@ -1705,7 +1705,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Nephrology & Urology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-[#1a1a1a]/40 backdrop-blur-md border border-white/5 hover:border-cyan-500/30 transition-all duration-500 hover:-translate-y-2">
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-cyan-500/30 transition-all duration-500 hover:-translate-y-2">
             <div className="relative z-10 flex items-center gap-6">
               <div className="p-4 rounded-2xl bg-cyan-500/10 text-cyan-500 group-hover:bg-cyan-500/20 transition-colors duration-500">
                 <Droplets className="h-10 w-10" />
@@ -1719,14 +1719,14 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Welcome To Vikram ENT Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 relative z-10 border-t border-white/5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 relative z-10 border-t border-gray-200 dark:border-white/5">
         <div className="text-center mb-20">
           <h2 className="text-4xl sm:text-5xl font-bold mb-8 text-gray-900 dark:text-white">
             Welcome To <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">Vikram ENT</span> —
             <br className="hidden sm:block" /> The International Leader in <span className="text-[#d946ef]">ENT Care</span>
           </h2>
-          <p className="text-gray-400 text-lg max-w-4xl mx-auto leading-relaxed">
-            Looking for the best <span className="text-white font-semibold">ENT Hospital in Coimbatore</span> that not only treats you but truly understands what you’re going through?
+          <p className="text-gray-500 dark:text-gray-400 text-lg max-w-4xl mx-auto leading-relaxed">
+            Looking for the best <span className="text-gray-900 dark:text-white font-semibold">ENT Hospital in Coimbatore</span> that not only treats you but truly understands what you’re going through?
             Vikram ENT Hospital and Research Institute has offered the best compassionate and specialised care for your ear, nose and throat conditions since <span className="text-indigo-400 font-bold">1972</span>.
           </p>
         </div>
@@ -1737,7 +1737,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 py-8">
             {/* Stat 1: Years of Experience */}
-            <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-indigo-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
+            <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-indigo-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
                 <div className="text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-indigo-400 transition-colors">
                   <CountUpNumber endValue={55} startTrigger={statsVisible} />+
@@ -1751,7 +1751,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Stat 2: Doctors */}
-            <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-purple-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
+            <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-purple-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
                 <div className="text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-purple-400 transition-colors">
                   <CountUpNumber endValue={20} startTrigger={statsVisible} />+
@@ -1765,7 +1765,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Stat 3: Procedures */}
-            <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-pink-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
+            <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-pink-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
                 <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-pink-400 transition-colors">
                   <CountUpNumber endValue={500000} startTrigger={statsVisible} />+
@@ -1779,7 +1779,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Stat 4: Lives Touched */}
-            <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-cyan-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
+            <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-cyan-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
                 <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-cyan-400 transition-colors">
                   <CountUpNumber endValue={5000000} startTrigger={statsVisible} />+
@@ -1804,7 +1804,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
           Committed to the <span className="bg-gradient-to-r from-red-500 to-rose-600 bg-clip-text text-transparent">Flow of Healing</span>
         </h2>
-        <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+        <p className="text-gray-500 dark:text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
           At Vikram ENT, every pulse and every procedure is dedicated to your complete recovery and well-being.
         </p>
       </div>

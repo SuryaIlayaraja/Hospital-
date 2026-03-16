@@ -27,6 +27,28 @@ interface DaywiseAnalysisPageProps {
 const COLORS = ["#ff4d4f", "#eab308", "#52c41a"];
 const LABELS = ["Will Not Recommend", "May Recommend", "Will Recommend"];
 
+// All 17 hospital departments
+const DEPARTMENTS = [
+  "All Departments",
+  "Nursing",
+  "Operations",
+  "House Keeping",
+  "Maintenance",
+  "Medical",
+  "F&B",
+  "Security",
+  "Transport",
+  "IT",
+  "Laundry",
+  "Billing",
+  "Insurance / TPA",
+  "MRD",
+  "Lab",
+  "Radiology",
+  "Blood Bank",
+  "Pharmacy",
+];
+
 const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
   onBack,
 }) => {
@@ -37,6 +59,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [feedbackType, setFeedbackType] = useState<"all" | "opd" | "ipd">("all");
   const [analysisView, setAnalysisView] = useState<"day" | "monthDetail" | "month" | "year">("day");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("All Departments");
 
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
@@ -46,6 +69,9 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
       try {
         setLoading(true);
         setError(null);
+
+        // Convert "All Departments" → "all" for the API param
+        const deptParam = selectedDepartment === "All Departments" ? "all" : selectedDepartment;
 
         let startStr, endStr;
 
@@ -64,9 +90,9 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
         }
 
         const [dayRes, monthRes, yearRes] = await Promise.all([
-          getDaywiseAnalysis(startStr, endStr, feedbackType),
-          getMonthlyAnalysis(selectedYear, feedbackType),
-          getYearlyAnalysis(feedbackType)
+          getDaywiseAnalysis(startStr, endStr, feedbackType, deptParam),
+          getMonthlyAnalysis(selectedYear, feedbackType, deptParam),
+          getYearlyAnalysis(feedbackType, deptParam)
         ]);
 
         if (dayRes.success && dayRes.data) setDayData(dayRes.data);
@@ -85,7 +111,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
     };
 
     fetchData();
-  }, [feedbackType, selectedYear, selectedMonth, analysisView]);
+  }, [feedbackType, selectedYear, selectedMonth, analysisView, selectedDepartment]);
 
   if (loading) {
     return (
@@ -121,7 +147,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
           </div>
           <button
             onClick={onBack}
-            className="px-6 py-2 bg-gray-100 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200 font-medium backdrop-blur-sm shadow-sm"
+            className="px-6 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all duration-200 font-medium backdrop-blur-sm shadow-sm"
           >
             ← Back to Admin
           </button>
@@ -129,14 +155,14 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
 
         {/* View Switcher, Selectors and Feedback Type Toggle */}
         <div className="mb-8 space-y-4">
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-6">
             <div className="flex flex-wrap items-center gap-4">
-              <div className="flex bg-black/40 p-1 rounded-xl border border-gray-700">
+              <div className="flex bg-gray-100 dark:bg-black/40 p-1 rounded-xl border border-gray-300 dark:border-gray-700">
                 <button
                   onClick={() => setAnalysisView("day")}
                   className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${analysisView === "day"
                       ? "bg-indigo-500 text-white shadow-lg"
-                      : "text-gray-500 hover:text-gray-300"
+                      : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
                     }`}
                 >
                   Recent
@@ -145,7 +171,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                   onClick={() => setAnalysisView("monthDetail")}
                   className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${analysisView === "monthDetail"
                       ? "bg-indigo-500 text-white shadow-lg"
-                      : "text-gray-500 hover:text-gray-300"
+                      : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
                     }`}
                 >
                   Month Detail
@@ -154,7 +180,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                   onClick={() => setAnalysisView("month")}
                   className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${analysisView === "month"
                       ? "bg-indigo-500 text-white shadow-lg"
-                      : "text-gray-500 hover:text-gray-300"
+                      : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
                     }`}
                 >
                   Yearly Trends
@@ -163,20 +189,20 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                   onClick={() => setAnalysisView("year")}
                   className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${analysisView === "year"
                       ? "bg-indigo-500 text-white shadow-lg"
-                      : "text-gray-500 hover:text-gray-300"
+                      : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
                     }`}
                 >
                   Year-over-Year
                 </button>
               </div>
 
-              <div className="h-8 w-[1px] bg-gray-700 hidden sm:block"></div>
+              <div className="h-8 w-[1px] bg-gray-300 dark:bg-gray-700 hidden sm:block"></div>
 
               <div className="flex items-center gap-2">
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                 >
                   {[2023, 2024, 2025, 2026].map((y) => (
                     <option key={y} value={y}>{y}</option>
@@ -188,7 +214,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                     setSelectedMonth(parseInt(e.target.value));
                     if (analysisView === "year") setAnalysisView("month");
                   }}
-                  className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                     <option key={m} value={m}>
@@ -199,36 +225,83 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 font-bold text-sm uppercase tracking-wider mr-2">Filter:</span>
-              <div className="flex bg-black/40 p-1 rounded-xl border border-gray-700">
-                <button
-                  onClick={() => setFeedbackType("all")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${feedbackType === "all"
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-500 hover:text-gray-300"
-                    }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFeedbackType("opd")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${feedbackType === "opd"
-                      ? "bg-cyan-600 text-white"
-                      : "text-gray-500 hover:text-gray-300"
-                    }`}
-                >
-                  OPD
-                </button>
-                <button
-                  onClick={() => setFeedbackType("ipd")}
-                  className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${feedbackType === "ipd"
-                      ? "bg-purple-600 text-white"
-                      : "text-gray-500 hover:text-gray-300"
-                    }`}
-                >
-                  IPD
-                </button>
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Department Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 dark:text-gray-400 font-bold text-sm uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  Dept:
+                </span>
+                <div className="relative">
+                  <select
+                    value={selectedDepartment}
+                    onChange={(e) => setSelectedDepartment(e.target.value)}
+                    className={`appearance-none pr-8 pl-3 py-2 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border text-sm min-w-[170px]
+                      ${selectedDepartment !== "All Departments"
+                        ? "bg-indigo-50 border-indigo-400 text-indigo-700 dark:bg-indigo-500/20 dark:border-indigo-500/50 dark:text-indigo-300"
+                        : "bg-white dark:bg-gray-800/60 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                      }`}
+                  >
+                    {DEPARTMENTS.map((dept) => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                {selectedDepartment !== "All Departments" && (
+                  <button
+                    onClick={() => setSelectedDepartment("All Departments")}
+                    className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-red-500 dark:text-indigo-300 dark:hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-500/40 hover:border-red-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-red-50 dark:hover:bg-red-500/10"
+                    title="Clear department filter"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              <div className="h-8 w-[1px] bg-gray-300 dark:bg-gray-700 hidden sm:block"></div>
+
+              {/* OPD / IPD Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 dark:text-gray-400 font-bold text-sm uppercase tracking-wider mr-2">Filter:</span>
+                <div className="flex bg-gray-100 dark:bg-black/40 p-1 rounded-xl border border-gray-300 dark:border-gray-700">
+                  <button
+                    onClick={() => setFeedbackType("all")}
+                    className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${feedbackType === "all"
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
+                      }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setFeedbackType("opd")}
+                    className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${feedbackType === "opd"
+                        ? "bg-cyan-600 text-white"
+                        : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
+                      }`}
+                  >
+                    OPD
+                  </button>
+                  <button
+                    onClick={() => setFeedbackType("ipd")}
+                    className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${feedbackType === "ipd"
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
+                      }`}
+                  >
+                    IPD
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -270,7 +343,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
                 ];
                 const dateObj = new Date(d.day);
                 return (
-                  <div key={d.day} className="bg-white dark:bg-gradient-to-br dark:from-gray-800/40 dark:to-gray-900/40 backdrop-blur-sm border border-gray-200 dark:border-gray-800 p-8 rounded-3xl shadow-xl flex flex-col items-center group hover:border-indigo-500/30 transition-all duration-500">
+                  <div key={d.day} className="bg-white dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 p-8 rounded-3xl shadow-xl flex flex-col items-center group hover:border-indigo-500/30 transition-all duration-500">
                     <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1">{dateObj.toLocaleDateString('en-US', { weekday: 'long' })}</h3>
                     <p className="text-gray-500 font-bold mb-6">{dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
 
@@ -322,10 +395,15 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
         )}
 
         {analysisView === "monthDetail" && (
-          <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-gray-800 p-8 rounded-3xl shadow-2xl">
-            <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
+          <div className="bg-white dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 p-8 rounded-3xl shadow-2xl">
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-3 flex-wrap">
               <div className="w-2 h-8 bg-indigo-500 rounded-full"></div>
               {currentMonthName} {selectedYear} Daily Breakdown
+              {selectedDepartment !== "All Departments" && (
+                <span className="text-xs font-bold bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 px-3 py-1 rounded-full border border-indigo-300 dark:border-indigo-500/30">
+                  {selectedDepartment}
+                </span>
+              )}
             </h2>
             {(() => {
               const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
@@ -375,10 +453,15 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
         )}
 
         {analysisView === "month" && (
-          <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-gray-800 p-8 rounded-3xl shadow-2xl">
-            <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
+          <div className="bg-white dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 p-8 rounded-3xl shadow-2xl">
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-3 flex-wrap">
               <div className="w-2 h-8 bg-indigo-500 rounded-full"></div>
               Monthly Trends for {selectedYear}
+              {selectedDepartment !== "All Departments" && (
+                <span className="text-xs font-bold bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 px-3 py-1 rounded-full border border-indigo-300 dark:border-indigo-500/30">
+                  {selectedDepartment}
+                </span>
+              )}
             </h2>
             {(() => {
               // Ensure all 12 months are present for the selected year
@@ -422,10 +505,15 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
         )}
 
         {analysisView === "year" && (
-          <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-gray-800 p-8 rounded-3xl shadow-2xl">
-            <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
+          <div className="bg-white dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 p-8 rounded-3xl shadow-2xl">
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-3 flex-wrap">
               <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
               Yearly Progress Comparison
+              {selectedDepartment !== "All Departments" && (
+                <span className="text-xs font-bold bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 px-3 py-1 rounded-full border border-indigo-300 dark:border-indigo-500/30">
+                  {selectedDepartment}
+                </span>
+              )}
             </h2>
             {yearData.length === 0 ? (
               <div className="h-[400px] flex items-center justify-center text-gray-500 font-bold">No yearly data available</div>
@@ -449,7 +537,7 @@ const DaywiseAnalysisPage: React.FC<DaywiseAnalysisPageProps> = ({
         )}
 
         {/* Legend */}
-        <div className="mt-8 bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-3xl shadow-lg p-8">
+        <div className="mt-8 bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-3xl shadow-lg p-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex flex-wrap justify-center gap-8">
               <div className="flex items-center gap-3">

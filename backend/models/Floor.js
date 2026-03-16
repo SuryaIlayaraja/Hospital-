@@ -32,8 +32,7 @@ const floorSchema = new mongoose.Schema(
   }
 );
 
-// Index for faster queries
-floorSchema.index({ floorNumber: 1 });
+
 
 const Floor = mongoose.model("Floor", floorSchema);
 

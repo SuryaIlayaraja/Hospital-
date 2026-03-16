@@ -12,6 +12,8 @@ export interface Ticket {
   updatedAt?: string;
 }
 
+export type TicketCreateResult = { ticket: Ticket; patientChatToken?: string };
+
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -61,10 +63,12 @@ export const useTickets = () => {
     ticket: Omit<Ticket, "id" | "createdAt" | "status">
   ) => {
     try {
+      const patientToken = localStorage.getItem("patientToken");
       const response = await fetch(`${API_BASE_URL}/tickets/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(patientToken ? { Authorization: `Bearer ${patientToken}` } : {}),
         },
         body: JSON.stringify(ticket),
       });
@@ -76,7 +80,7 @@ export const useTickets = () => {
       const data = await response.json();
       if (data.success) {
         setTickets((prev) => [data.data, ...prev]);
-        return data.data;
+        return { ticket: data.data as Ticket, patientChatToken: data.patientChatToken as string | undefined };
       } else {
         throw new Error(data.message || "Failed to create ticket");
       }
@@ -90,7 +94,7 @@ export const useTickets = () => {
         status: "open",
       };
       setTickets((prev) => [newTicket, ...prev]);
-      return newTicket;
+      return { ticket: newTicket };
     }
   };
 

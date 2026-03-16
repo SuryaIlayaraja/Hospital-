@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DaywiseAnalysisPage from "./DaywiseAnalysisPage";
+import OPDNPSDashboard from "./OPDNPSDashboard";
 import {
   Database,
   Eye,
@@ -14,6 +15,7 @@ import {
   BarChart3,
   Mail,
   Building2,
+  Bell,
   Plus,
   Edit,
   Trash2,
@@ -25,6 +27,7 @@ import {
   Shield,
   EyeOff,
   BedDouble,
+  Activity,
 } from "lucide-react";
 
 import LoginShapes from "./LoginShapes";
@@ -58,6 +61,9 @@ import {
   getAuthToken,
 } from "../services/apiService";
 import { useTickets, Ticket } from "../hooks/useTickets";
+import ComplaintHeatmap from "./ComplaintHeatmap";
+import TicketChat from "./TicketChat";
+import { useChatNotifications } from "../hooks/useChatNotifications";
 import * as XLSX from "xlsx";
 
 // Feedback data type (union of OPD and IPD feedback)
@@ -75,6 +81,9 @@ type FeedbackData = {
 const AdminPanel: React.FC = () => {
   // State to show/hide daywise analysis page
   const [showDaywisePage, setShowDaywisePage] = useState(false);
+  
+  // State to show/hide OPD NPS Dashboard
+  const [showOPDDashboard, setShowOPDDashboard] = useState(false);
 
   const [feedback, setFeedback] = useState<{
     opd: FeedbackData[];
@@ -150,6 +159,7 @@ const AdminPanel: React.FC = () => {
     deleteTicket,
   } = useTickets();
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
+  const [chatTicketId, setChatTicketId] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState({
     startDate: "",
     endDate: "",
@@ -175,6 +185,7 @@ const AdminPanel: React.FC = () => {
     // Check if token exists
     return !!getAuthToken();
   });
+  const { unread, clearUnread } = useChatNotifications(isAuthenticated);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     const savedUser = localStorage.getItem("authUser");
     return savedUser ? JSON.parse(savedUser) : null;
@@ -186,6 +197,10 @@ const AdminPanel: React.FC = () => {
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+
+  // Escalated tickets state (COO only)
+  const [escalatedTickets, setEscalatedTickets] = useState<Ticket[]>([]);
+  const [showEscalatedDetails, setShowEscalatedDetails] = useState(false);
 
   // Ticket filter states
   const [ticketSearchTerm, setTicketSearchTerm] = useState("");
@@ -290,24 +305,61 @@ const AdminPanel: React.FC = () => {
     verifyUser();
   }, [isAuthenticated, currentUser]);
 
+  // Fetch escalated tickets for COO
+  const loadEscalatedTickets = async () => {
+    try {
+      const token = getAuthToken();
+      console.log("loadEscalatedTickets: token exists?", !!token);
+      if (!token) return;
+      const url = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/tickets/escalated`;
+      console.log("loadEscalatedTickets: fetching", url);
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("loadEscalatedTickets: response status", response.status);
+      const data = await response.json();
+      console.log("loadEscalatedTickets: data", data);
+      if (data.success) {
+        setEscalatedTickets(data.data);
+        console.log("loadEscalatedTickets: set", data.data.length, "tickets");
+      }
+    } catch (error) {
+      console.error("Failed to load escalated tickets:", error);
+    }
+  };
+
   useEffect(() => {
-    if (isAuthenticated) {
-      loadFeedback();
-      loadFloors();
-      loadDoctors();
+    if (isAuthenticated && currentUser) {
       loadDepartments();
       loadCOO();
+
+      if (currentUser.role === "COO") {
+        loadFeedback();
+        loadFloors();
+        loadDoctors();
+      } else if (currentUser.role === "Supervisor") {
+        // Set default view to departments for Supervisors
+        setMainView("departments");
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentUser]);
+
+  // Separate effect for escalated tickets - runs for COO
+  useEffect(() => {
+    if (isAuthenticated && currentUser?.role === "COO") {
+      console.log("Escalation useEffect triggered - calling loadEscalatedTickets");
+      loadEscalatedTickets();
+    }
+  }, [isAuthenticated, currentUser]);
 
   // Check if view is allowed for current user
   const isViewAllowed = (view: typeof mainView) => {
     if (!currentUser) return false;
     if (currentUser.role === "COO") return true; // COO has access to all
 
-    // Supervisors only have access to departments view
+    // Supervisors have access to departments and tickets views
     if (currentUser.role === "Supervisor") {
-      return view === "departments";
+      return view === "departments" || view === "tickets";
     }
 
     return false;
@@ -864,12 +916,18 @@ const AdminPanel: React.FC = () => {
 
   // Ticket filtering logic
   useEffect(() => {
+    // For Supervisors, always apply department filter based on their departmentName
+    const effectiveDeptFilter =
+      currentUser?.role === "Supervisor" && currentUser?.departmentName
+        ? currentUser.departmentName
+        : ticketDepartmentFilter;
+
     // Check if any filters are active
     const hasActiveFilters =
       ticketSearchTerm !== "" ||
       ticketStatusFilter !== "all" ||
       ticketSeverityFilter !== "all" ||
-      ticketDepartmentFilter !== "" ||
+      effectiveDeptFilter !== "" ||
       ticketDateFilter.startDate !== "" ||
       ticketDateFilter.endDate !== "";
 
@@ -895,13 +953,13 @@ const AdminPanel: React.FC = () => {
         ticketSeverityFilter === "all" ||
         ticket.severity === ticketSeverityFilter;
 
-      // Department filter
+      // Department filter (auto-applied for Supervisors)
       const matchesDepartment =
-        ticketDepartmentFilter === "all" ||
-        ticketDepartmentFilter === "" ||
+        effectiveDeptFilter === "all" ||
+        effectiveDeptFilter === "" ||
         ticket.department
           .toLowerCase()
-          .includes(ticketDepartmentFilter.toLowerCase());
+          .includes(effectiveDeptFilter.toLowerCase());
 
       // Date range filter
       let matchesDateRange = true;
@@ -947,6 +1005,7 @@ const AdminPanel: React.FC = () => {
     ticketStatusFilter,
     ticketSeverityFilter,
     ticketDepartmentFilter,
+    currentUser,
     ticketDateFilter,
   ]);
 
@@ -1484,6 +1543,11 @@ Admin Panel - Vikram ENT Hospital`;
     return <DaywiseAnalysisPage onBack={() => setShowDaywisePage(false)} />;
   }
 
+  // Show OPD NPS Dashboard
+  if (showOPDDashboard) {
+    return <OPDNPSDashboard onBack={() => setShowOPDDashboard(false)} />;
+  }
+
   // Show login form if not authenticated
   if (!isAuthenticated) {
     console.log("Rendering login view. State:", { isLoggingIn, loginSuccess });
@@ -1542,7 +1606,7 @@ Admin Panel - Vikram ENT Hospital`;
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => setFocusedInput('email')}
                     onBlur={() => setFocusedInput(null)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 focus:ring-2 focus:ring-black dark:focus:ring-indigo-500/50 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white bg-white dark:bg-[#1a1a1a]/50"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 focus:ring-2 focus:ring-black dark:focus:ring-indigo-500/50 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white bg-gray-50 dark:bg-[#1a1a1a]/50"
                     placeholder="admin@hospital.com"
                   />
                 </div>
@@ -1557,7 +1621,7 @@ Admin Panel - Vikram ENT Hospital`;
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setFocusedInput('password')}
                       onBlur={() => setFocusedInput(null)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 focus:ring-2 focus:ring-black dark:focus:ring-indigo-500/50 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white bg-white dark:bg-[#1a1a1a]/50 pr-10"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 focus:ring-2 focus:ring-black dark:focus:ring-indigo-500/50 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white bg-gray-50 dark:bg-[#1a1a1a]/50 pr-10"
                       placeholder="Enter password"
                     />
                     <button
@@ -1642,7 +1706,7 @@ Admin Panel - Vikram ENT Hospital`;
 
             <button
               onClick={loadFeedback}
-              className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700/70 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-all duration-300"
+              className="flex items-center gap-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-all duration-300"
             >
               <Eye className="h-4 w-4" />
               Refresh Data
@@ -1661,7 +1725,7 @@ Admin Panel - Vikram ENT Hospital`;
                 (mainView === "tickets" && filteredTickets.length === 0) ||
                 (mainView !== "feedbacks" && mainView !== "tickets")
               }
-              className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700/70 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className="h-4 w-4" />
               Export {mainView === "tickets" ? "TICKETS" : activeTab.toUpperCase()} Excel
@@ -1674,8 +1738,93 @@ Admin Panel - Vikram ENT Hospital`;
               <Mail className="h-4 w-4" />
               Send Report to CEO
             </button>
+
+            {currentUser?.role === "COO" && escalatedTickets.length > 0 && (
+              <button
+                onClick={() => setShowEscalatedDetails(!showEscalatedDetails)}
+                className="relative flex items-center gap-2 bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/50 text-red-400 px-4 py-2 rounded-xl hover:from-red-500/30 hover:to-orange-500/30 transition-all duration-300 animate-pulse"
+              >
+                <Bell className="h-4 w-4" />
+                Escalations
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {escalatedTickets.length}
+                </span>
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Escalation Alert Banner - COO only */}
+        {currentUser?.role === "COO" && escalatedTickets.length > 0 && (
+          <div className="bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border border-red-500/40 rounded-2xl p-6 mb-8 shadow-lg">
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setShowEscalatedDetails(!showEscalatedDetails)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center animate-pulse">
+                  <Bell className="h-5 w-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-red-400">
+                    ⚠️ {escalatedTickets.length} Escalated {escalatedTickets.length === 1 ? 'Ticket' : 'Tickets'}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Unresolved tickets older than 24 hours — click to {showEscalatedDetails ? 'hide' : 'view'} details
+                  </p>
+                </div>
+              </div>
+              <span className="text-2xl font-bold text-red-400">{showEscalatedDetails ? '▲' : '▼'}</span>
+            </div>
+
+            {showEscalatedDetails && (
+              <div className="mt-4 space-y-3 max-h-80 overflow-y-auto">
+                {escalatedTickets.map((ticket) => {
+                  const hoursOld = Math.floor(
+                    (Date.now() - new Date(ticket.createdAt).getTime()) / (1000 * 60 * 60)
+                  );
+                  const daysOld = Math.floor(hoursOld / 24);
+                  const ageText = daysOld > 0 ? `${daysOld}d ${hoursOld % 24}h` : `${hoursOld}h`;
+
+                  return (
+                    <div
+                      key={ticket.id}
+                      className="flex items-center justify-between bg-white/5 dark:bg-white/[0.03] border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-mono text-gray-500">{ticket.id}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                            ticket.severity === 'high'
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                              : ticket.severity === 'medium'
+                              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                              : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                          }`}>
+                            {ticket.severity.toUpperCase()}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                            ticket.status === 'open'
+                              ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                              : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                          }`}>
+                            {ticket.status}
+                          </span>
+                        </div>
+                        <p className="font-semibold text-gray-800 dark:text-white truncate">{ticket.title}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Dept: {ticket.department}</p>
+                      </div>
+                      <div className="text-right ml-4 flex-shrink-0">
+                        <p className="text-lg font-bold text-red-400">{ageText}</p>
+                        <p className="text-xs text-gray-500">overdue</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mb-8 flex justify-center items-center gap-4 flex-wrap">
           {isViewAllowed("feedbacks") && (
@@ -1686,7 +1835,7 @@ Admin Panel - Vikram ENT Hospital`;
               }}
               className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "feedbacks"
                 ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white scale-105 shadow-xl border border-indigo-500/50"
-                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
+                : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
               <Filter className="h-5 w-5 inline-block mr-2" />
@@ -1701,26 +1850,11 @@ Admin Panel - Vikram ENT Hospital`;
               }}
               className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "tickets"
                 ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white scale-105 shadow-xl border border-purple-500/50"
-                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
+                : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
               <Filter className="h-5 w-5 inline-block mr-2" />
-              Filter Tickets
-            </button>
-          )}
-          {isViewAllowed("floors") && (
-            <button
-              onClick={() => {
-                setMainView("floors");
-                loadFloors();
-              }}
-              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "floors"
-                ? "bg-gradient-to-r from-orange-500 to-red-500 text-white scale-105 shadow-xl border border-orange-500/50"
-                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
-                }`}
-            >
-              <Building2 className="h-5 w-5 inline-block mr-2" />
-              Manage Floors
+              View Tickets
             </button>
           )}
           {isViewAllowed("doctors") && (
@@ -1731,27 +1865,11 @@ Admin Panel - Vikram ENT Hospital`;
               }}
               className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "doctors"
                 ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white scale-105 shadow-xl border border-indigo-500/50"
-                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
+                : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
-              <UserPlus className="h-5 w-5 inline-block mr-2" />
+              <Stethoscope className="h-5 w-5 inline-block mr-2" />
               Manage Doctors
-            </button>
-          )}
-          {isViewAllowed("departments") && (
-            <button
-              onClick={() => {
-                setMainView("departments");
-                loadDepartments();
-                loadCOO();
-              }}
-              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "departments"
-                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white scale-105 shadow-xl border border-emerald-500/50"
-                : "bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50 hover:scale-105"
-                }`}
-            >
-              <GitBranch className="h-5 w-5 inline-block mr-2" />
-              {currentUser?.role === 'Supervisor' ? 'My Department' : 'Manage Departments'}
             </button>
           )}
           {isViewAllowed("rooms") && (
@@ -1761,7 +1879,7 @@ Admin Panel - Vikram ENT Hospital`;
               }}
               className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "rooms"
                 ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white scale-105 shadow-xl border border-cyan-500/50"
-                : "bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:scale-105"
+                : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
               <BedDouble className="h-5 w-5 inline-block mr-2" />
@@ -1769,16 +1887,29 @@ Admin Panel - Vikram ENT Hospital`;
             </button>
           )}
           {currentUser?.role === 'COO' && (
-            <button
-              onClick={() => setShowDaywisePage(true)}
-              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${showDaywisePage
-                ? "bg-blue-600 text-white scale-105 shadow-xl border border-blue-500/50"
-                : "bg-gray-800/50 border-2 border-blue-500/50 text-blue-400 hover:bg-gray-700/50 hover:scale-105"
-                }`}
-            >
-              <BarChart3 className="h-5 w-5 inline-block mr-2" />
-              Show Day Wise Analysis
-            </button>
+            <div className="flex gap-4 flex-wrap w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowDaywisePage(true)}
+                className={`flex-1 md:flex-none px-6 py-4 rounded-xl font-bold text-sm md:text-base transition-all duration-300 shadow-lg transform ${showDaywisePage
+                  ? "bg-blue-600 text-white scale-105 shadow-xl border border-blue-500/50"
+                  : "bg-white dark:bg-gray-800 border-2 border-blue-500 dark:border-blue-500/50 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 hover:scale-105"
+                  }`}
+              >
+                <BarChart3 className="h-5 w-5 inline-block mr-2" />
+                Show Day Wise Analysis
+              </button>
+              
+              <button
+                onClick={() => setShowOPDDashboard(true)}
+                className={`flex-1 md:flex-none px-6 py-4 rounded-xl font-bold text-sm md:text-base transition-all duration-300 shadow-lg transform ${showOPDDashboard
+                  ? "bg-indigo-600 text-white scale-105 shadow-xl border border-indigo-500/50"
+                  : "bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 hover:scale-105 border border-indigo-500/30"
+                  }`}
+              >
+                <Activity className="h-5 w-5 inline-block mr-2" />
+                OPD NPS Dashboard
+              </button>
+            </div>
           )}
         </div>
 
@@ -1786,7 +1917,7 @@ Admin Panel - Vikram ENT Hospital`;
         {mainView === "feedbacks" && (
           <>
             {/* Date Filter Section */}
-            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-lg mb-8">
+            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg mb-8">
               <div className="flex items-center gap-3 mb-4">
                 <Filter className="h-6 w-6 text-indigo-400" />
                 <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
@@ -1804,7 +1935,7 @@ Admin Panel - Vikram ENT Hospital`;
                     onClick={() => switchFilterType("range")}
                     className={`px-4 py-2 rounded-xl font-bold transition-all duration-300 ${dateFilter.filterType === "range"
                       ? "bg-indigo-500 text-white shadow-lg border border-indigo-500/50"
-                      : "bg-gray-700/50 text-gray-300 hover:bg-gray-700/70 border border-gray-700"
+                      : "bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/70 border border-gray-300 dark:border-gray-700"
                       }`}
                   >
                     Date Range
@@ -1813,7 +1944,7 @@ Admin Panel - Vikram ENT Hospital`;
                     onClick={() => switchFilterType("single")}
                     className={`px-4 py-2 rounded-xl font-bold transition-all duration-300 ${dateFilter.filterType === "single"
                       ? "bg-indigo-500 text-white shadow-lg border border-indigo-500/50"
-                      : "bg-gray-700/50 text-gray-300 hover:bg-gray-700/70 border border-gray-700"
+                      : "bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/70 border border-gray-300 dark:border-gray-700"
                       }`}
                   >
                     Single Day
@@ -1825,7 +1956,7 @@ Admin Panel - Vikram ENT Hospital`;
                 {dateFilter.filterType === "range" ? (
                   <>
                     <div className="flex-1 min-w-[200px]">
-                      <label className="block text-sm font-bold text-gray-300 mb-2">
+                      <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                         Start Date
                       </label>
                       <input
@@ -1838,13 +1969,13 @@ Admin Panel - Vikram ENT Hospital`;
                             isActive: true,
                           }))
                         }
-                        className="w-full px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                        className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                         placeholder="Select start date"
                       />
                     </div>
 
                     <div className="flex-1 min-w-[200px]">
-                      <label className="block text-sm font-bold text-gray-300 mb-2">
+                      <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                         End Date
                       </label>
                       <input
@@ -1857,14 +1988,14 @@ Admin Panel - Vikram ENT Hospital`;
                             isActive: true,
                           }))
                         }
-                        className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                        className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                         placeholder="Select end date"
                       />
                     </div>
                   </>
                 ) : (
                   <div className="flex-1 min-w-[200px]">
-                    <label className="block text-sm font-bold text-gray-300 mb-2">
+                    <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                       Select Date
                     </label>
                     <input
@@ -1877,7 +2008,7 @@ Admin Panel - Vikram ENT Hospital`;
                           isActive: true,
                         }))
                       }
-                      className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                      className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                       placeholder="Select date"
                     />
                   </div>
@@ -1931,7 +2062,7 @@ Admin Panel - Vikram ENT Hospital`;
             </div>
 
             {/* Search Filter Section */}
-            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl mb-8">
+            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-xl mb-8">
               <div className="flex items-center gap-3 mb-4">
                 <Filter className="h-6 w-6 text-purple-400" />
                 <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
@@ -1954,7 +2085,7 @@ Admin Panel - Vikram ENT Hospital`;
                         isActive: true,
                       }))
                     }
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
                     placeholder="Enter patient name"
                   />
                 </div>
@@ -1973,7 +2104,7 @@ Admin Panel - Vikram ENT Hospital`;
                         isActive: true,
                       }))
                     }
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
                     placeholder="Enter mobile number"
                   />
                 </div>
@@ -1992,7 +2123,7 @@ Admin Panel - Vikram ENT Hospital`;
                         isActive: true,
                       }))
                     }
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
                     placeholder="Enter UHID"
                   />
                 </div>
@@ -2029,7 +2160,7 @@ Admin Panel - Vikram ENT Hospital`;
             </div>
 
             {/* Rating Filter Section */}
-            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl mb-8">
+            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-xl mb-8">
               <div className="flex items-center gap-3 mb-4">
                 <Star className="h-6 w-6 text-yellow-400" />
                 <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
@@ -2051,7 +2182,7 @@ Admin Panel - Vikram ENT Hospital`;
                       }));
                       applyRatingFilter();
                     }}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-300 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-300 text-gray-900 dark:text-white"
                   >
                     <option value="">All Ratings</option>
                     <option value="Excellent">😊 Excellent</option>
@@ -2120,7 +2251,7 @@ Admin Panel - Vikram ENT Hospital`;
         {mainView === "tickets" && (
           <>
             {/* Ticket Filters */}
-            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl mb-8">
+            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-xl mb-8">
               <div className="flex items-center gap-3 mb-4">
                 <Filter className="h-6 w-6 text-indigo-400" />
                 <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
@@ -2130,26 +2261,26 @@ Admin Panel - Vikram ENT Hospital`;
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                     Search
                   </label>
                   <input
                     type="text"
                     value={ticketSearchTerm}
                     onChange={(e) => setTicketSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                     placeholder="Search by title, description, department..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                     Status
                   </label>
                   <select
                     value={ticketStatusFilter}
                     onChange={(e) => setTicketStatusFilter(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                   >
                     <option value="all">All Status</option>
                     <option value="open">Open</option>
@@ -2159,13 +2290,13 @@ Admin Panel - Vikram ENT Hospital`;
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                     Severity
                   </label>
                   <select
                     value={ticketSeverityFilter}
                     onChange={(e) => setTicketSeverityFilter(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                   >
                     <option value="all">All Severity</option>
                     <option value="low">Low</option>
@@ -2175,22 +2306,38 @@ Admin Panel - Vikram ENT Hospital`;
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                     Department
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={ticketDepartmentFilter}
                     onChange={(e) => setTicketDepartmentFilter(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
-                    placeholder="Filter by department"
-                  />
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                  >
+                    <option value="all">All Departments</option>
+                    <option value="Nursing">Nursing</option>
+                    <option value="Operations">Operations</option>
+                    <option value="House Keeping">House Keeping</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Medical">Medical</option>
+                    <option value="F&B">F&B</option>
+                    <option value="Security">Security</option>
+                    <option value="Transport">Transport</option>
+                    <option value="IT">IT</option>
+                    <option value="Laundry">Laundry</option>
+                    <option value="Billing">Billing</option>
+                    <option value="Insurance / TPA">Insurance / TPA</option>
+                    <option value="MRD">MRD</option>
+                    <option value="Lab">Lab</option>
+                    <option value="Radiology">Radiology</option>
+                    <option value="Blood Bank">Blood Bank</option>
+                  </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                     Start Date
                   </label>
                   <input
@@ -2202,12 +2349,12 @@ Admin Panel - Vikram ENT Hospital`;
                         startDate: e.target.value,
                       }))
                     }
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
+                  <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                     End Date
                   </label>
                   <input
@@ -2219,7 +2366,7 @@ Admin Panel - Vikram ENT Hospital`;
                         endDate: e.target.value,
                       }))
                     }
-                    className="w-full px-4 py-2 rounded-xl bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                   />
                 </div>
               </div>
@@ -2244,237 +2391,14 @@ Admin Panel - Vikram ENT Hospital`;
           </>
         )}
 
-        {/* Floors Section - Only show when mainView is "floors" */}
-        {mainView === "floors" && (
-          <>
-            <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Building2 className="h-6 w-6 text-orange-400" />
-                  <h3 className="text-xl font-bold text-gray-200">
-                    Building Floors Management
-                  </h3>
-                </div>
-                <button
-                  onClick={() => {
-                    setEditingFloor(null);
-                    setFloorFormData({
-                      floorNumber: "",
-                      floorName: "",
-                      description: "",
-                      departments: "",
-                    });
-                    setShowFloorForm(true);
-                  }}
-                  className="flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/50 text-orange-400 px-4 py-2 rounded-xl hover:from-orange-500/30 hover:to-red-500/30 transition-all duration-300"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add New Floor
-                </button>
-              </div>
-
-              {/* Floor Form */}
-              {showFloorForm && (
-                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6 mb-6">
-                  <h4 className="text-lg font-bold text-gray-200 mb-4">
-                    {editingFloor ? "Edit Floor" : "Add New Floor"}
-                  </h4>
-                  <form
-                    onSubmit={editingFloor ? handleUpdateFloor : handleCreateFloor}
-                    className="space-y-4"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-bold text-gray-300 mb-2">
-                          Floor Number <span className="text-red-400">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={floorFormData.floorNumber}
-                          onChange={(e) =>
-                            setFloorFormData({
-                              ...floorFormData,
-                              floorNumber: e.target.value,
-                            })
-                          }
-                          required
-                          className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300"
-                          placeholder="e.g., Ground, 1, 2, 3, etc."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-gray-300 mb-2">
-                          Floor Name <span className="text-red-400">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={floorFormData.floorName}
-                          onChange={(e) =>
-                            setFloorFormData({
-                              ...floorFormData,
-                              floorName: e.target.value,
-                            })
-                          }
-                          required
-                          className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300"
-                          placeholder="e.g., Ground Floor, First Floor"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-300 mb-2">
-                        Description
-                      </label>
-                      <textarea
-                        value={floorFormData.description}
-                        onChange={(e) =>
-                          setFloorFormData({
-                            ...floorFormData,
-                            description: e.target.value,
-                          })
-                        }
-                        rows={3}
-                        className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300"
-                        placeholder="Optional description of the floor"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-300 mb-2">
-                        Departments (comma-separated)
-                      </label>
-                      <input
-                        type="text"
-                        value={floorFormData.departments}
-                        onChange={(e) =>
-                          setFloorFormData({
-                            ...floorFormData,
-                            departments: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300"
-                        placeholder="e.g., Cardiology, Neurology, Emergency"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Separate multiple departments with commas
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        className="flex items-center gap-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 text-green-400 px-6 py-2 rounded-xl hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-300"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                        {editingFloor ? "Update Floor" : "Create Floor"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCancelFloorForm}
-                        className="flex items-center gap-2 bg-gray-700/50 text-gray-300 border border-gray-600 px-6 py-2 rounded-xl hover:bg-gray-600 transition-all duration-300"
-                      >
-                        <X className="h-4 w-4" />
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-
-              {/* Floors List */}
-              {floorsLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading floors...</p>
-                </div>
-              ) : floors.length === 0 ? (
-                <div className="text-center py-8">
-                  <Building2 className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg">No floors added yet</p>
-                  <p className="text-gray-500 text-sm mt-2">
-                    Click "Add New Floor" to get started
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {floors.map((floor) => (
-                    <div
-                      key={floor._id}
-                      className={`bg-white dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-4 border ${floor.isActive
-                        ? "border-green-500/30"
-                        : "border-gray-200 dark:border-gray-700 opacity-60"
-                        } hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-all duration-300 shadow-md`}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="text-lg font-bold text-gray-200">
-                            {floor.floorName}
-                          </h4>
-                          <p className="text-sm text-gray-400">
-                            Floor #{floor.floorNumber}
-                          </p>
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-bold ${floor.isActive
-                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                            : "bg-gray-700/50 text-gray-400 border border-gray-600"
-                            }`}
-                        >
-                          {floor.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-                      {floor.description && (
-                        <p className="text-sm text-gray-400 mb-3">
-                          {floor.description}
-                        </p>
-                      )}
-                      {floor.departments && floor.departments.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-xs font-bold text-gray-500 mb-1">
-                            Departments:
-                          </p>
-                          <div className="flex flex-wrap gap-1">
-                            {floor.departments.map((dept, index) => (
-                              <span
-                                key={index}
-                                className="px-2 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-md text-xs"
-                              >
-                                {dept}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      <div className="flex gap-2 mt-4">
-                        <button
-                          onClick={() => handleEditFloor(floor)}
-                          className="flex-1 flex items-center justify-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/50 px-3 py-2 rounded-lg transition-colors text-sm"
-                        >
-                          <Edit className="h-3 w-3" />
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteFloor(floor._id)}
-                          className="flex-1 flex items-center justify-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 px-3 py-2 rounded-lg transition-colors text-sm"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
         {/* Doctors Section - Only show when mainView is "doctors" */}
         {mainView === "doctors" && (
           <>
-            <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg mb-8">
+            <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg mb-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <Stethoscope className="h-6 w-6 text-indigo-400" />
-                  <h3 className="text-xl font-bold text-gray-200">
+                  <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">
                     Doctors Management
                   </h3>
                 </div>
@@ -2490,7 +2414,7 @@ Admin Panel - Vikram ENT Hospital`;
                     });
                     setShowDoctorForm(true);
                   }}
-                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/50 text-indigo-400 px-4 py-2 rounded-xl hover:from-indigo-500/30 hover:to-purple-500/30 transition-all duration-300"
+                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500/10 dark:from-indigo-500/20 to-purple-500/10 dark:to-purple-500/20 border border-indigo-200 dark:border-indigo-500/50 text-indigo-700 dark:text-indigo-400 px-4 py-2 rounded-xl hover:from-indigo-500/20 dark:hover:from-indigo-500/30 hover:to-purple-500/20 dark:hover:to-purple-500/30 transition-all duration-300"
                 >
                   <Plus className="h-4 w-4" />
                   Add New Doctor
@@ -2499,8 +2423,8 @@ Admin Panel - Vikram ENT Hospital`;
 
               {/* Doctor Form */}
               {showDoctorForm && (
-                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6 mb-6">
-                  <h4 className="text-lg font-bold text-gray-200 mb-4">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 mb-6">
+                  <h4 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">
                     {editingDoctor ? "Edit Doctor" : "Add New Doctor"}
                   </h4>
                   <form
@@ -2509,7 +2433,7 @@ Admin Panel - Vikram ENT Hospital`;
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-bold text-gray-300 mb-2">
+                        <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                           Doctor Name <span className="text-red-400">*</span>
                         </label>
                         <input
@@ -2522,12 +2446,12 @@ Admin Panel - Vikram ENT Hospital`;
                             })
                           }
                           required
-                          className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                          className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                           placeholder="e.g., Dr. Rajesh Kumar"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-gray-300 mb-2">
+                        <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                           Specialization
                         </label>
                         <input
@@ -2539,13 +2463,13 @@ Admin Panel - Vikram ENT Hospital`;
                               specialization: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                          className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                           placeholder="e.g., Cardiologist, Neurologist"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-300 mb-2">
+                      <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                         Studies/Qualifications <span className="text-red-400">*</span>
                       </label>
                       <textarea
@@ -2558,12 +2482,12 @@ Admin Panel - Vikram ENT Hospital`;
                         }
                         required
                         rows={3}
-                        className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                        className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                         placeholder="e.g., MBBS, MD in Cardiology, PhD"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-300 mb-2">
+                      <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                         Doctor Image (URL or Base64)
                       </label>
                       <div className="space-y-2">
@@ -2576,7 +2500,7 @@ Admin Panel - Vikram ENT Hospital`;
                               image: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                          className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                           placeholder="Enter image URL or paste base64 data URI"
                         />
                         <div className="relative">
@@ -2589,7 +2513,7 @@ Admin Panel - Vikram ENT Hospital`;
                           />
                           <label
                             htmlFor="doctor-image-upload"
-                            className="flex items-center gap-2 bg-indigo-500/20 text-indigo-400 border border-indigo-500/50 px-4 py-2 rounded-xl hover:bg-indigo-500/30 transition-all duration-300 cursor-pointer w-fit"
+                            className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/50 px-4 py-2 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/30 transition-all duration-300 cursor-pointer w-fit"
                           >
                             <ImageIcon className="h-4 w-4" />
                             Upload Image
@@ -2597,7 +2521,7 @@ Admin Panel - Vikram ENT Hospital`;
                         </div>
                       </div>
                       {doctorFormData.image && (
-                        <div className="mt-2 w-32 aspect-square bg-gray-800 rounded-xl border-2 border-gray-700 overflow-hidden flex items-center justify-center">
+                        <div className="mt-2 w-32 aspect-square bg-gray-100 dark:bg-gray-800 rounded-xl border-2 border-gray-300 dark:border-gray-700 overflow-hidden flex items-center justify-center">
                           <img
                             src={doctorFormData.image}
                             alt="Doctor preview"
@@ -2608,28 +2532,28 @@ Admin Panel - Vikram ENT Hospital`;
                           />
                         </div>
                       )}
-                      <div className="mt-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-                        <p className="text-xs font-semibold text-blue-300 mb-1">
+                      <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg">
+                        <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1">
                           📐 Recommended Image Dimensions:
                         </p>
-                        <ul className="text-xs text-blue-200 space-y-1 ml-4 list-disc">
+                        <ul className="text-xs text-blue-700 dark:text-blue-200 space-y-1 ml-4 list-disc">
                           <li><strong>Size:</strong> 400 x 400 pixels (square, 1:1 ratio)</li>
                           <li><strong>Minimum:</strong> 300 x 300 pixels</li>
                           <li><strong>Maximum:</strong> 800 x 800 pixels</li>
                           <li><strong>Format:</strong> JPG, PNG, or WebP</li>
                           <li><strong>File Size:</strong> Maximum 5MB</li>
                         </ul>
-                        <p className="text-xs text-blue-300 mt-2 mb-2">
+                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-2 mb-2">
                           💡 Tip: Use square images for best results. The image will be cropped to fit if it's not square.
                         </p>
-                        <p className="text-xs font-bold text-blue-300 mb-1">
+                        <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-1">
                           Use this link to resize image:
                         </p>
                         <a
                           href="https://resizer.zeeconvert.com/resize-image-to-1x1/"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-xs font-semibold text-blue-400 hover:text-blue-300 hover:underline transition-colors duration-200"
+                          className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline transition-colors duration-200"
                         >
                           <ExternalLink className="h-3 w-3" />
                           Resize image to square (1:1) using online tool
@@ -2637,7 +2561,7 @@ Admin Panel - Vikram ENT Hospital`;
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-300 mb-2">
+                      <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
                         Display Order
                       </label>
                       <input
@@ -2649,7 +2573,7 @@ Admin Panel - Vikram ENT Hospital`;
                             displayOrder: parseInt(e.target.value) || 0,
                           })
                         }
-                        className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+                        className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
                         placeholder="0"
                       />
                       <p className="text-xs text-gray-600 mt-1">
@@ -2659,7 +2583,7 @@ Admin Panel - Vikram ENT Hospital`;
                     <div className="flex gap-2">
                       <button
                         type="submit"
-                        className="flex items-center gap-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 text-green-400 px-6 py-2 rounded-xl hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-300"
+                        className="flex items-center gap-2 bg-gradient-to-r from-green-500/10 dark:from-green-500/20 to-emerald-500/10 dark:to-emerald-500/20 border border-green-300 dark:border-green-500/50 text-green-700 dark:text-green-400 px-6 py-2 rounded-xl hover:from-green-500/20 dark:hover:from-green-500/30 hover:to-emerald-500/20 dark:hover:to-emerald-500/30 transition-all duration-300"
                       >
                         <CheckCircle2 className="h-4 w-4" />
                         {editingDoctor ? "Update Doctor" : "Create Doctor"}
@@ -2667,7 +2591,7 @@ Admin Panel - Vikram ENT Hospital`;
                       <button
                         type="button"
                         onClick={handleCancelDoctorForm}
-                        className="flex items-center gap-2 bg-gray-700/50 text-gray-300 border border-gray-600 px-6 py-2 rounded-xl hover:bg-gray-600 transition-all duration-300"
+                        className="flex items-center gap-2 bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 px-6 py-2 rounded-xl hover:bg-gray-600 transition-all duration-300"
                       >
                         <X className="h-4 w-4" />
                         Cancel
@@ -2681,12 +2605,12 @@ Admin Panel - Vikram ENT Hospital`;
               {doctorsLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading doctors...</p>
+                  <p className="text-gray-500 dark:text-gray-400">Loading doctors...</p>
                 </div>
               ) : doctors.length === 0 ? (
                 <div className="text-center py-8">
                   <Stethoscope className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg">No doctors added yet</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">No doctors added yet</p>
                   <p className="text-gray-500 text-sm mt-2">
                     Click "Add New Doctor" to get started
                   </p>
@@ -2696,13 +2620,13 @@ Admin Panel - Vikram ENT Hospital`;
                   {doctors.map((doctor) => (
                     <div
                       key={doctor._id}
-                      className={`bg-gray-800/40 backdrop-blur-sm rounded-xl shadow-lg border overflow-hidden ${doctor.isActive
+                      className={`bg-white dark:bg-gray-800/40 backdrop-blur-sm rounded-xl shadow-lg border overflow-hidden ${doctor.isActive
                         ? "border-green-500/30"
                         : "border-gray-700 opacity-60"
-                        } hover:bg-gray-800/60 transition-all duration-300`}
+                        } hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-all duration-300`}
                     >
                       {doctor.image && (
-                        <div className="w-full aspect-square bg-gray-900 overflow-hidden flex items-center justify-center">
+                        <div className="w-full aspect-square bg-gray-100 dark:bg-gray-900 overflow-hidden flex items-center justify-center">
                           <img
                             src={doctor.image}
                             alt={doctor.name}
@@ -2717,14 +2641,14 @@ Admin Panel - Vikram ENT Hospital`;
                       <div className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
-                            <h4 className="text-base font-bold text-gray-200">
+                            <h4 className="text-base font-bold text-gray-800 dark:text-gray-200">
                               {doctor.name}
                             </h4>
                           </div>
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-bold ${doctor.isActive
-                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                              : "bg-gray-700/50 text-gray-400 border border-gray-600"
+                              ? "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-500/30"
+                              : "bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600"
                               }`}
                           >
                             {doctor.isActive ? "Active" : "Inactive"}
@@ -2732,13 +2656,13 @@ Admin Panel - Vikram ENT Hospital`;
                         </div>
 
                         {doctor.studies && (
-                          <p className="text-xs text-gray-400 mb-2 leading-relaxed">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
                             {doctor.studies}
                           </p>
                         )}
 
                         {doctor.specialization && (
-                          <p className="text-sm font-semibold text-indigo-400 mb-3">
+                          <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mb-3">
                             {doctor.specialization}
                           </p>
                         )}
@@ -2746,14 +2670,14 @@ Admin Panel - Vikram ENT Hospital`;
                         <div className="flex gap-2 mt-4">
                           <button
                             onClick={() => handleEditDoctor(doctor)}
-                            className="flex-1 flex items-center justify-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/50 px-3 py-2 rounded-lg transition-colors text-sm"
+                            className="flex-1 flex items-center justify-center gap-2 bg-blue-50 dark:bg-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/50 px-3 py-2 rounded-lg transition-colors text-sm"
                           >
                             <Edit className="h-3 w-3" />
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteDoctor(doctor._id)}
-                            className="flex-1 flex items-center justify-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 px-3 py-2 rounded-lg transition-colors text-sm"
+                            className="flex-1 flex items-center justify-center gap-2 bg-red-50 dark:bg-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/50 px-3 py-2 rounded-lg transition-colors text-sm"
                           >
                             <Trash2 className="h-3 w-3" />
                             Delete
@@ -2768,447 +2692,16 @@ Admin Panel - Vikram ENT Hospital`;
           </>
         )}
 
-        {/* Departments Section - Only show when mainView is "departments" */}
-        {mainView === "departments" && (
-          <>
-            <div className="space-y-8">
-              {/* COO Management Section */}
-              <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-6 w-6 text-emerald-400" />
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-200">
-                        Top Level Escalation (COO)
-                      </h3>
-                      <p className="text-sm text-gray-400">
-                        Manage the Chief Operating Officer details for final escalation
-                      </p>
-                    </div>
-                  </div>
-                  {!showCOOForm && cooData && (
-                    <button
-                      onClick={() => setShowCOOForm(true)}
-                      className="flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-4 py-2 rounded-xl hover:bg-emerald-500/30 transition-all duration-300"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Edit COO Details
-                    </button>
-                  )}
-                </div>
-
-                {showCOOForm ? (
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
-                    <form onSubmit={handleUpdateCOO} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-bold text-gray-300 mb-2">
-                            Name
-                          </label>
-                          <input
-                            type="text"
-                            value={cooFormData.name}
-                            onChange={(e) => setCooFormData({ ...cooFormData, name: e.target.value })}
-                            className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="e.g. Dr. Vikram Singh"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-gray-300 mb-2">
-                            Designation
-                          </label>
-                          <input
-                            type="text"
-                            value={cooFormData.designation}
-                            onChange={(e) => setCooFormData({ ...cooFormData, designation: e.target.value })}
-                            className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="COO"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-gray-300 mb-2">
-                            Email
-                          </label>
-                          <input
-                            type="email"
-                            value={cooFormData.email}
-                            onChange={(e) => setCooFormData({ ...cooFormData, email: e.target.value })}
-                            className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="coo@hospital.com"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-gray-300 mb-2">
-                            Phone
-                          </label>
-                          <input
-                            type="text"
-                            value={cooFormData.phone}
-                            onChange={(e) => setCooFormData({ ...cooFormData, phone: e.target.value })}
-                            className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="+91..."
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-bold text-gray-300 mb-2">
-                            Access Scope
-                          </label>
-                          <input
-                            type="text"
-                            value={cooFormData.access}
-                            onChange={(e) => setCooFormData({ ...cooFormData, access: e.target.value })}
-                            className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="All Departments"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-gray-300 mb-2">
-                            Ward Access Scope
-                          </label>
-                          <input
-                            type="text"
-                            value={cooFormData.wardAccess}
-                            onChange={(e) => setCooFormData({ ...cooFormData, wardAccess: e.target.value })}
-                            className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="All Wards"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          type="button"
-                          onClick={() => setShowCOOForm(false)}
-                          className="px-4 py-2 rounded-xl border border-gray-600 text-gray-300 hover:bg-gray-700"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
-                        >
-                          Save Changes
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                ) : cooData ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Name & Designation</p>
-                      <p className="text-lg font-bold text-white">{cooData.name || "Not Set"}</p>
-                      <p className="text-emerald-400">{cooData.designation}</p>
-                    </div>
-                    <div className="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Contact Info</p>
-                      <div className="space-y-1">
-                        <p className="text-gray-300 flex items-center gap-2">
-                          <Mail className="h-4 w-4" /> {cooData.email || "N/A"}
-                        </p>
-                        <p className="text-gray-300 flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4" /> {cooData.phone || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Access Rights</p>
-                      <div className="space-y-1">
-                        <p className="text-gray-300"><span className="text-gray-500">Depts:</span> {cooData.access}</p>
-                        <p className="text-gray-300"><span className="text-gray-500">Wards:</span> {cooData.wardAccess}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-gray-400 italic">No COO information available.</p>
-                )}
-              </div>
-
-              {/* Departments Management Section */}
-              <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <GitBranch className="h-6 w-6 text-emerald-400" />
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-200">
-                        Departments Hierarchy
-                      </h3>
-                      <p className="text-sm text-gray-400">
-                        Manage escalation levels for each department
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSeedDepartments}
-                      className="flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/50 text-yellow-500 px-4 py-2 rounded-xl hover:bg-yellow-500/30 transition-all duration-300 text-sm"
-                    >
-                      Reset Default Data
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingDepartment(null);
-                        setDepartmentFormData({
-                          departmentName: "",
-                          firstLevelDesignation: "",
-                          firstLevelAccess: "",
-                          firstLevelEmail: "",
-                          firstLevelPhone: "",
-                          secondLevelDesignation: "",
-                          secondLevelAccess: "",
-                          secondLevelEmail: "",
-                          secondLevelPhone: "",
-                        });
-                        setShowDepartmentForm(true);
-                      }}
-                      className="flex items-center gap-2 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/50 text-emerald-400 px-4 py-2 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 transition-all duration-300"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Department
-                    </button>
-                  </div>
-                </div>
-
-                {/* Department Form */}
-                {showDepartmentForm && (
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6 mb-6">
-                    <h4 className="text-lg font-bold text-gray-200 mb-4">
-                      {editingDepartment ? "Edit Department Hierarchy" : "Add New Department Hierarchy"}
-                    </h4>
-                    <form onSubmit={editingDepartment ? handleUpdateDepartment : handleCreateDepartment} className="space-y-6">
-
-                      {/* Department Name */}
-                      <div>
-                        <label className="block text-sm font-bold text-gray-300 mb-2">
-                          Department Name <span className="text-red-400">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={departmentFormData.departmentName}
-                          onChange={(e) => setDepartmentFormData({ ...departmentFormData, departmentName: e.target.value })}
-                          required
-                          className="w-full px-4 py-2 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          placeholder="e.g. Operations"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Level 1 */}
-                        <div className="p-4 bg-gray-800/30 rounded-xl border border-gray-700">
-                          <h5 className="font-bold text-emerald-400 mb-4 border-b border-gray-700 pb-2">Level 1 Escalation</h5>
-                          <div className="space-y-4">
-                            <div>
-                              <label className="block text-xs font-bold text-gray-400 mb-1">Designation</label>
-                              <input
-                                type="text"
-                                value={departmentFormData.firstLevelDesignation}
-                                onChange={(e) => setDepartmentFormData({ ...departmentFormData, firstLevelDesignation: e.target.value })}
-                                required
-                                className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-emerald-500"
-                                placeholder="e.g. Nursing Supervisor"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold text-gray-400 mb-1">Access</label>
-                              <input
-                                type="text"
-                                value={departmentFormData.firstLevelAccess}
-                                onChange={(e) => setDepartmentFormData({ ...departmentFormData, firstLevelAccess: e.target.value })}
-                                required
-                                className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-emerald-500"
-                                placeholder="e.g. Particular Ward"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="block text-xs font-bold text-gray-400 mb-1">Email</label>
-                                <input
-                                  type="text"
-                                  value={departmentFormData.firstLevelEmail}
-                                  onChange={(e) => setDepartmentFormData({ ...departmentFormData, firstLevelEmail: e.target.value })}
-                                  className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-emerald-500"
-                                  placeholder="Optional"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-bold text-gray-400 mb-1">Phone</label>
-                                <input
-                                  type="text"
-                                  value={departmentFormData.firstLevelPhone}
-                                  onChange={(e) => setDepartmentFormData({ ...departmentFormData, firstLevelPhone: e.target.value })}
-                                  className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-emerald-500"
-                                  placeholder="Optional"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Level 2 */}
-                        <div className="p-4 bg-gray-800/30 rounded-xl border border-gray-700">
-                          <h5 className="font-bold text-blue-400 mb-4 border-b border-gray-700 pb-2">Level 2 Escalation</h5>
-                          <div className="space-y-4">
-                            <div>
-                              <label className="block text-xs font-bold text-gray-400 mb-1">Designation</label>
-                              <input
-                                type="text"
-                                value={departmentFormData.secondLevelDesignation}
-                                onChange={(e) => setDepartmentFormData({ ...departmentFormData, secondLevelDesignation: e.target.value })}
-                                required
-                                className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-blue-500"
-                                placeholder="e.g. Head Operations"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold text-gray-400 mb-1">Access</label>
-                              <input
-                                type="text"
-                                value={departmentFormData.secondLevelAccess}
-                                onChange={(e) => setDepartmentFormData({ ...departmentFormData, secondLevelAccess: e.target.value })}
-                                required
-                                className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-blue-500"
-                                placeholder="e.g. All Wards"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="block text-xs font-bold text-gray-400 mb-1">Email</label>
-                                <input
-                                  type="text"
-                                  value={departmentFormData.secondLevelEmail}
-                                  onChange={(e) => setDepartmentFormData({ ...departmentFormData, secondLevelEmail: e.target.value })}
-                                  className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-blue-500"
-                                  placeholder="Optional"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-bold text-gray-400 mb-1">Phone</label>
-                                <input
-                                  type="text"
-                                  value={departmentFormData.secondLevelPhone}
-                                  onChange={(e) => setDepartmentFormData({ ...departmentFormData, secondLevelPhone: e.target.value })}
-                                  className="w-full px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600 text-white text-sm focus:ring-1 focus:ring-blue-500"
-                                  placeholder="Optional"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          type="button"
-                          onClick={handleCancelDepartmentForm}
-                          className="px-6 py-2 rounded-xl border border-gray-600 text-gray-300 hover:bg-gray-700"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-6 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90 font-bold shadow-lg"
-                        >
-                          {editingDepartment ? "Update Department" : "Create Department"}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                )}
-
-                {/* Departments List */}
-                {departmentsLoading ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading hierarchy...</p>
-                  </div>
-                ) : departments.length === 0 ? (
-                  <div className="text-center py-12">
-                    <GitBranch className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400 text-lg">No departments found.</p>
-                    <p className="text-gray-500 text-sm mt-2">
-                      Add a new department or reset to defaults.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {departments.map((dept) => (
-                      <div key={dept._id} className="bg-gray-800/30 border border-gray-700 rounded-xl p-4 hover:bg-gray-800/50 transition-all duration-200">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                          {/* Department Info */}
-                          <div className="min-w-[200px]">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded">#{dept.serialNumber}</span>
-                              <h4 className="text-lg font-bold text-white">{dept.departmentName}</h4>
-                            </div>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${dept.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                              {dept.isActive ? 'Active' : 'Inactive'}
-                            </span>
-                          </div>
-
-                          {/* Escalation Levels Visual */}
-                          <div className="flex-1 flex flex-col md:flex-row gap-2 md:items-center">
-                            {/* Level 1 */}
-                            <div className="flex-1 bg-emerald-900/20 border border-emerald-500/20 rounded-lg p-3">
-                              <p className="text-xs text-emerald-500 font-bold mb-1">Level 1</p>
-                              <p className="text-sm text-gray-200 font-semibold">{dept.firstLevel.designation}</p>
-                              <p className="text-xs text-gray-400">{dept.firstLevel.access}</p>
-                            </div>
-
-                            <div className="hidden md:block text-gray-600">→</div>
-
-                            {/* Level 2 */}
-                            <div className="flex-1 bg-blue-900/20 border border-blue-500/20 rounded-lg p-3">
-                              <p className="text-xs text-blue-500 font-bold mb-1">Level 2</p>
-                              <p className="text-sm text-gray-200 font-semibold">{dept.secondLevel.designation}</p>
-                              <p className="text-xs text-gray-400">{dept.secondLevel.access}</p>
-                            </div>
-
-                            <div className="hidden md:block text-gray-600">→</div>
-
-                            {/* Next Level (COO) - Static Visual */}
-                            <div className="flex-[0.5] bg-purple-900/20 border border-purple-500/20 rounded-lg p-3 opacity-70">
-                              <p className="text-xs text-purple-500 font-bold mb-1">Next</p>
-                              <p className="text-sm text-gray-200 font-semibold">{cooData?.designation || "COO"}</p>
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleEditDepartment(dept)}
-                              className="p-2 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
-                              title="Edit"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteDepartment(dept._id)}
-                              className="p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        )}
-
         {/* Rooms Section - Only show when mainView is "rooms" */}
         {mainView === "rooms" && (
-          <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-3xl p-8 shadow-2xl mb-8">
+          <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-3xl p-8 shadow-2xl mb-8">
             <div className="flex items-center gap-4 mb-8">
               <div className="p-3 bg-cyan-500/20 rounded-2xl">
                 <BedDouble className="h-8 w-8 text-cyan-400" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-white">Hospital Rooms & Beds</h2>
-                <p className="text-gray-400">Inventory and categorization of all available beds</p>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Hospital Rooms & Beds</h2>
+                <p className="text-gray-500 dark:text-gray-400">Inventory and categorization of all available beds</p>
               </div>
             </div>
 
@@ -3235,10 +2728,10 @@ Admin Panel - Vikram ENT Hospital`;
                     { sno: 9, category: "Labour ward", rooms: "2101-2105", beds: 5 }
                   ].map((room, idx) => (
                     <tr key={idx} className="hover:bg-white/5 transition-colors group">
-                      <td className="px-6 py-4 text-gray-400 group-hover:text-yellow-400 transition-colors font-bold">{room.sno}</td>
-                      <td className="px-6 py-4 font-semibold text-gray-200">{room.category}</td>
-                      <td className="px-6 py-4 text-gray-300 font-mono">{room.rooms}</td>
-                      <td className="px-6 py-4 text-right font-bold text-white">
+                      <td className="px-6 py-4 text-gray-500 dark:text-gray-400 group-hover:text-yellow-500 dark:group-hover:text-yellow-400 transition-colors font-bold">{room.sno}</td>
+                      <td className="px-6 py-4 font-semibold text-gray-800 dark:text-gray-200">{room.category}</td>
+                      <td className="px-6 py-4 text-gray-600 dark:text-gray-300 font-mono">{room.rooms}</td>
+                      <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
                         <span className="inline-block px-3 py-1 bg-white/5 rounded-lg border border-white/10 group-hover:border-yellow-500/30 transition-all">
                           {room.beds}
                         </span>
@@ -3258,15 +2751,15 @@ Admin Panel - Vikram ENT Hospital`;
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="p-6 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 rounded-2xl">
                 <p className="text-indigo-400 font-bold text-sm uppercase mb-2">Ward Capacity</p>
-                <p className="text-3xl font-bold text-white">23 <span className="text-sm font-normal text-gray-500">General Beds</span></p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">23 <span className="text-sm font-normal text-gray-500">General Beds</span></p>
               </div>
               <div className="p-6 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-2xl">
                 <p className="text-cyan-400 font-bold text-sm uppercase mb-2">Critical Care</p>
-                <p className="text-3xl font-bold text-white">50 <span className="text-sm font-normal text-gray-500">ICU Beds</span></p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">50 <span className="text-sm font-normal text-gray-500">ICU Beds</span></p>
               </div>
               <div className="p-6 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl">
                 <p className="text-purple-400 font-bold text-sm uppercase mb-2">Private Rooms</p>
-                <p className="text-3xl font-bold text-white">56 <span className="text-sm font-normal text-gray-500">Premium Units</span></p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">56 <span className="text-sm font-normal text-gray-500">Premium Units</span></p>
               </div>
             </div>
           </div>
@@ -3274,12 +2767,12 @@ Admin Panel - Vikram ENT Hospital`;
 
         {/* Tabs - Only show for feedbacks view */}
         {mainView === "feedbacks" && (
-          <div className="flex space-x-2 bg-gray-800/50 backdrop-blur-sm p-2 rounded-2xl w-fit shadow-lg mb-8 border border-gray-700">
+          <div className="flex space-x-2 bg-white dark:bg-gray-800/50 backdrop-blur-sm p-2 rounded-2xl w-fit shadow-lg mb-8 border border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setActiveTab("opd")}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 transform ${activeTab === "opd"
                 ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-xl scale-105"
-                : "bg-gray-700/30 text-gray-400 hover:bg-gray-700/50 hover:scale-105 hover:text-gray-200"
+                : "bg-white dark:bg-gray-700/30 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:scale-105 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
             >
               OPD Feedback ({filteredFeedback.opd.length})
@@ -3288,7 +2781,7 @@ Admin Panel - Vikram ENT Hospital`;
               onClick={() => setActiveTab("ipd")}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 transform ${activeTab === "ipd"
                 ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-xl scale-105"
-                : "bg-gray-700/30 text-gray-400 hover:bg-gray-700/50 hover:scale-105 hover:text-gray-200"
+                : "bg-white dark:bg-gray-700/30 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:scale-105 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
             >
               IPD Feedback ({filteredFeedback.ipd.length})
@@ -3325,53 +2818,55 @@ Admin Panel - Vikram ENT Hospital`;
                 </p>
               </div>
             ) : mainView === "tickets" ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col gap-6 p-6">
+                <ComplaintHeatmap tickets={filteredTickets} />
+                <div className="overflow-x-auto bg-white dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-3xl pb-2">
+                  <table className="w-full">
+                    <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-300">
                         S.No
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-300">
                         Ticket ID
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-300">
                         Title
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-300">
                         Issue Category
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-300">
                         Department
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-300">
                         Severity
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-300">
                         Status
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-300">
                         Created At
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-300">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 dark:text-gray-300">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                     {filteredTickets.map((ticket, index) => (
                       <tr
                         key={ticket.id}
-                        className={`group hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all duration-200 border-b border-gray-100 dark:border-gray-800 last:border-0 ${index % 2 === 0 ? "bg-gray-50 dark:bg-gray-900/20" : "bg-transparent"
+                        className={`group hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all duration-200 border-b border-gray-100 dark:border-gray-800 last:border-0 ${index % 2 === 0 ? "bg-gray-50/50 dark:bg-gray-900/20" : "bg-transparent"
                           }`}
                       >
-                        <td className="px-6 py-4 text-sm text-gray-400 font-mono group-hover:text-indigo-400 transition-colors">
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 font-mono group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">
                           {index + 1}
                         </td>
-                        <td className="px-6 py-4 text-sm text-white font-semibold">
+                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-semibold">
                           {ticket.id}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-300">
+                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                           <div className="max-w-xs truncate" title={ticket.title}>
                             {ticket.title}
                           </div>
@@ -3381,7 +2876,7 @@ Admin Panel - Vikram ENT Hospital`;
                             {ticket.issueCategory || "N/A"}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-400">
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                           {ticket.department}
                         </td>
                         <td className="px-6 py-4 text-sm">
@@ -3409,11 +2904,27 @@ Admin Panel - Vikram ENT Hospital`;
                             {ticket.status.replace("-", " ").toUpperCase()}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-500">
                           {new Date(ticket.createdAt).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                clearUnread(ticket.id);
+                                setChatTicketId(ticket.id);
+                              }}
+                              className="px-3 py-1 bg-indigo-500/20 text-indigo-400 border border-indigo-500/50 rounded-lg hover:bg-indigo-500/30 transition-colors text-xs"
+                            >
+                              <span className="flex items-center gap-2">
+                                Chat
+                                {unread[ticket.id] ? (
+                                  <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-[10px] font-black">
+                                    {unread[ticket.id]}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </button>
                             <button
                               onClick={() => {
                                 const newStatus =
@@ -3449,6 +2960,27 @@ Admin Panel - Vikram ENT Hospital`;
                   </tbody>
                 </table>
               </div>
+
+                {/* Chat Sidebar */}
+                {chatTicketId && (
+                  <div className="fixed inset-0 z-50">
+                    <div
+                      className="absolute inset-0 bg-black/50"
+                      onClick={() => setChatTicketId(null)}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center p-4">
+                      <div className="w-full max-w-2xl h-[80vh] bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl p-4">
+                        <TicketChat
+                          ticketId={chatTicketId}
+                          role="admin"
+                          onClose={() => setChatTicketId(null)}
+                          title={`Ticket Chat • ${chatTicketId}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+            </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -3477,26 +3009,26 @@ Admin Panel - Vikram ENT Hospital`;
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                     {(currentData as FeedbackData[]).map((item, index) => (
                       <tr
                         key={item.id || `feedback-${index}`}
-                        className={`group hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all duration-200 border-b border-gray-100 dark:border-gray-800 last:border-0 ${index % 2 === 0 ? "bg-gray-50 dark:bg-gray-900/20" : "bg-transparent"
+                        className={`group hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all duration-200 border-b border-gray-100 dark:border-gray-800 last:border-0 ${index % 2 === 0 ? "bg-gray-50/50 dark:bg-gray-900/20" : "bg-transparent"
                           }`}
                       >
-                        <td className="px-6 py-4 text-sm text-gray-400 font-mono group-hover:text-indigo-400 transition-colors">
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 font-mono group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">
                           {index + 1}
                         </td>
-                        <td className="px-6 py-4 text-sm text-white font-semibold">
+                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-semibold">
                           {item.name}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-300">
+                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                           {item.uhid}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-400">
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                           {item.date}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-400">
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                           {item.mobile}
                         </td>
                         <td className="px-6 py-4 text-sm">
@@ -3538,26 +3070,26 @@ Admin Panel - Vikram ENT Hospital`;
               {mainView === "tickets" ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-                    <h3 className="text-lg font-bold text-green-400 mb-2">
+                    <h3 className="text-lg font-bold text-green-600 dark:text-green-400 mb-2">
                       Total Tickets
                     </h3>
-                    <p className="text-3xl font-bold text-white">
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {tickets.length}
                     </p>
                   </div>
                   <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-                    <h3 className="text-lg font-bold text-blue-400 mb-2">
+                    <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-2">
                       Open Tickets
                     </h3>
-                    <p className="text-3xl font-bold text-white">
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {tickets.filter((t) => t.status === "open").length}
                     </p>
                   </div>
                   <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-                    <h3 className="text-lg font-bold text-purple-400 mb-2">
+                    <h3 className="text-lg font-bold text-purple-600 dark:text-purple-400 mb-2">
                       Resolved Tickets
                     </h3>
-                    <p className="text-3xl font-bold text-white">
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {tickets.filter((t) => t.status === "resolved").length}
                     </p>
                   </div>

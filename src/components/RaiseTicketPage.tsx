@@ -7,6 +7,8 @@ import {
   Download,
 } from "lucide-react";
 import { useTickets, Ticket } from "../hooks/useTickets";
+import TicketChat from "./TicketChat";
+import PatientLoginModal from "./PatientLoginModal";
 
 interface Props {
   onNavigateBack?: (tab: "dashboard") => void;
@@ -17,13 +19,16 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
   const [title, setTitle] = useState("");
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("medium");
   const [description, setDescription] = useState("");
-  const [department, setDepartment] = useState("General");
+  const [department, setDepartment] = useState("Nursing");
   const [issueCategory, setIssueCategory] = useState<"Delay" | "Misbehavior" | "Overcharging" | "Hygiene" | "Equipment">("Delay");
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTicket, setCreatedTicket] = useState<Ticket | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [patientChatToken, setPatientChatToken] = useState<string | null>(null);
+  const [showPatientLogin, setShowPatientLogin] = useState(false);
 
   const handleDownload = (ticket: Ticket) => {
     const md = `# ${ticket.title}\n\n- Ticket ID: ${ticket.id
@@ -43,6 +48,13 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Require patient OTP login before creating ticket
+    const patientToken = localStorage.getItem("patientToken");
+    if (!patientToken) {
+      setShowPatientLogin(true);
+      return;
+    }
+
     if (!title.trim()) {
       setSubmitStatus("error");
       return;
@@ -51,7 +63,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
     setIsSubmitting(true);
 
     try {
-      const newTicket = await addTicket({
+      const result = await addTicket({
         title,
         severity,
         description,
@@ -59,13 +71,20 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
         issueCategory,
       });
 
-      setCreatedTicket(newTicket);
+      setCreatedTicket(result.ticket);
+      setPatientChatToken(result.patientChatToken || null);
+      if (result.patientChatToken) {
+        localStorage.setItem(
+          `ticket_chat_token:${result.ticket.id}`,
+          result.patientChatToken
+        );
+      }
       setSubmitStatus("success");
       setTimeout(() => {
         setTitle("");
         setDescription("");
         setSeverity("medium");
-        setDepartment("General");
+        setDepartment("Nursing");
         setIssueCategory("Delay");
       }, 1000);
     } catch (error) {
@@ -79,10 +98,10 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
   return (
     <div className="w-full min-h-screen bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-100/50 dark:from-gray-900/50 to-transparent pointer-events-none" />
 
       {/* Header with Back Button */}
-      <div className="relative z-10 bg-gray-50 dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-lg">
+      <div className="relative z-10 bg-gray-50 dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 shadow-lg">
         <div className="w-full px-6 py-6 max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             <button
@@ -97,7 +116,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent mb-2">
               Raise an Issue Ticket
             </h1>
-            <p className="text-gray-400">
+            <p className="text-gray-500 dark:text-gray-400">
               Report a problem or issue with the hospital system
             </p>
           </div>
@@ -106,7 +125,11 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
 
       {/* Main Content */}
       <div className="relative z-10 pt-8 pb-8 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-800">
+        <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-700">
+          <PatientLoginModal
+            isOpen={showPatientLogin}
+            onClose={() => setShowPatientLogin(false)}
+          />
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title Field */}
             <div>
@@ -119,27 +142,42 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Brief summary of the issue"
                 required
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
 
             {/* Department, Severity, and Issue Category - Three Columns */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                   Department <span className="text-indigo-400">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  placeholder="e.g., IT, Admin, Frontend, Backend"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                />
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-gray-900 dark:text-white"
+                >
+                  <option value="Nursing">Nursing</option>
+                  <option value="Operations">Operations</option>
+                  <option value="House Keeping">House Keeping</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Medical">Medical</option>
+                  <option value="F&B">F&B</option>
+                  <option value="Security">Security</option>
+                  <option value="Transport">Transport</option>
+                  <option value="IT">IT</option>
+                  <option value="Laundry">Laundry</option>
+                  <option value="Billing">Billing</option>
+                  <option value="Insurance / TPA">Insurance / TPA</option>
+                  <option value="MRD">MRD</option>
+                  <option value="Lab">Lab</option>
+                  <option value="Radiology">Radiology</option>
+                  <option value="Blood Bank">Blood Bank</option>
+                </select>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                   Issue Category <span className="text-indigo-400">*</span>
                 </label>
                 <select
@@ -147,7 +185,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                   onChange={(e) =>
                     setIssueCategory(e.target.value as "Delay" | "Misbehavior" | "Overcharging" | "Hygiene" | "Equipment")
                   }
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-gray-900 dark:text-white"
                 >
                   <option value="Delay">Delay</option>
                   <option value="Misbehavior">Misbehavior</option>
@@ -158,7 +196,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                   Severity Level <span className="text-indigo-400">*</span>
                 </label>
                 <select
@@ -166,7 +204,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                   onChange={(e) =>
                     setSeverity(e.target.value as "low" | "medium" | "high")
                   }
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 text-gray-900 dark:text-white"
                 >
                   <option value="low">Low - Minor issue</option>
                   <option value="medium">Medium - Important issue</option>
@@ -177,7 +215,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
 
             {/* Description Field */}
             <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                 Detailed Description <span className="text-gray-500 text-xs">(Optional)</span>
               </label>
               <textarea
@@ -185,7 +223,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Provide detailed information about the issue, including steps to reproduce if applicable (optional)"
                 rows={8}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
 
@@ -208,6 +246,38 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                   <Download className="h-5 w-5" />
                   Download Ticket as Markdown
                 </button>
+
+                <button
+                  onClick={() => setIsChatOpen(true)}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/50 text-indigo-200 rounded-xl font-bold transition-colors duration-150"
+                >
+                  Open Chat Sidebar
+                </button>
+              </div>
+            )}
+
+            {/* Chat Sidebar */}
+            {isChatOpen && createdTicket && (
+              <div className="fixed inset-0 z-50">
+                <div
+                  className="absolute inset-0 bg-black/50"
+                  onClick={() => setIsChatOpen(false)}
+                />
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                  <div className="w-full max-w-2xl h-[80vh] bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl p-4">
+                    <TicketChat
+                      ticketId={createdTicket.id}
+                      role="patient"
+                      patientChatToken={
+                        patientChatToken ||
+                        localStorage.getItem(`ticket_chat_token:${createdTicket.id}`) ||
+                        undefined
+                      }
+                      onClose={() => setIsChatOpen(false)}
+                      title={`Chat with Admin • ${createdTicket.id}`}
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -224,11 +294,11 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
             )}
 
             {/* Submit Button */}
-            <div className="flex justify-end gap-4 pt-6 border-t border-gray-800">
+            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-800">
               <button
                 type="button"
                 onClick={() => onNavigateBack?.("dashboard")}
-                className="px-6 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 transition-all duration-300"
+                className="px-6 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 transition-all duration-300"
               >
                 {submitStatus === "success" ? "Back to Dashboard" : "Cancel"}
               </button>

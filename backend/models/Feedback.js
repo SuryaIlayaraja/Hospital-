@@ -4,12 +4,12 @@ const mongoose = require('mongoose');
 const baseFeedbackSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    default: 'Anonymous',
     trim: true
   },
   uhid: {
     type: String,
-    required: true,
+    default: '',
     trim: true
   },
   date: {
@@ -18,8 +18,12 @@ const baseFeedbackSchema = new mongoose.Schema({
   },
   mobile: {
     type: String,
-    required: true,
+    default: '',
     trim: true
+  },
+  isAnonymous: {
+    type: Boolean,
+    default: false
   },
   overallExperience: {
     type: String,

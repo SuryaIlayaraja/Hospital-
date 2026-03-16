@@ -29,29 +29,32 @@ export interface YearlyAnalysis {
 export const getDaywiseAnalysis = async (
   start: string, // YYYY-MM-DD
   end: string, // YYYY-MM-DD
-  type: "all" | "opd" | "ipd" = "all" // Filter by feedback type
+  type: "all" | "opd" | "ipd" = "all", // Filter by feedback type
+  department: string = "all" // Filter by department
 ): Promise<ApiResponse<DaywiseAnalysis[]>> => {
   return apiRequest<DaywiseAnalysis[]>(
-    `/feedback/daywise?start=${start}&end=${end}&type=${type}`
+    `/feedback/daywise?start=${start}&end=${end}&type=${type}&department=${encodeURIComponent(department)}`
   );
 };
 
 // Fetch monthly analysis for a year
 export const getMonthlyAnalysis = async (
   year: number,
-  type: "all" | "opd" | "ipd" = "all"
+  type: "all" | "opd" | "ipd" = "all",
+  department: string = "all"
 ): Promise<ApiResponse<MonthlyAnalysis[]>> => {
   return apiRequest<MonthlyAnalysis[]>(
-    `/feedback/monthly?year=${year}&type=${type}`
+    `/feedback/monthly?year=${year}&type=${type}&department=${encodeURIComponent(department)}`
   );
 };
 
 // Fetch yearly analysis
 export const getYearlyAnalysis = async (
-  type: "all" | "opd" | "ipd" = "all"
+  type: "all" | "opd" | "ipd" = "all",
+  department: string = "all"
 ): Promise<ApiResponse<YearlyAnalysis[]>> => {
   return apiRequest<YearlyAnalysis[]>(
-    `/feedback/yearly?type=${type}`
+    `/feedback/yearly?type=${type}&department=${encodeURIComponent(department)}`
   );
 };
 // API service for communicating with the Node.js backend
