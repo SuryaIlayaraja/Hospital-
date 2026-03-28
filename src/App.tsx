@@ -5,13 +5,9 @@ import {
   UserCheck,
   Settings,
   Home,
-  Calendar,
-  MessageCircle,
-  Phone,
-  Mail,
-  ArrowUp,
 } from "lucide-react";
 import Dashboard from "./components/Dashboard";
+import Footer from "./components/Footer";
 import OPDFeedback from "./components/OPDFeedback";
 import IPDFeedback from "./components/IPDFeedback";
 import AdminPanel from "./components/AdminPanel";
@@ -140,11 +136,11 @@ const AppContent: React.FC = () => {
         <main className="w-full">
           {activeTab === "dashboard" ? (
             <Dashboard
-              onNavigate={(tab) => setActiveTab(tab)}
+              onNavigate={(tab) => setActiveTab(tab as any)}
               onNavigateToTicket={() => setActiveTab("raise-ticket")}
             />
           ) : activeTab === "raise-ticket" ? (
-            <RaiseTicketPage onNavigateBack={(tab) => setActiveTab(tab)} />
+            <RaiseTicketPage onNavigateBack={(tab) => setActiveTab(tab as any)} />
           ) : activeTab === "admin" ? (
             <AdminPanel />
           ) : (
@@ -154,58 +150,7 @@ const AppContent: React.FC = () => {
           )}
         </main>
 
-        {/* Custom Application Footer */}
-        <div className="relative mt-auto">
-          {/* CTA Banner Section */}
-          <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 dark:from-indigo-900 dark:via-purple-900 dark:to-indigo-950 py-16 relative overflow-hidden">
-            {/* Background effects */}
-            <div className="absolute inset-0 bg-[url('https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg')] opacity-10 bg-cover bg-center mix-blend-overlay pointer-events-none" />
-            <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-black/20 rounded-full blur-3xl pointer-events-none" />
-            
-            <div className="max-w-4xl mx-auto text-center px-4 relative z-10">
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-md">
-                {t("cta.title")}
-              </h2>
-              <p className="text-blue-50 dark:text-indigo-200 text-lg md:text-xl mb-10 font-medium drop-shadow">
-                {t("cta.subtitle")}
-              </p>
-              
-              <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-                {[
-                  { icon: Calendar, label: t("cta.book") },
-                  { icon: WhatsappIcon, label: t("cta.chat") },
-                  { icon: Phone, label: t("cta.call") },
-                  { icon: Mail, label: t("cta.email") }
-                ].map((item, idx) => (
-                  <button 
-                    key={idx}
-                    className="group flex flex-col items-center justify-center p-4 w-16 h-16 sm:w-20 sm:h-20 bg-white/10 hover:bg-white/25 dark:bg-black/20 dark:hover:bg-black/40 backdrop-blur-md rounded-2xl border border-white/20 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_10px_30px_rgba(255,255,255,0.2)]"
-                    title={item.label}
-                  >
-                    <item.icon className="h-7 w-7 text-white group-hover:scale-110 transition-transform duration-300 drop-shadow-md" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Copyright Section */}
-          <footer className="bg-white dark:bg-[#060606] border-t border-gray-100 dark:border-white/5 py-6">
-            <div className="w-full px-6 flex flex-col sm:flex-row items-center justify-between text-gray-500 dark:text-gray-400 text-sm max-w-7xl mx-auto">
-              <p className="font-medium mb-4 sm:mb-0">
-                {t("footer.copyright")}
-              </p>
-              <button 
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-700 dark:text-gray-300 font-medium"
-              >
-                {t("footer.backToTop")}
-                <ArrowUp className="h-4 w-4" />
-              </button>
-            </div>
-          </footer>
-        </div>
+        <Footer />
 
         {/* Floating WhatsApp Button */}
         <a 
