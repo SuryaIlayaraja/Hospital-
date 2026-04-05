@@ -150,18 +150,22 @@ const AppContent: React.FC = () => {
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   <Hospital className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 shrink-0" />
                   <div className="min-w-0">
-                    <h1 className="text-base sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
+                    <h1 className="text-xl sm:text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent truncate leading-tight">
                       {hospitalSettings?.hospital_name || t("hospital.name")}
                     </h1>
-                    <p className="text-gray-400 font-medium text-xs sm:text-sm truncate">
+                    <p className="text-gray-600 dark:text-gray-300 font-bold text-[10px] sm:text-sm flex items-center gap-1 mt-0.5">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
                       {hospitalSettings?.hospital_location || t("hospital.location")}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-4 shrink-0 px-2 py-1 bg-white/50 dark:bg-black/20 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm ml-4">
                   <ThemeToggle />
                   <LanguageSwitcher />
                   <ReportNavbar onOpen={() => setActiveTab("raise-ticket")} />
+                  <div className="ml-1 sm:ml-2 border-l border-gray-200 dark:border-white/10 pl-2 sm:pl-4">
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
                 </div>
               </div>
 
@@ -179,9 +183,9 @@ const AppContent: React.FC = () => {
                   <>
                     <button
                       onClick={() => setActiveTab("opd")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${activeTab === "opd"
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 transform active:scale-95 ${activeTab === "opd"
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/30 scale-105"
+                        : "text-gray-600 dark:text-gray-400 hover:text-white hover:bg-gray-700/50"
                         }`}
                     >
                       <Users className="h-4 w-4" />
@@ -189,9 +193,9 @@ const AppContent: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setActiveTab("ipd")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${activeTab === "ipd"
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 transform active:scale-95 ${activeTab === "ipd"
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/30 scale-105"
+                        : "text-gray-600 dark:text-gray-400 hover:text-white hover:bg-gray-700/50"
                         }`}
                     >
                       <UserCheck className="h-4 w-4" />
@@ -201,9 +205,9 @@ const AppContent: React.FC = () => {
                 )}
                 <button
                   onClick={() => setActiveTab("admin")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${activeTab === "admin"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                    : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 transform active:scale-95 ${activeTab === "admin"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/30 scale-105"
+                    : "text-gray-600 dark:text-gray-400 hover:text-white hover:bg-gray-700/50"
                     }`}
                 >
                   <Settings className="h-4 w-4" />
@@ -233,11 +237,6 @@ const AppContent: React.FC = () => {
           ) : (
             <div className="w-full min-h-screen">
               <SignedIn>
-                {/* Global User Button for non-dashboard views */}
-                <div className="fixed top-6 right-6 z-[100]">
-                  <UserButton afterSignOutUrl="/" />
-                </div>
-                
                 {activeTab === "raise-ticket" ? (
                   <RaiseTicketPage onNavigateBack={(tab) => setActiveTab(tab)} />
                 ) : activeTab === "opd" ? (

@@ -9,7 +9,7 @@ interface RatingSelectorProps {
 }
 
 const SmileyIcon = ({ color, type }: { color: string; type: 'excellent' | 'good' | 'average' }) => (
-  <svg viewBox="0 0 100 100" className="w-8 h-8 drop-shadow-sm">
+  <svg viewBox="0 0 100 100" className="w-6 h-6 sm:w-8 sm:h-8 drop-shadow-sm shrink-0">
     <circle cx="50" cy="50" r="45" fill={color} stroke="black" strokeWidth="2.5" />
     <ellipse cx="35" cy="40" rx="5" ry="10" fill="black" />
     <ellipse cx="65" cy="40" rx="5" ry="10" fill="black" />
@@ -35,13 +35,13 @@ const RatingSelector: React.FC<RatingSelectorProps> = ({ label, value, onChange,
 
   return (
     <div className="border-b border-gray-200 dark:border-gray-800 py-6 last:border-b-0">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-center sm:text-left">
         <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex-1">
           {label}
           {required && <span className="text-indigo-600 dark:text-indigo-400 ml-1 font-bold">*</span>}
         </label>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap justify-center sm:justify-end gap-2 sm:gap-3">
           {ratings.map((rating) => (
             <label key={rating.text} className="flex items-center gap-2 cursor-pointer group">
               <input
@@ -54,7 +54,7 @@ const RatingSelector: React.FC<RatingSelectorProps> = ({ label, value, onChange,
                 required={required}
               />
               <div
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${value === rating.text
+                className={`flex items-center gap-1.5 sm:gap-3 px-2.5 py-2 sm:px-4 sm:py-3 rounded-xl text-sm font-bold transition-all duration-300 ${value === rating.text
                   ? rating.type === 'excellent'
                     ? 'bg-green-500/20 text-green-400 border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)] scale-105'
                     : rating.type === 'good'

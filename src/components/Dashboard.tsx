@@ -1278,11 +1278,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Hero Image Carousel */}
-          <div ref={heroRef} className="flex-[1.4] relative group w-full lg:w-[60%]">
+          <div ref={heroRef} className="flex-[1.4] relative group w-full lg:w-[60%] mx-auto lg:mx-0 flex justify-center">
             {/* Ambient Glow behind image */}
             <div className="absolute inset-x-0 -bottom-10 h-1/2 bg-gradient-to-t from-indigo-500/20 to-transparent blur-3xl rounded-full" />
 
-            <div className="relative z-10 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(79,70,229,0.2)] transition-all duration-700 hover:scale-[1.03] hover:border-indigo-500/30 aspect-[4/3] min-h-[300px] bg-gray-900">
+            <div className="relative z-10 rounded-3xl sm:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(79,70,229,0.2)] transition-all duration-700 hover:scale-[1.03] hover:border-indigo-500/30 aspect-[4/3] min-h-[280px] sm:min-h-[300px] bg-gray-900 w-full">
               {heroImages.map((image, index) => (
                 <div
                   key={index}
@@ -1502,7 +1502,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Cardiology */}
-          <div className="group relative overflow-hidden rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-red-500/30 transition-all duration-500 hover:-translate-y-2">
+          <div className="group relative overflow-hidden rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-red-500/30 transition-all duration-500 hover:-translate-y-2">
             <div className="relative z-10 flex items-center gap-4 sm:gap-6">
               <div className="p-3 sm:p-4 rounded-2xl bg-red-500/10 text-red-500 group-hover:bg-red-500/20 transition-colors duration-500">
                 <Heart className="h-8 w-8 sm:h-10 sm:w-10" />
@@ -1514,60 +1514,60 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Orthopedics */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-yellow-500/30 transition-all duration-500 hover:-translate-y-2">
-            <div className="relative z-10 flex items-center gap-6">
-              <div className="p-4 rounded-2xl bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20 transition-colors duration-500">
-                <Bone className="h-10 w-10" />
+          <div className="group relative overflow-hidden rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-yellow-500/30 transition-all duration-500 hover:-translate-y-2">
+            <div className="relative z-10 flex items-center gap-4 sm:gap-6">
+              <div className="p-3 sm:p-4 rounded-2xl bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20 transition-colors duration-500">
+                <Bone className="h-8 w-8 sm:h-10 sm:w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.orthopedics')}</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.orthopedics')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-yellow-500/10 rounded-full blur-3xl group-hover:bg-yellow-500/20 transition-all duration-500" />
           </div>
 
           {/* Oncology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-emerald-500/30 transition-all duration-500 hover:-translate-y-2">
-            <div className="relative z-10 flex items-center gap-6">
-              <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors duration-500">
-                <Microscope className="h-10 w-10" />
+          <div className="group relative overflow-hidden rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-emerald-500/30 transition-all duration-500 hover:-translate-y-2">
+            <div className="relative z-10 flex items-center gap-4 sm:gap-6">
+              <div className="p-3 sm:p-4 rounded-2xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors duration-500">
+                <Microscope className="h-8 w-8 sm:h-10 sm:w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.oncology')}</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.oncology')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-500" />
           </div>
 
           {/* Neurology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-purple-500/30 transition-all duration-500 hover:-translate-y-2">
-            <div className="relative z-10 flex items-center gap-6">
-              <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-500 group-hover:bg-purple-500/20 transition-colors duration-500">
-                <Brain className="h-10 w-10" />
+          <div className="group relative overflow-hidden rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-purple-500/30 transition-all duration-500 hover:-translate-y-2">
+            <div className="relative z-10 flex items-center gap-4 sm:gap-6">
+              <div className="p-3 sm:p-4 rounded-2xl bg-purple-500/10 text-purple-500 group-hover:bg-purple-500/20 transition-colors duration-500">
+                <Brain className="h-8 w-8 sm:h-10 sm:w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.neurology')}</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.neurology')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-all duration-500" />
           </div>
 
           {/* Gastroenterology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-blue-500/30 transition-all duration-500 hover:-translate-y-2">
-            <div className="relative z-10 flex items-center gap-6">
-              <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 transition-colors duration-500">
-                <Activity className="h-10 w-10" />
+          <div className="group relative overflow-hidden rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-blue-500/30 transition-all duration-500 hover:-translate-y-2">
+            <div className="relative z-10 flex items-center gap-4 sm:gap-6">
+              <div className="p-3 sm:p-4 rounded-2xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 transition-colors duration-500">
+                <Activity className="h-8 w-8 sm:h-10 sm:w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.gastro')}</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.gastro')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-500" />
           </div>
 
           {/* Nephrology & Urology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-cyan-500/30 transition-all duration-500 hover:-translate-y-2">
-            <div className="relative z-10 flex items-center gap-6">
-              <div className="p-4 rounded-2xl bg-cyan-500/10 text-cyan-500 group-hover:bg-cyan-500/20 transition-colors duration-500">
-                <Droplets className="h-10 w-10" />
+          <div className="group relative overflow-hidden rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-cyan-500/30 transition-all duration-500 hover:-translate-y-2">
+            <div className="relative z-10 flex items-center gap-4 sm:gap-6">
+              <div className="p-3 sm:p-4 rounded-2xl bg-cyan-500/10 text-cyan-500 group-hover:bg-cyan-500/20 transition-colors duration-500">
+                <Droplets className="h-8 w-8 sm:h-10 sm:w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.nephro')}</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.nephro')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl group-hover:bg-cyan-500/20 transition-all duration-500" />

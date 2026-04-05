@@ -38,7 +38,6 @@ const IPDFeedback: React.FC = () => {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    uhid: "",
     date: "",
     mobile: "",
     overallExperience: "",
@@ -86,7 +85,7 @@ const IPDFeedback: React.FC = () => {
   const formProgress = useMemo(() => {
     const requiredFields = isAnonymous
       ? ["date", "overallExperience"]
-      : ["name", "uhid", "date", "mobile", "overallExperience"];
+      : ["name", "date", "mobile", "overallExperience"];
 
     const ratingFields = [
       "registrationProcess",
@@ -122,7 +121,7 @@ const IPDFeedback: React.FC = () => {
       const submitData = {
         ...formData,
         name: isAnonymous ? "Anonymous" : formData.name,
-        uhid: isAnonymous ? "" : formData.uhid,
+        uhid: "", // Removed from form, sending empty
         mobile: isAnonymous ? "" : formData.mobile,
         isAnonymous,
         overallExperience: mapRatingToBackend(formData.overallExperience),
@@ -147,7 +146,6 @@ const IPDFeedback: React.FC = () => {
         // Reset form after successful submission
         setFormData({
           name: "",
-          uhid: "",
           date: "",
           mobile: "",
           overallExperience: "",
@@ -201,24 +199,24 @@ const IPDFeedback: React.FC = () => {
         {/* Anonymous Feedback Toggle */}
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-5 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-gray-400/50 dark:hover:border-gray-500/50 transition-all duration-500">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
               {isAnonymous ? (
-                <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
-                  <EyeOff className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                <div className="w-11 h-11 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
+                  <EyeOff className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                 </div>
               ) : (
-                <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Eye className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Eye className="h-6 w-6 text-gray-500 dark:text-gray-400" />
                 </div>
               )}
               <div>
-                <p className="font-bold text-gray-800 dark:text-white text-sm">
+                <p className="font-bold text-gray-800 dark:text-white text-base sm:text-sm">
                   Submit Anonymously
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-sm sm:text-xs text-gray-500 dark:text-gray-400">
                   {isAnonymous
-                    ? "Your identity will not be recorded"
-                    : "Toggle on to hide your personal details"}
+                    ? "Your identity will be hidden"
+                    : "Toggle on for privacy"}
                 </p>
               </div>
             </div>
@@ -228,7 +226,6 @@ const IPDFeedback: React.FC = () => {
                 setIsAnonymous(!isAnonymous);
                 if (!isAnonymous) {
                   updateField("name", "");
-                  updateField("uhid", "");
                   updateField("mobile", "");
                 }
               }}
@@ -250,8 +247,8 @@ const IPDFeedback: React.FC = () => {
         {/* Patient Information — hidden when anonymous */}
         {!isAnonymous && (
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-indigo-500/50 transition-all duration-500">
-          <h3 className="text-xl font-bold text-indigo-400 mb-6 flex items-center gap-2">
-            <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+          <h3 className="text-xl font-bold text-indigo-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
+            <div className="w-2 h-2 bg-indigo-500 rounded-full hidden sm:block"></div>
             {t("ipd.patient.info")}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,14 +258,6 @@ const IPDFeedback: React.FC = () => {
               value={formData.name}
               onChange={(value) => updateField("name", value)}
               placeholder="Enter patient name"
-              required
-            />
-            <FormInput
-              label={t("common.uhid")}
-              type="text"
-              value={formData.uhid}
-              onChange={(value) => updateField("uhid", value)}
-              placeholder="Enter UHID"
               required
             />
             <FormInput
@@ -293,8 +282,8 @@ const IPDFeedback: React.FC = () => {
         {/* Date-only input when anonymous */}
         {isAnonymous && (
           <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-indigo-500/50 transition-all duration-500">
-            <h3 className="text-xl font-bold text-indigo-400 mb-6 flex items-center gap-2">
-              <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+            <h3 className="text-xl font-bold text-indigo-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
+              <div className="w-2 h-2 bg-indigo-500 rounded-full hidden sm:block"></div>
               {t("common.date")}
             </h3>
             <div className="max-w-xs">
@@ -311,8 +300,8 @@ const IPDFeedback: React.FC = () => {
 
         {/* Overall Experience */}
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-purple-500/50 transition-all duration-500">
-          <h3 className="text-xl font-bold text-purple-400 mb-6 flex items-center gap-2">
-            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+          <h3 className="text-xl font-bold text-purple-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
+            <div className="w-2 h-2 bg-purple-500 rounded-full hidden sm:block"></div>
             {t("ipd.overall.experience")}
           </h3>
           <RatingSelector
@@ -325,8 +314,8 @@ const IPDFeedback: React.FC = () => {
 
         {/* Service Ratings */}
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-none dark:shadow-lg hover:border-blue-500/50 transition-all duration-500">
-          <h3 className="text-xl font-bold text-blue-400 mb-8 flex items-center gap-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          <h3 className="text-xl font-bold text-blue-400 mb-8 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
+            <div className="w-2 h-2 bg-blue-500 rounded-full hidden sm:block"></div>
             {t("ipd.service.quality")}
           </h3>
           <div className="space-y-1">
@@ -347,7 +336,7 @@ const IPDFeedback: React.FC = () => {
         {/* Employee Nomination & Comments */}
         <div className="space-y-6">
           <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-none dark:shadow-lg hover:border-yellow-500/50 transition-all duration-500">
-            <h3 className="text-xl font-bold text-yellow-400 mb-6 flex items-center gap-3">
+            <h3 className="text-xl font-bold text-yellow-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 text-center sm:text-left">
               <Award className="h-6 w-6 text-yellow-400" />
               {t("ipd.employee.recognition")}
             </h3>
@@ -371,7 +360,7 @@ const IPDFeedback: React.FC = () => {
           </div>
 
           <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-none dark:shadow-lg hover:border-green-500/50 transition-all duration-500">
-            <h3 className="text-xl font-bold text-green-400 mb-6 flex items-center gap-3">
+            <h3 className="text-xl font-bold text-green-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 text-center sm:text-left">
               <MessageSquare className="h-6 w-6 text-green-400" />
               {t("ipd.additional.comments")}
             </h3>
