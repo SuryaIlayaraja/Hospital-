@@ -146,20 +146,20 @@ const AppContent: React.FC = () => {
 
             {/* Content overlay */}
             <div className="relative z-10 w-full px-3 sm:px-6 py-4 sm:py-6">
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 justify-center sm:justify-start">
                   <Hospital className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 shrink-0" />
-                  <div className="min-w-0">
+                  <div className="min-w-0 text-center sm:text-left">
                     <h1 className="text-xl sm:text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent truncate leading-tight">
                       {hospitalSettings?.hospital_name || t("hospital.name")}
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-300 font-bold text-[10px] sm:text-sm flex items-center gap-1 mt-0.5">
+                    <p className="text-gray-600 dark:text-gray-300 font-bold text-[10px] sm:text-sm flex items-center justify-center sm:justify-start gap-1 mt-0.5">
                       <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
                       {hospitalSettings?.hospital_location || t("hospital.location")}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-4 shrink-0 px-2 py-1 bg-white/50 dark:bg-black/20 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm ml-4">
+                <div className="flex items-center justify-center gap-2 sm:gap-4 shrink-0 px-3 py-2 bg-white/50 dark:bg-black/20 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm mx-auto sm:mx-0">
                   <ThemeToggle />
                   <LanguageSwitcher />
                   <ReportNavbar onOpen={() => setActiveTab("raise-ticket")} />
@@ -170,8 +170,8 @@ const AppContent: React.FC = () => {
               </div>
 
               {/* Tab Navigation — scrollable on mobile */}
-              <div className="overflow-x-auto -mx-1 px-1 pb-1">
-              <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-lg w-fit border border-gray-200 dark:border-gray-700/50 min-w-max">
+              <div className="overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
+              <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-lg w-fit border border-gray-200 dark:border-gray-700/50 min-w-max mx-auto">
                 <button
                   onClick={() => setActiveTab("dashboard")}
                   className="flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700/50"
