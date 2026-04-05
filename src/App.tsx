@@ -131,96 +131,7 @@ const AppContent: React.FC = () => {
         className={`min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-white transition-opacity duration-500 ${isLoading ? "opacity-0" : "opacity-100"
           }`}
       >
-        {/* Header - Only hide when on specific full-screen views like raise-ticket */}
-        {activeTab !== "raise-ticket" && (
-          <header className="relative bg-white dark:bg-[#0a0a0a] shadow-lg border-b border-gray-200 dark:border-gray-800 overflow-hidden">
 
-            {/* Background Doctor Image */}
-            <div
-              className="absolute inset-0 opacity-5 bg-cover bg-center bg-no-repeat pointer-events-none"
-              style={{
-                backgroundImage:
-                  "url(https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1)",
-              }}
-            />
-
-            {/* Content overlay */}
-            <div className="relative z-10 w-full px-3 sm:px-6 py-4 sm:py-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0 justify-center sm:justify-start">
-                  <Hospital className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 shrink-0" />
-                  <div className="min-w-0 text-center sm:text-left">
-                    <h1 className="text-xl sm:text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent truncate leading-tight">
-                      {hospitalSettings?.hospital_name || t("hospital.name")}
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-300 font-bold text-[10px] sm:text-sm flex items-center justify-center sm:justify-start gap-1 mt-0.5">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                      {hospitalSettings?.hospital_location || t("hospital.location")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-center gap-2 sm:gap-4 shrink-0 px-3 py-2 bg-white/50 dark:bg-black/20 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm mx-auto sm:mx-0">
-                  <ThemeToggle />
-                  <LanguageSwitcher />
-                  <ReportNavbar onOpen={() => setActiveTab("raise-ticket")} />
-                  <div className="ml-1 sm:ml-2 border-l border-gray-200 dark:border-white/10 pl-2 sm:pl-4">
-                    <UserButton afterSignOutUrl="/" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Tab Navigation — scrollable on mobile */}
-              <div className="w-full">
-              <div className="flex flex-col sm:flex-row sm:space-x-1 space-y-1.5 sm:space-y-0 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl w-full sm:w-fit border border-gray-200 dark:border-gray-700/50 mx-auto">
-                <button
-                  onClick={() => setActiveTab("dashboard")}
-                  className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-lg font-bold transition-all duration-300 w-full sm:w-auto ${(activeTab as string) === "dashboard"
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50"
-                    }`}
-                >
-                  <Home className="h-4 w-4" />
-                  {t("nav.dashboard")}
-                </button>
-                {activeTab !== "admin" && (
-                  <>
-                    <button
-                      onClick={() => setActiveTab("opd")}
-                      className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-lg font-bold transition-all duration-300 w-full sm:w-auto ${activeTab === "opd"
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-[1.02] sm:scale-105"
-                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50"
-                        }`}
-                    >
-                      <Users className="h-4 w-4" />
-                      {t("nav.opd")}
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("ipd")}
-                      className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-lg font-bold transition-all duration-300 w-full sm:w-auto ${activeTab === "ipd"
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-[1.02] sm:scale-105"
-                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50"
-                        }`}
-                    >
-                      <UserCheck className="h-4 w-4" />
-                      {t("nav.ipd")}
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => setActiveTab("admin")}
-                  className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-lg font-bold transition-all duration-300 w-full sm:w-auto ${activeTab === "admin"
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-[1.02] sm:scale-105"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50"
-                    }`}
-                >
-                  <Settings className="h-4 w-4" />
-                  {t("nav.admin")}
-                </button>
-              </div>
-              </div>
-            </div>
-          </header>
-        )}
 
         {/* Main Content */}
         <main className="w-full">
@@ -235,17 +146,20 @@ const AppContent: React.FC = () => {
                <div className="absolute top-6 right-6 z-[100]">
                   <UserButton afterSignOutUrl="/" />
                </div>
-               <AdminPanel onSettingsUpdate={() => (window as any).refreshSettings?.()} />
+               <AdminPanel 
+                 onSettingsUpdate={() => (window as any).refreshSettings?.()} 
+                 onNavigate={(tab) => setActiveTab(tab as any)}
+               />
             </div>
           ) : (
             <div className="w-full min-h-screen">
               <SignedIn>
                 {activeTab === "raise-ticket" ? (
-                  <RaiseTicketPage onNavigateBack={(tab) => setActiveTab(tab)} />
+                  <RaiseTicketPage onNavigateBack={(tab) => setActiveTab(tab as any)} />
                 ) : activeTab === "opd" ? (
-                  <OPDFeedback />
+                  <OPDFeedback onNavigate={() => setActiveTab("dashboard")} />
                 ) : (
-                  <IPDFeedback />
+                  <IPDFeedback onNavigate={() => setActiveTab("dashboard")} />
                 )}
               </SignedIn>
               <SignedOut>

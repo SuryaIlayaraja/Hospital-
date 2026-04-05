@@ -22,9 +22,10 @@ import {
   Image as ImageIcon,
   ExternalLink,
   EyeOff,
-  Activity,
   Settings,
   MessageSquareQuote,
+  ArrowLeft,
+  Activity,
 } from "lucide-react";
 
 import LoginShapes from "./LoginShapes";
@@ -68,6 +69,7 @@ import {
 import { useTickets, Ticket } from "../hooks/useTickets";
 import ComplaintHeatmap from "./ComplaintHeatmap";
 import TicketChat from "./TicketChat";
+import ThemeToggle from "./ThemeToggle";
 import { useChatNotifications } from "../hooks/useChatNotifications";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -87,9 +89,10 @@ type FeedbackData = {
 
 interface AdminPanelProps {
   onSettingsUpdate?: () => void;
+  onNavigate?: (tab: string) => void;
 }
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate }) => {
   // State to show/hide daywise analysis page
   const [showDaywisePage, setShowDaywisePage] = useState(false);
   
@@ -1953,7 +1956,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
             </h1>
           </div>
 
-          <div className="flex gap-4 flex-wrap">
+          <div className="flex gap-4 flex-wrap items-center">
+            <button
+              onClick={() => onNavigate?.("dashboard")}
+              className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-xl transition-all duration-300 font-bold"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Main Dashboard
+            </button>
+            <ThemeToggle />
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 bg-red-50 dark:bg-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/30 border border-red-200 dark:border-red-500/50 text-red-600 dark:text-red-400 px-4 py-2 rounded-xl transition-all duration-300 font-bold"

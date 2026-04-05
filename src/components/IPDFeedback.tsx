@@ -7,7 +7,9 @@ import {
   AlertCircle,
   EyeOff,
   Eye,
+  ArrowLeft,
 } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 import RatingSelector from "./RatingSelector";
 import FormInput from "./FormInput";
 import ProgressBar from "./ProgressBar";
@@ -28,8 +30,11 @@ function getIPDQuestions(): FeedbackQuestion[] {
   return DEFAULT_IPD_QUESTIONS;
 }
 
+interface IPDFeedbackProps {
+  onNavigate?: () => void;
+}
 
-const IPDFeedback: React.FC = () => {
+const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
@@ -180,6 +185,20 @@ const IPDFeedback: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
 
       <form onSubmit={handleSubmit} className="relative z-10 p-4 sm:p-8 space-y-8 min-h-full max-w-7xl mx-auto">
+        {/* Navigation & Theme Header */}
+        <div className="flex justify-between items-center bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-4 border border-gray-200 dark:border-white/10 shadow-sm mb-6">
+          <button
+            type="button"
+            onClick={() => onNavigate?.()}
+            className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-xl transition-all duration-300 font-bold"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
+          </button>
+          <ThemeToggle />
+        </div>
+
         <div className="text-center border-b border-gray-200 dark:border-white/10 pb-8 bg-gray-50 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 shadow-2xl">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent mb-3">
             {t("ipd.title")}
