@@ -1095,6 +1095,22 @@ const Dashboard: React.FC<DashboardProps> = ({
             opacity: 0;
           }
         }
+
+        @media (max-width: 767px) {
+          @keyframes blood-flow {
+            0% { 
+              transform: translateX(-10vw) translateY(0) rotate(0deg); 
+              opacity: 0;
+            }
+            10% { opacity: 1; }
+            50% { transform: translateX(50vw) translateY(0) rotate(180deg); }
+            90% { opacity: 1; }
+            100% { 
+              transform: translateX(110vw) translateY(0) rotate(360deg); 
+              opacity: 0;
+            }
+          }
+        }
         .animate-blood-flow {
           animation: blood-flow 10s linear infinite;
         }
@@ -1460,7 +1476,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div
           onMouseEnter={() => setHoveredBanner('black')}
           onMouseLeave={() => setHoveredBanner(null)}
-          className={`absolute w-[260%] h-20 sm:h-28 bg-[#1e1b4b] border-y-2 border-white/10 -rotate-[8deg] sm:-rotate-[18deg] flex items-center shadow-[0_0_60px_rgba(30,27,75,0.4)] z-10 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'accent' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
+          className={`absolute w-[260%] h-20 sm:h-28 bg-[#1e1b4b] border-y-2 border-white/10 rotate-0 sm:-rotate-[18deg] -translate-y-10 sm:translate-y-0 flex items-center shadow-[0_0_60px_rgba(30,27,75,0.4)] z-10 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'accent' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
             }`}
         >
           <div className="flex whitespace-nowrap animate-marquee">
@@ -1476,7 +1492,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div
           onMouseEnter={() => setHoveredBanner('accent')}
           onMouseLeave={() => setHoveredBanner(null)}
-          className={`absolute w-[260%] h-20 sm:h-28 bg-[#d946ef] rotate-[6deg] sm:rotate-[12deg] flex items-center shadow-[0_0_70px_rgba(217,70,239,0.4)] z-20 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'black' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
+          className={`absolute w-[260%] h-20 sm:h-28 bg-[#d946ef] rotate-0 sm:rotate-[12deg] translate-y-10 sm:translate-y-0 flex items-center shadow-[0_0_70px_rgba(217,70,239,0.4)] z-20 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'black' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
             }`}
         >
           <div className="flex whitespace-nowrap animate-marquee-reverse">
