@@ -143,7 +143,7 @@ const ValueCard = ({ item, index }: { item: any; index: number }) => {
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl p-6 bg-white/5 dark:bg-white/[0.03] backdrop-blur-xl border border-white/10 ${theme.border} transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl`}
+      className={`group relative overflow-hidden rounded-xl sm:rounded-2xl p-5 sm:p-6 bg-white/5 dark:bg-white/[0.03] backdrop-blur-xl border border-white/10 ${theme.border} transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl`}
       style={{ transition: 'all 0.4s ease' }}
       onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 20px 60px ${theme.glow}`)}
       onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}
@@ -154,10 +154,10 @@ const ValueCard = ({ item, index }: { item: any; index: number }) => {
       {/* Subtle top-left corner glow */}
       <div className={`absolute -top-6 -left-6 w-24 h-24 bg-gradient-to-br ${theme.gradient} rounded-full blur-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none`} />
 
-      <div className="relative z-10 flex items-start gap-4">
+      <div className="relative z-10 flex items-start gap-3 sm:gap-4">
         {/* Icon container with gradient ring */}
-        <div className={`relative w-12 h-12 ${theme.iconBg} border ${theme.iconBorder} rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-          <Icon className={`h-6 w-6 ${theme.iconColor}`} />
+        <div className={`relative w-10 h-10 sm:w-12 sm:h-12 ${theme.iconBg} border ${theme.iconBorder} rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+          <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${theme.iconColor}`} />
           {/* Gradient shimmer on icon */}
           <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${theme.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-300`} />
         </div>
@@ -449,28 +449,28 @@ const Dashboard: React.FC<DashboardProps> = ({
           <nav className="absolute top-0 left-0 right-0 z-30 bg-black/30 backdrop-blur-md border-b border-white/5">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/30 pulse-glow">
-                    <Building2 className="h-5 w-5 text-indigo-400" />
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/30 shrink-0 pulse-glow">
+                    <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-400" />
                   </div>
-                  <span className="text-lg font-bold text-white">
+                  <span className="text-sm sm:text-lg font-bold text-white truncate">
                     {hospitalSettings?.hospital_name || "Vikram Hospital"}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                   <button
                     onClick={() => setLanguage(language === "en" ? "ta" : "en")}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all duration-300"
+                    className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all duration-300"
                   >
-                    <Globe className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-300">{language === "en" ? "EN" : "தமிழ்"}</span>
+                    <Globe className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-xs sm:text-sm text-gray-300">{language === "en" ? "EN" : "தமிழ்"}</span>
                   </button>
                   <button
                     onClick={() => setShowAbout(false)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 border border-white/10"
+                    className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 border border-white/10"
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('backToHome')}</span>
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    <span className="text-xs sm:text-sm">{t('backToHome')}</span>
                   </button>
                 </div>
               </div>
@@ -486,14 +486,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                   {t('about.est')}
                 </span>
               </div>
-              <h1 className="about-animate-delay-1 text-5xl sm:text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-[0.9]">
+              <h1 className="about-animate-delay-1 text-4xl sm:text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-[1.1] sm:leading-[0.9]">
                 {t('about.redefining')}{" "}
                 <br className="hidden sm:block" />
                 <span className="shimmer-text">
                   {t('about.redefiningCard')}
                 </span>
               </h1>
-              <p className="about-animate-delay-2 text-gray-300/80 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-light">
+              <p className="about-animate-delay-2 text-gray-300/80 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-light px-4">
                 {t('about.heroDesc')}
               </p>
 
@@ -1172,11 +1172,14 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Mobile Navigation */}
-            <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-800/50 flex flex-wrap gap-4">
-              <button onClick={() => onNavigate?.("opd")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t('opdFeedback')}</button>
-              <button onClick={() => onNavigate?.("ipd")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t('ipdFeedback')}</button>
-              <button onClick={() => onNavigate?.("admin")} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t('admin')}</button>
-              <button onClick={() => setShowAbout(true)} className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors">{t('about')}</button>
+            <div className="md:hidden py-3 border-t border-gray-200 dark:border-gray-800/50 flex flex-wrap gap-3">
+              <button onClick={() => onNavigate?.("opd")} className="text-sm font-medium px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 transition-colors">{t('opdFeedback')}</button>
+              <button onClick={() => onNavigate?.("ipd")} className="text-sm font-medium px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20 transition-colors">{t('ipdFeedback')}</button>
+              <button onClick={() => onNavigate?.("admin")} className="text-sm font-medium px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 transition-colors">{t('admin')}</button>
+              <button onClick={() => setShowAbout(true)} className="text-sm font-medium px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10 transition-colors">{t('about')}</button>
+              <button onClick={onNavigateToTicket} className="text-sm font-medium px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 transition-colors flex items-center gap-1">
+                <Ticket className="h-3.5 w-3.5" />{t('raiseTicket')}
+              </button>
             </div>
           </div>
         </nav>
@@ -1195,7 +1198,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     ? "opacity-100 translate-y-0 scale-100 blur-0"
                     : "opacity-0 -translate-y-4 scale-95 blur-sm pointer-events-none"}`}
               >
-                <span className="text-base font-semibold text-indigo-800 dark:text-indigo-200/90 tracking-[0.1em] text-center uppercase drop-shadow-[0_0_8px_rgba(129,140,248,0.3)]">
+                <span className="text-xs sm:text-base font-semibold text-indigo-800 dark:text-indigo-200/90 tracking-[0.05em] sm:tracking-[0.1em] text-center uppercase drop-shadow-[0_0_8px_rgba(129,140,248,0.3)] px-4">
                   {msg}
                 </span>
               </div>
@@ -1256,17 +1259,17 @@ const Dashboard: React.FC<DashboardProps> = ({
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-4">
               <button
                 onClick={() => onNavigate?.("opd")}
-                className="group flex items-center gap-3 px-10 py-5 bg-indigo-600 dark:bg-white text-white dark:text-black rounded-xl font-bold text-lg hover:bg-indigo-700 dark:hover:bg-gray-100 transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                className="group flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 bg-indigo-600 dark:bg-white text-white dark:text-black rounded-xl font-bold text-base sm:text-lg hover:bg-indigo-700 dark:hover:bg-gray-100 transition-all duration-300 hover:scale-105 hover:shadow-2xl"
               >
                 {t('shareFeedback')}
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <button
                 onClick={handleMeetDoctors}
-                className="flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-pink-600 hover:to-purple-700 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/20"
+                className="flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold text-base sm:text-lg hover:from-pink-600 hover:to-purple-700 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/20"
               >
                 <Stethoscope className="h-5 w-5" />
                 {t('meetDoctors')}
@@ -1305,9 +1308,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                       `;
                     }}
                   />
-                  {/* Image Title Overlay - Aesthetic Style */}
-                  <div className="absolute bottom-10 left-12 right-12 transform transition-all duration-700 delay-300 translate-y-0 opacity-100">
-                    <p className="text-white text-3xl sm:text-4xl md:text-5xl italic drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] tracking-tight leading-relaxed" style={{ fontFamily: language === 'en' ? "'Playfair Display', serif" : "inherit" }}>
+                  {/* Image Title Overlay */}
+                  <div className="absolute bottom-4 left-4 right-4 sm:bottom-10 sm:left-12 sm:right-12 transform transition-all duration-700 delay-300 translate-y-0 opacity-100">
+                    <p className="text-white text-xl sm:text-3xl md:text-5xl italic drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] tracking-tight leading-relaxed" style={{ fontFamily: language === 'en' ? "'Playfair Display', serif" : "inherit" }}>
                       {image.title}
                     </p>
                   </div>
@@ -1449,21 +1452,21 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Footer Crossing Decorative Banners - Interactive Lens Focus */}
-      <div className="relative h-[450px] w-full overflow-hidden mt-12 select-none flex items-center justify-center">
+      <div className="relative h-[280px] sm:h-[450px] w-full overflow-hidden mt-12 select-none flex items-center justify-center">
         {/* Central Purplish Pink Glow */}
-        <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[550px] bg-[#d946ef]/15 blur-[130px] rounded-full z-0 transition-opacity duration-700 ${hoveredBanner ? 'opacity-40' : 'opacity-100'}`} />
+        <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] sm:w-[650px] sm:h-[550px] bg-[#d946ef]/15 blur-[60px] sm:blur-[130px] rounded-full z-0 transition-opacity duration-700 ${hoveredBanner ? 'opacity-40' : 'opacity-100'}`} />
 
         {/* Black Banner (Behind) */}
         <div
           onMouseEnter={() => setHoveredBanner('black')}
           onMouseLeave={() => setHoveredBanner(null)}
-          className={`absolute w-[260%] h-28 bg-[#1e1b4b] border-y-2 border-white/10 -rotate-[18deg] flex items-center shadow-[0_0_60px_rgba(30,27,75,0.4)] z-10 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'accent' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
+          className={`absolute w-[260%] h-20 sm:h-28 bg-[#1e1b4b] border-y-2 border-white/10 -rotate-[8deg] sm:-rotate-[18deg] flex items-center shadow-[0_0_60px_rgba(30,27,75,0.4)] z-10 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'accent' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
             }`}
         >
           <div className="flex whitespace-nowrap animate-marquee">
             {[...Array(8)].map((_, i) => (
-              <span key={i} className="text-5xl font-bold text-white/30 px-16 flex items-center gap-8 uppercase tracking-tighter">
-                {t('hospital.name')} <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> {t('expertDoctors')} <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> {t('about.tech')} <Plus className="h-10 w-10 text-white/40 animate-spin-slow" /> {t('about.story.healing')}
+              <span key={i} className="text-3xl sm:text-5xl font-bold text-white/30 px-12 sm:px-16 flex items-center gap-6 sm:gap-8 uppercase tracking-tighter">
+                {t('hospital.name')} <Plus className="h-6 w-6 sm:h-10 sm:w-10 text-white/40 animate-spin-slow" /> {t('expertDoctors')} <Plus className="h-6 w-6 sm:h-10 sm:w-10 text-white/40 animate-spin-slow" /> {t('about.tech')} <Plus className="h-6 w-6 sm:h-10 sm:w-10 text-white/40 animate-spin-slow" /> {t('about.story.healing')}
               </span>
             ))}
           </div>
@@ -1473,13 +1476,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div
           onMouseEnter={() => setHoveredBanner('accent')}
           onMouseLeave={() => setHoveredBanner(null)}
-          className={`absolute w-[260%] h-28 bg-[#d946ef] rotate-[12deg] flex items-center shadow-[0_0_70px_rgba(217,70,239,0.4)] z-20 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'black' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
+          className={`absolute w-[260%] h-20 sm:h-28 bg-[#d946ef] rotate-[6deg] sm:rotate-[12deg] flex items-center shadow-[0_0_70px_rgba(217,70,239,0.4)] z-20 transition-all duration-500 cursor-crosshair pointer-events-auto ${hoveredBanner === 'black' ? 'blur-[6px] opacity-40 scale-[0.98]' : 'blur-0 opacity-100 scale-100'
             }`}
         >
           <div className="flex whitespace-nowrap animate-marquee-reverse">
             {[...Array(8)].map((_, i) => (
-              <span key={i} className="text-5xl font-bold text-white px-16 flex items-center gap-8 italic uppercase tracking-tighter">
-                {t('premiumCare')} <Dna className="h-12 w-12 text-white animate-spin-slow" /> {t('shareExperience')} <Dna className="h-12 w-12 text-white animate-spin-slow" /> {t('about.story.healing')} <Dna className="h-12 w-12 text-white animate-spin-slow" /> {t('patientFirst')}
+              <span key={i} className="text-3xl sm:text-5xl font-bold text-white px-12 sm:px-16 flex items-center gap-6 sm:gap-8 italic uppercase tracking-tighter">
+                {t('premiumCare')} <Dna className="h-8 w-8 sm:h-12 sm:w-12 text-white animate-spin-slow" /> {t('shareExperience')} <Dna className="h-8 w-8 sm:h-12 sm:w-12 text-white animate-spin-slow" /> {t('about.story.healing')} <Dna className="h-8 w-8 sm:h-12 sm:w-12 text-white animate-spin-slow" /> {t('patientFirst')}
               </span>
             ))}
           </div>
@@ -1499,12 +1502,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Cardiology */}
-          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-red-500/30 transition-all duration-500 hover:-translate-y-2">
-            <div className="relative z-10 flex items-center gap-6">
-              <div className="p-4 rounded-2xl bg-red-500/10 text-red-500 group-hover:bg-red-500/20 transition-colors duration-500">
-                <Heart className="h-10 w-10" />
+          <div className="group relative overflow-hidden rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-8 bg-white dark:bg-[#1a1a1a]/40 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-red-500/30 transition-all duration-500 hover:-translate-y-2">
+            <div className="relative z-10 flex items-center gap-4 sm:gap-6">
+              <div className="p-3 sm:p-4 rounded-2xl bg-red-500/10 text-red-500 group-hover:bg-red-500/20 transition-colors duration-500">
+                <Heart className="h-8 w-8 sm:h-10 sm:w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.cardiology')}</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white/90">{t('coe.cardiology')}</h3>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-all duration-500" />
@@ -1590,15 +1593,15 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 py-8">
             {/* Stat 1: Years of Experience */}
-            <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-indigo-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
+            <div className="group/stat relative px-5 py-6 sm:px-8 sm:py-10 rounded-2xl sm:rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-indigo-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
-                <div className="text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-indigo-400 transition-colors">
+                <div className="text-4xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-indigo-400 transition-colors">
                   <CountUpNumber endValue={hospitalSettings?.years_experience || 55} startTrigger={statsVisible} />+
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">{t('stats.experience')}</div>
+                <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-lg font-medium leading-tight">{t('stats.experience')}</div>
               </div>
-              <div className="p-5 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover/stat:bg-indigo-500/20 group-hover/stat:scale-110 transition-all duration-500">
-                <Clock className="h-10 w-10" />
+              <div className="p-3 sm:p-5 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover/stat:bg-indigo-500/20 group-hover/stat:scale-110 transition-all duration-500">
+                <Clock className="h-6 w-6 sm:h-10 sm:w-10" />
               </div>
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
             </div>
@@ -1677,21 +1680,21 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Thick Wavy Blood Flow Animation - Pure Cells - Balanced Scale */}
-      <div className="relative h-[450px] w-full overflow-hidden pointer-events-none">
-        {[...Array(30)].map((_, i) => (
+      <div className="relative h-[250px] sm:h-[450px] w-full overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
           <div
             key={i}
             className="absolute top-1/2 left-0 rounded-full z-[60]"
             style={{
-              width: `${30 + (i % 8) * 10}px`,
-              height: `${24 + (i % 8) * 8}px`,
+              width: `${20 + (i % 6) * 8}px`,
+              height: `${16 + (i % 6) * 6}px`,
               background: 'radial-gradient(circle at 30% 30%, #ff0000, #4a0000)',
               boxShadow: 'inset -5px -5px 12px rgba(0,0,0,0.6), 0 0 30px rgba(255, 0, 0, 0.4)',
               animation: `blood-flow ${6 + (i % 3)}s linear infinite`,
-              animationDelay: `${i * 0.25}s`,
+              animationDelay: `${i * 0.4}s`,
               opacity: 0.8 + (i % 3) * 0.1,
               filter: `blur(${i % 5 === 0 ? '2px' : '0px'})`,
-              marginTop: `${(i % 5 - 2) * 40}px`
+              marginTop: `${(i % 5 - 2) * (window.innerWidth < 640 ? 25 : 40)}px`
             }}
           >
             {/* Cell detail */}

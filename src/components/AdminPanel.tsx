@@ -1826,21 +1826,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
   if (!isAuthenticated) {
     console.log("Rendering login view. State:", { isLoggingIn, loginSuccess });
     return (
-      <div className="min-h-screen bg-white dark:bg-[#030303] flex items-center justify-center p-4 lg:p-0">
-        <div className="bg-gray-50 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-[1200px] min-h-[700px] flex flex-col lg:flex-row relative border border-gray-200 dark:border-white/10">
+      <div className="min-h-screen bg-white dark:bg-[#030303] flex items-center justify-center p-4 lg:p-6">
+        <div className="bg-gray-50 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-[1200px] min-h-[500px] lg:min-h-[700px] flex flex-col lg:flex-row relative border border-gray-200 dark:border-white/10">
 
           {/* Left Side - Hero/Illustration */}
 
           {/* Left Side - Hero/Illustration (Interactive Shapes) */}
-          <div className="w-full lg:w-1/2 bg-gray-100 dark:bg-[#080808] flex items-center justify-center relative overflow-hidden">
-
+          <div className="w-full h-48 lg:h-auto lg:w-1/2 bg-gray-100 dark:bg-[#080808] flex items-center justify-center relative overflow-hidden">
             <div className="w-full h-full absolute inset-0">
               <LoginShapes focusedInput={focusedInput} emailLength={email.length} />
             </div>
           </div>
 
           {/* Right Side - Login Form */}
-          <div className="w-full lg:w-1/2 p-8 lg:p-16 flex flex-col justify-center bg-white dark:bg-[#0c0c0c]/50">
+          <div className="w-full lg:w-1/2 p-6 sm:p-8 lg:p-16 flex flex-col justify-center bg-white dark:bg-[#0c0c0c]/50">
 
             {/* Logo area */}
             <div className="mb-8 text-center lg:text-left">
@@ -1944,12 +1943,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
 
-      <div className="relative z-10 w-full p-8">
+      <div className="relative z-10 w-full p-4 sm:p-8">
         {/* Header */}
-        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-3xl p-8 mb-8 shadow-2xl">
-          <div className="flex items-center gap-4 mb-6">
-            <Database className="h-8 w-8 text-indigo-400" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent">
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-8 shadow-2xl">
+          <div className="flex items-center gap-3 sm:gap-4 mb-6">
+            <Database className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-400" />
+            <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent">
               Feedback Admin Panel
             </h1>
           </div>
@@ -2092,12 +2091,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
                 setMainView("feedbacks");
                 setActiveTab("opd"); // Reset to OPD when switching to feedbacks
               }}
-              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "feedbacks"
+              className={`px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-lg transform ${mainView === "feedbacks"
                 ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white scale-105 shadow-xl border border-indigo-500/50"
                 : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
-              <Filter className="h-5 w-5 inline-block mr-2" />
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5 inline-block mr-2" />
               Filter Feedbacks
             </button>
           )}
@@ -2107,12 +2106,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
                 setMainView("tickets");
                 setActiveTab("tickets");
               }}
-              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "tickets"
+              className={`px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-lg transform ${mainView === "tickets"
                 ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white scale-105 shadow-xl border border-purple-500/50"
                 : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
-              <Filter className="h-5 w-5 inline-block mr-2" />
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5 inline-block mr-2" />
               View Tickets
             </button>
           )}
@@ -2122,12 +2121,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
                 setMainView("doctors");
                 loadDoctors();
               }}
-              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "doctors"
+              className={`px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-lg transform ${mainView === "doctors"
                 ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white scale-105 shadow-xl border border-indigo-500/50"
                 : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
-              <Stethoscope className="h-5 w-5 inline-block mr-2" />
+              <Stethoscope className="h-4 w-4 sm:h-5 sm:w-5 inline-block mr-2" />
               Manage Doctors
             </button>
           )}
@@ -2137,12 +2136,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
                 setMainView("testimonials");
                 loadTestimonials();
               }}
-              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "testimonials"
+              className={`px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-lg transform ${mainView === "testimonials"
                 ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white scale-105 shadow-xl border border-blue-500/50"
                 : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
-              <MessageSquareQuote className="h-5 w-5 inline-block mr-2" />
+              <MessageSquareQuote className="h-4 w-4 sm:h-5 sm:w-5 inline-block mr-2" />
               Manage Testimonials
             </button>
           )}
@@ -2152,12 +2151,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
                 setMainView("settings");
                 loadHospitalSettings();
               }}
-              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "settings"
+              className={`px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-lg transform ${mainView === "settings"
                 ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white scale-105 shadow-xl border border-teal-500/50"
                 : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
-              <Settings className="h-5 w-5 inline-block mr-2" />
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5 inline-block mr-2" />
               Hospital Settings
             </button>
           )}
@@ -3420,24 +3419,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
 
         {/* Tabs - Only show for feedbacks view */}
         {mainView === "feedbacks" && (
-          <div className="flex space-x-2 bg-white dark:bg-gray-800/50 backdrop-blur-sm p-2 rounded-2xl w-fit shadow-lg mb-8 border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-800/50 backdrop-blur-sm p-2 rounded-2xl w-fit shadow-lg mb-8 border border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setActiveTab("opd")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 transform ${activeTab === "opd"
+              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold transition-all duration-300 transform ${activeTab === "opd"
                 ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-xl scale-105"
                 : "bg-white dark:bg-gray-700/30 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:scale-105 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
             >
-              OPD Feedback ({filteredFeedback.opd.length})
+              OPD ({filteredFeedback.opd.length})
             </button>
             <button
               onClick={() => setActiveTab("ipd")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 transform ${activeTab === "ipd"
+              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold transition-all duration-300 transform ${activeTab === "ipd"
                 ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-xl scale-105"
                 : "bg-white dark:bg-gray-700/30 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:scale-105 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
             >
-              IPD Feedback ({filteredFeedback.ipd.length})
+              IPD ({filteredFeedback.ipd.length})
             </button>
           </div>
         )}

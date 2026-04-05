@@ -64,7 +64,7 @@ const RatingSelector: React.FC<RatingSelectorProps> = ({ label, value, onChange,
                   }`}
               >
                 <SmileyIcon color={rating.color} type={rating.type} />
-                <span className="hidden sm:inline">{rating.text}</span>
+                <span className="text-[10px] sm:text-sm">{rating.text}</span>
               </div>
             </label>
           ))}

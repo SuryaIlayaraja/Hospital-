@@ -145,28 +145,29 @@ const AppContent: React.FC = () => {
             />
 
             {/* Content overlay */}
-            <div className="relative z-10 w-full px-6 py-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Hospital className="h-8 w-8 text-blue-600" />
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="relative z-10 w-full px-3 sm:px-6 py-4 sm:py-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <Hospital className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 shrink-0" />
+                  <div className="min-w-0">
+                    <h1 className="text-base sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
                       {hospitalSettings?.hospital_name || t("hospital.name")}
                     </h1>
-                    <p className="text-gray-400 font-medium">
+                    <p className="text-gray-400 font-medium text-xs sm:text-sm truncate">
                       {hospitalSettings?.hospital_location || t("hospital.location")}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 sm:gap-3 shrink-0">
                   <ThemeToggle />
                   <LanguageSwitcher />
                   <ReportNavbar onOpen={() => setActiveTab("raise-ticket")} />
                 </div>
               </div>
 
-              {/* Tab Navigation */}
-              <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-lg w-fit border border-gray-200 dark:border-gray-700/50">
+              {/* Tab Navigation — scrollable on mobile */}
+              <div className="overflow-x-auto -mx-1 px-1 pb-1">
+              <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-lg w-fit border border-gray-200 dark:border-gray-700/50 min-w-max">
                 <button
                   onClick={() => setActiveTab("dashboard")}
                   className="flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700/50"
@@ -208,6 +209,7 @@ const AppContent: React.FC = () => {
                   <Settings className="h-4 w-4" />
                   {t("nav.admin")}
                 </button>
+              </div>
               </div>
             </div>
           </header>

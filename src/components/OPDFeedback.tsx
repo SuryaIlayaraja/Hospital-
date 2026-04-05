@@ -194,7 +194,7 @@ const OPDFeedback: React.FC = () => {
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
 
-      <form onSubmit={handleSubmit} className="relative z-10 p-8 space-y-8 min-h-full max-w-7xl mx-auto">
+      <form onSubmit={handleSubmit} className="relative z-10 p-4 sm:p-8 space-y-8 min-h-full max-w-7xl mx-auto">
         <div className="text-center border-b border-gray-200 dark:border-white/10 pb-8 bg-gray-50 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 shadow-none dark:shadow-2xl">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent mb-3">
             {t("opd.title")}
@@ -435,7 +435,7 @@ const OPDFeedback: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`flex items-center gap-3 px-12 py-4 rounded-2xl font-bold text-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transform transition-all duration-300 shadow-2xl ${isSubmitting
+            className={`w-full sm:w-auto flex items-center justify-center gap-3 px-12 py-4 rounded-2xl font-bold text-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transform transition-all duration-300 shadow-2xl ${isSubmitting
               ? "bg-gray-700 text-gray-400 cursor-not-allowed"
               : "bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 hover:scale-105 hover:shadow-indigo-500/50"
               }`}
