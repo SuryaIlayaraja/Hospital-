@@ -1,5 +1,4 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
@@ -24,9 +23,14 @@ const doctorRoutes = require("./routes/doctors");
 const departmentRoutes = require("./routes/departments");
 const authRoutes = require("./routes/auth");
 const chatRoutes = require("./routes/chat");
-const ChatMessage = require("./models/ChatMessage");
-const Ticket = require("./models/Ticket");
 const patientAuthRoutes = require("./routes/patientAuth");
+const settingsRoutes = require("./routes/settings");
+const testimonialRoutes = require("./routes/testimonials");
+const {
+  findTicketById,
+  insertChatMessage,
+  markAllMessagesRead,
+} = require("./lib/socketDb");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,11 +38,12 @@ const PORT = process.env.PORT || 5000;
 // CORS configuration - must be before other middleware
 // Allow all origins in development, specific origin in production
 const corsOptions = {
-  origin: process.env.NODE_ENV === "production" 
-    ? (process.env.FRONTEND_URL || "http://localhost:5173")
-    : true, // Allow all origins in development
+  origin:
+    process.env.NODE_ENV === "production"
+      ? process.env.FRONTEND_URL || "http://localhost:5173"
+      : true, // Allow all origins in development
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-chat-token"],
   credentials: true,
   optionsSuccessStatus: 200, // Support legacy browsers
 };
@@ -48,7 +53,7 @@ app.use(cors(corsOptions));
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
+  }),
 );
 
 // Rate limiting
@@ -76,21 +81,15 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use("/uploads", express.static(uploadsDir));
 
-// MongoDB connection
-const connectDB = async () => {
-  try {
-    const mongoURI =
-      process.env.MONGODB_URI || "mongodb://localhost:27017/hospital-feedback";
-    await mongoose.connect(mongoURI);
-    console.log("✅ MongoDB connected successfully");
-  } catch (error) {
-    console.error("❌ MongoDB connection error:", error);
-    process.exit(1);
-  }
-};
-
-// Connect to MongoDB
-connectDB();
+// Supabase: tables must exist (run supabase/migrations/001_initial_schema.sql). Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+try {
+  const { getSupabase } = require("./lib/supabase");
+  getSupabase();
+  console.log("✅ Supabase client initialized");
+} catch (e) {
+  console.error("❌ Supabase configuration error:", e.message);
+  process.exit(1);
+}
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -101,6 +100,8 @@ app.use("/api/floors", floorRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/testimonials", testimonialRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -205,24 +206,41 @@ const JWT_SECRET =
 
 const getAdminFromHandshake = (socket) => {
   try {
+    const authToken = socket.handshake.auth?.token;
     const authHeader =
       socket.handshake.auth?.token ||
       socket.handshake.headers?.authorization ||
       "";
 
+    console.log("[Socket Auth] Full handshake auth object:", {
+      auth: Object.keys(socket.handshake.auth || {}),
+      authTokenValue: authToken ? `${authToken.substring(0, 30)}...` : null,
+      authHeader: authHeader ? `${authHeader.substring(0, 30)}...` : null,
+      hasBearer: authHeader.startsWith("Bearer "),
+    });
+
     const token = authHeader.startsWith("Bearer ")
       ? authHeader.substring(7)
       : authHeader;
 
-    if (!token) return null;
+    if (!token) {
+      console.log("[Socket Auth] No token found after extraction");
+      return null;
+    }
     const decoded = jwt.verify(token, JWT_SECRET);
+    console.log("[Socket Auth] Admin authenticated:", {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+    });
     return {
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,
       departmentName: decoded.departmentName,
     };
-  } catch {
+  } catch (error) {
+    console.log("[Socket Auth] Admin authentication failed:", error.message);
     return null;
   }
 };
@@ -241,12 +259,45 @@ const cryptoHash = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
 };
 
+/** Patient may use per-ticket chat token (anonymous) or OTP JWT when ticket.patient_id matches. */
+async function patientSocketCanAccessTicket(socket, ticketId) {
+  const t = await findTicketById(ticketId);
+  if (!t) return false;
+
+  if (socket.data.chatToken) {
+    const h = cryptoHash(socket.data.chatToken);
+    if (t.patient_chat_token_hash && t.patient_chat_token_hash === h) {
+      return true;
+    }
+  }
+
+  if (socket.data.patientToken) {
+    let decoded;
+    try {
+      decoded = jwt.verify(socket.data.patientToken, JWT_SECRET);
+    } catch {
+      return false;
+    }
+    if (decoded?.role !== "Patient" || !decoded?.patientId) return false;
+    socket.data.patientId = decoded.patientId;
+    if (
+      t.patient_id &&
+      String(t.patient_id) === String(decoded.patientId)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 io.on("connection", (socket) => {
   const admin = getAdminFromHandshake(socket);
   socket.data.role = admin ? "admin" : "patient";
   socket.data.userId = admin?.userId;
   socket.data.chatToken = admin ? null : getPatientTokenFromHandshake(socket);
   socket.data.patientToken = admin ? null : getPatientJwtFromHandshake(socket);
+  socket.data.clerkUserId = admin ? null : socket.handshake.auth?.clerkUserId;
   socket.data.patientId = null;
 
   if (admin) {
@@ -257,22 +308,37 @@ io.on("connection", (socket) => {
     try {
       if (!ticketId) return;
 
-      // Patient must prove access token for this ticket
+      console.log(
+        `[Chat] ${socket.data.role} trying to join ticket: ${ticketId}`,
+      );
+
+      // Patient: per-ticket chat token and/or OTP JWT (see patientSocketCanAccessTicket)
       if (socket.data.role === "patient") {
-        // Prefer patient JWT (phone OTP login)
-        if (socket.data.patientToken) {
-          const decoded = jwt.verify(socket.data.patientToken, JWT_SECRET);
-          if (decoded?.role !== "Patient" || !decoded?.patientId) return;
-          socket.data.patientId = decoded.patientId;
-          const t = await Ticket.findOne({ id: ticketId });
-          if (!t || !t.patientId || String(t.patientId) !== String(decoded.patientId)) return;
-        } else {
-          // Fallback: ticket chat token
-          const token = socket.data.chatToken;
-          if (!token) return;
-          const tokenHash = cryptoHash(token);
-          const t = await Ticket.findOne({ id: ticketId }).select("+patientChatTokenHash");
-          if (!t || !t.patientChatTokenHash || t.patientChatTokenHash !== tokenHash) return;
+        const ok = await patientSocketCanAccessTicket(socket, ticketId);
+        if (!ok) {
+          if (socket.data.patientToken) {
+            try {
+              jwt.verify(socket.data.patientToken, JWT_SECRET);
+            } catch {
+              socket.emit("join_error", {
+                ticketId,
+                message: "Invalid patient token",
+              });
+              return;
+            }
+          }
+          if (!socket.data.chatToken && !socket.data.patientToken) {
+            socket.emit("join_error", {
+              ticketId,
+              message: "No chat token provided",
+            });
+            return;
+          }
+          socket.emit("join_error", {
+            ticketId,
+            message: "Ticket not found or access denied",
+          });
+          return;
         }
       }
 
@@ -284,6 +350,10 @@ io.on("connection", (socket) => {
       });
     } catch (error) {
       console.error("join_ticket error:", error);
+      socket.emit("join_error", {
+        ticketId,
+        message: "Server error joining ticket",
+      });
     }
   });
 
@@ -312,13 +382,10 @@ io.on("connection", (socket) => {
       const now = new Date();
       const role = socket.data.role;
       const field =
-        role === "admin" ? "readBy.adminAt" : role === "patient" ? "readBy.patientAt" : null;
+        role === "admin" ? "adminAt" : role === "patient" ? "patientAt" : null;
       if (!field) return;
 
-      await ChatMessage.updateMany(
-        { ticketId },
-        { $set: { [field]: now } }
-      );
+      await markAllMessagesRead(ticketId, field, now.toISOString());
 
       io.to(`ticket:${ticketId}`).emit("read_receipt", {
         ticketId,
@@ -336,28 +403,20 @@ io.on("connection", (socket) => {
       const cleanAttachments = Array.isArray(attachments) ? attachments : [];
       if (!ticketId || (!cleanMessage && cleanAttachments.length === 0)) return;
 
-      // Patient must be authorized for this ticket
       if (socket.data.role === "patient") {
-        if (socket.data.patientToken) {
-          const decoded = jwt.verify(socket.data.patientToken, JWT_SECRET);
-          if (decoded?.role !== "Patient" || !decoded?.patientId) return;
-          const t = await Ticket.findOne({ id: ticketId });
-          if (!t || !t.patientId || String(t.patientId) !== String(decoded.patientId)) return;
-        } else {
-          const token = socket.data.chatToken;
-          if (!token) return;
-          const tokenHash = cryptoHash(token);
-          const t = await Ticket.findOne({ id: ticketId }).select("+patientChatTokenHash");
-          if (!t || !t.patientChatTokenHash || t.patientChatTokenHash !== tokenHash) return;
+        const ok = await patientSocketCanAccessTicket(socket, ticketId);
+        if (!ok) {
+          socket.emit("chat_error", { message: "Access denied" });
+          return;
         }
       }
 
       const senderType = socket.data.role === "admin" ? "admin" : "patient";
 
-      const doc = await ChatMessage.create({
-        ticketId,
-        senderType,
-        senderId: socket.data.userId,
+      const doc = await insertChatMessage({
+        ticket_id: ticketId,
+        sender_type: senderType,
+        sender_id: socket.data.userId ? String(socket.data.userId) : null,
         message: cleanMessage,
         attachments: cleanAttachments,
       });
@@ -405,22 +464,18 @@ httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(
-    `🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`
+    `🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`,
   );
   console.log(`📝 API Documentation: http://localhost:${PORT}`);
 });
 
 // Graceful shutdown
-process.on("SIGTERM", async () => {
+process.on("SIGTERM", () => {
   console.log("SIGTERM received, shutting down gracefully");
-  await mongoose.connection.close();
-  console.log("MongoDB connection closed");
   process.exit(0);
 });
 
-process.on("SIGINT", async () => {
+process.on("SIGINT", () => {
   console.log("SIGINT received, shutting down gracefully");
-  await mongoose.connection.close();
-  console.log("MongoDB connection closed");
   process.exit(0);
 });

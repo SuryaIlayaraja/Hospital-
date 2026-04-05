@@ -5,6 +5,8 @@ export type Language = 'en' | 'ta';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
+  hospitalName: string | null;
+  setHospitalName: (name: string | null) => void;
   t: (key: string) => any;
 }
 
@@ -79,6 +81,9 @@ const translations = {
     'ticket.dept.lab': 'Lab',
     'ticket.dept.radiology': 'Radiology',
     'ticket.dept.bloodbank': 'Blood Bank',
+    'ticket.history.title': 'Your support tickets',
+    'ticket.history.resumeHint':
+      'If you leave this page, your chat is not lost. Come back to Raise a Ticket, find your ticket below, and tap Chat — your chat link stays on this device.',
     'progress.title': 'Ticket Progress',
     'progress.complete': 'Ticket Completed',
     'progress.completed': 'Ticket Completed',
@@ -435,6 +440,9 @@ const translations = {
     'ticket.dept.lab': 'ஆய்வகம்',
     'ticket.dept.radiology': 'ரேடியாலஜி',
     'ticket.dept.bloodbank': 'இரத்த வங்கி',
+    'ticket.history.title': 'உங்கள் ஆதரவு டிக்கெட்டுகள்',
+    'ticket.history.resumeHint':
+      'இந்தப் பக்கத்தை விட்டுச் சென்றாலும் உரையாடல் தொலைந்துவிடாது. மீண்டும் “புகார் பதிவு” பக்கத்திற்கு வந்து, கீழே உள்ள டிக்கெட்டில் “உரையாடல்” ஐத் தட்டவும் — இணைப்பு இந்த சாதனத்தில் சேமிக்கப்படும்.',
     'progress.title': 'டிக்கெட் முன்னேற்றம்',
     'progress.complete': 'டிக்கெட் முடிந்தது',
     'progress.completed': 'டிக்கெட் முடிந்தது',
@@ -732,13 +740,29 @@ interface LanguageProviderProps {
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('en');
+  const [hospitalName, setHospitalName] = useState<string | null>(null);
 
   const t = (key: string): any => {
-    return (translations[language] as any)[key] || key;
+    let val = (translations[language] as any)[key] || key;
+    
+    // Globally replace hardcoded names with dynamic hospital name if available
+    if (typeof val === 'string' && hospitalName) {
+      // English replacements
+      val = val.replace(/Vikram ENT Hospital/g, hospitalName);
+      val = val.replace(/Vikram Hospital/g, hospitalName);
+      val = val.replace(/Vikram ENT/g, hospitalName);
+      
+      // Tamil replacements
+      val = val.replace(/விக்ரம் ENT மருத்துவமனை/g, hospitalName);
+      val = val.replace(/விக்ரம் மருத்துவமனை/g, hospitalName);
+      val = val.replace(/விக்ரம் ENT/g, hospitalName);
+    }
+    
+    return val;
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, hospitalName, setHospitalName, t }}>
       {children}
     </LanguageContext.Provider>
   );

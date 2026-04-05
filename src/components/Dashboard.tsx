@@ -30,7 +30,7 @@ import {
   Instagram,
   Twitter,
 } from "lucide-react";
-import { getActiveDoctors, Doctor } from "../services/apiService";
+import { getActiveDoctors, Doctor, HospitalSettings } from "../services/apiService";
 import ThemeToggle from "./ThemeToggle";
 import Testimonials from "./Testimonials";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -186,11 +186,13 @@ const ValueCard = ({ item, index }: { item: any; index: number }) => {
 interface DashboardProps {
   onNavigate?: (tab: "opd" | "ipd" | "admin") => void;
   onNavigateToTicket?: () => void;
+  hospitalSettings?: HospitalSettings | null;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
   onNavigateToTicket,
+  hospitalSettings,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [showDoctors, setShowDoctors] = useState(false);
@@ -431,7 +433,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="absolute inset-0">
             <img
               src={aboutImages.hero}
-              alt="Vikram Hospital"
+              alt={hospitalSettings?.hospital_name || "Vikram Hospital"}
               className="w-full h-full object-cover"
               style={{ filter: "brightness(0.35)" }}
             />
@@ -451,7 +453,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className="w-9 h-9 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/30 pulse-glow">
                     <Building2 className="h-5 w-5 text-indigo-400" />
                   </div>
-                  <span className="text-lg font-bold text-white">Vikram Hospital</span>
+                  <span className="text-lg font-bold text-white">
+                    {hospitalSettings?.hospital_name || "Vikram Hospital"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
@@ -833,13 +837,25 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <h3 className="text-xl font-bold text-white mb-6">{t('contactInfo')}</h3>
                 </div>
                 <div className="space-y-3">
-                  <p className="text-gray-400 flex justify-between items-center">
+                  <p className="text-gray-400 flex justify-between items-center group/item">
                     <span>{t('about.emergency')}:</span>
-                    <span className="text-indigo-300 font-mono bg-indigo-500/10 px-3 py-1 rounded-lg">+91 98765 43210</span>
+                    <a 
+                      href={hospitalSettings?.contact_phone ? `tel:${hospitalSettings.contact_phone}` : "tel:+919876543210"}
+                      className="text-indigo-300 font-mono bg-indigo-500/10 px-3 py-1 rounded-lg hover:bg-indigo-500/20 transition-colors"
+                    >
+                      {hospitalSettings?.contact_phone || "+91 98765 43210"}
+                    </a>
                   </p>
-                  <p className="text-gray-400 flex justify-between items-center">
+                  <p className="text-gray-400 flex justify-between items-center group/item">
                     <span>{t('about.email')}:</span>
-                    <span className="text-indigo-300">info@vikramhospital.com</span>
+                    <a 
+                      href={hospitalSettings?.contact_email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${hospitalSettings.contact_email}` : "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-300 hover:text-indigo-200 transition-colors underline decoration-indigo-500/30 underline-offset-4"
+                    >
+                      {hospitalSettings?.contact_email || "info@vikramhospital.com"}
+                    </a>
                   </p>
                 </div>
               </div>
@@ -1577,7 +1593,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-indigo-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
                 <div className="text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-indigo-400 transition-colors">
-                  <CountUpNumber endValue={55} startTrigger={statsVisible} />+
+                  <CountUpNumber endValue={hospitalSettings?.years_experience || 55} startTrigger={statsVisible} />+
                 </div>
                 <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">{t('stats.experience')}</div>
               </div>
@@ -1591,7 +1607,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-purple-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
                 <div className="text-6xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-purple-400 transition-colors">
-                  <CountUpNumber endValue={20} startTrigger={statsVisible} />+
+                  <CountUpNumber endValue={hospitalSettings?.expert_doctors || 20} startTrigger={statsVisible} />+
                 </div>
                 <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">{t('stats.doctors')}</div>
               </div>
@@ -1605,7 +1621,13 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-pink-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
                 <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-pink-400 transition-colors">
-                  <CountUpNumber endValue={500000} startTrigger={statsVisible} />+
+                  {hospitalSettings?.successful_procedures && hospitalSettings.successful_procedures.includes(',') ? (
+                    <span>{hospitalSettings.successful_procedures}</span>
+                  ) : (
+                    <>
+                      <CountUpNumber endValue={parseInt((hospitalSettings?.successful_procedures || "500000").replace(/[^0-9]/g, ''))} startTrigger={statsVisible} />+
+                    </>
+                  )}
                 </div>
                 <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">{t('stats.procedures')}</div>
               </div>
@@ -1619,7 +1641,13 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="group/stat relative px-8 py-10 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/5 hover:border-cyan-500/30 transition-all duration-500 flex items-center justify-between overflow-hidden">
               <div className="relative z-10">
                 <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2 group-hover/stat:text-cyan-400 transition-colors">
-                  <CountUpNumber endValue={5000000} startTrigger={statsVisible} />+
+                  {hospitalSettings?.lives_touched && hospitalSettings.lives_touched.includes(',') ? (
+                    <span>{hospitalSettings.lives_touched}</span>
+                  ) : (
+                    <>
+                      <CountUpNumber endValue={parseInt((hospitalSettings?.lives_touched || "5000000").replace(/[^0-9]/g, ''))} startTrigger={statsVisible} />+
+                    </>
+                  )}
                 </div>
                 <div className="text-gray-600 dark:text-gray-400 text-lg font-medium leading-tight">{t('stats.lives')}</div>
               </div>
@@ -1632,7 +1660,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      <Testimonials />
+      {hospitalSettings?.show_testimonials !== false && <Testimonials />}
 
       {/* Patient Dedication Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 text-center relative z-10">

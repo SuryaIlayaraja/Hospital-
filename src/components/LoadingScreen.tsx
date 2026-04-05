@@ -7,9 +7,10 @@ const FALLBACK_DOCTOR = 'https://images.pexels.com/photos/5327585/pexels-photo-5
 
 interface LoadingScreenProps {
   onComplete: () => void;
+  hospitalName?: string;
 }
 
-const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
+const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName }) => {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
@@ -133,7 +134,13 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           <div className="inline-flex items-center justify-center w-24 h-24 bg-[#2563eb] rounded-full shadow-lg mb-4 shadow-[#2563eb]/20">
             <Building2 className="w-12 h-12 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Vikram Hospital</h1>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 flex items-center justify-center">
+            {hospitalName ? (
+              hospitalName
+            ) : (
+              <span className="h-10 w-48 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-lg" />
+            )}
+          </h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">Patient Feedback Management System</p>
         </div>
 

@@ -1,94 +1,124 @@
 import React, { useState, useEffect } from "react";
-import { Quote } from "lucide-react";
+import { Quote, Star, MessageSquareQuote } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { getTestimonials, Testimonial } from "../services/apiService";
 
 const Testimonials: React.FC = () => {
   const { t } = useLanguage();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const testimonials = t('testimonials.list') as any[];
-
+  const [dynamicTestimonials, setDynamicTestimonials] = useState<Testimonial[]>([]);
+  
   useEffect(() => {
-    if (!testimonials || testimonials.length === 0) return;
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [testimonials]);
+    const fetchTestimonials = async () => {
+      try {
+        const response = await getTestimonials();
+        if (response.success && response.data && response.data.length > 0) {
+          setDynamicTestimonials(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching testimonials:", error);
+      }
+    };
+    fetchTestimonials();
+  }, []);
 
-  if (!testimonials || testimonials.length === 0) return null;
-  const current = testimonials[currentIndex];
+  // LOGIC: Only show dynamic testimonials from the database.
+  // If the user hasn't added any or has cleared the DB, it will show NOTHING on the dashboard.
+  if (dynamicTestimonials.length === 0) {
+     return null; 
+  }
+
+  const testimonials = dynamicTestimonials;
 
   return (
-    <section className="py-20 bg-gray-50/50 dark:bg-black/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-24 relative overflow-hidden bg-white dark:bg-[#0a0a0a]">
+      {/* Background Ambient Glows */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="text-center mb-16 relative">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white inline-block relative">
-            {t('testimonials.title')} <span className="text-indigo-600 dark:text-indigo-400">{t('testimonials.accent')}</span>
-            <div className="mt-4 flex justify-center">
-              <div className="h-1.5 w-48 bg-gray-800 dark:bg-gray-700 rounded-full relative overflow-hidden">
-                <div className="absolute top-0 left-1/3 w-1/3 h-full bg-yellow-500" />
-              </div>
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 mb-4">
+              <Star className="h-4 w-4 text-blue-500 fill-blue-500" />
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                Trusted by Professionals
+              </span>
             </div>
-          </h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
+              {t('testimonials.title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500 dark:from-blue-400 dark:to-indigo-400">{t('testimonials.accent')}</span>
+            </h2>
+          </div>
+          <div className="hidden md:block">
+            <p className="text-gray-500 dark:text-gray-400 max-w-xs text-right text-sm leading-relaxed">
+              Real feedback from healthcare experts about their experience with our medical standards.
+            </p>
+          </div>
         </div>
 
-        {/* Testimonial Card */}
-        <div className="max-w-4xl mx-auto relative">
-          <div className="flex flex-col items-center transition-all duration-500 ease-in-out transform">
-            {/* Avatar */}
-            <div className="relative mb-8 group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full blur opacity-40 group-hover:opacity-60 transition duration-300" />
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl">
-                <img
-                  src={current.image}
-                  alt={current.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-
-            {/* Quote Block */}
-            <div className="relative bg-white dark:bg-gray-800/40 backdrop-blur-sm p-8 md:p-12 rounded-2xl shadow-lg border border-gray-100 dark:border-white/5 w-full text-center">
-              <Quote className="absolute top-6 left-8 h-12 w-12 text-gray-200 dark:text-gray-700/50 -scale-x-100" />
-              <p className="text-gray-700 dark:text-gray-300 text-lg md:text-xl leading-relaxed font-medium italic relative z-10">
-                "{current.text}"
-              </p>
-            </div>
-
-            {/* Content Details */}
-            <div className="mt-12 text-center">
-              {/* Three Yellow Dots */}
-              <div className="flex justify-center gap-1.5 mb-6">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {testimonials.map((testimonial, idx) => (
+            <div 
+              key={testimonial.id || idx}
+              className={`group relative p-8 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 hover:border-blue-500/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/10 ${
+                idx === 1 ? 'lg:scale-105 lg:z-20 lg:shadow-xl lg:shadow-blue-500/5 lg:bg-white/40 lg:dark:bg-white/[0.04]' : ''
+              }`}
+            >
+              {/* Card Decoration */}
+              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Quote className="h-16 w-16" />
               </div>
 
-              <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                {current.name}
-              </h4>
-              <p className="text-gray-600 dark:text-gray-400 font-medium">
-                {current.role} {current.hospital}
-              </p>
-            </div>
+              {/* Quote Icon */}
+              <div className="mb-6">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                  <MessageSquareQuote className="h-5 w-5" />
+                </div>
+              </div>
 
-            {/* Pagination Controls */}
-            <div className="flex justify-center gap-3 mt-12">
-              {testimonials.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`transition-all duration-300 ${
-                    idx === currentIndex
-                      ? "w-8 h-3 bg-yellow-500 rounded-full"
-                      : "w-3 h-3 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-yellow-200"
-                  }`}
-                  aria-label={`Go to testimonial ${idx + 1}`}
-                />
-              ))}
+              {/* Testimonial Text */}
+              <div className="mb-8">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium italic">
+                  "{testimonial.text}"
+                </p>
+              </div>
+
+              {/* Author Section */}
+              <div className="flex items-center gap-4 mt-auto pt-6 border-t border-gray-100 dark:border-white/5">
+                <div className="relative shrink-0">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full blur opacity-0 group-hover:opacity-40 transition-opacity" />
+                  <img
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    className="relative w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-800"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                    {testimonial.name}
+                  </h4>
+                  <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 truncate uppercase tracking-wider">
+                    {testimonial.role} • {testimonial.hospital}
+                  </p>
+                </div>
+              </div>
+
+              {/* Rating Indication */}
+              <div className="mt-4 flex gap-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} className="h-3 w-3 text-blue-500 fill-blue-500" />
+                ))}
+              </div>
             </div>
-          </div>
+          ))}
+        </div>
+
+        {/* Bottom Trust Indicators */}
+        <div className="mt-20 flex flex-wrap items-center justify-center gap-x-12 gap-y-8 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+          <div className="text-lg font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Verified Excellence</div>
+          <div className="h-px w-24 bg-gray-200 dark:bg-white/10 hidden sm:block" />
+          <div className="text-lg font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Accredited Care</div>
         </div>
       </div>
     </section>

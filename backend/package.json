@@ -6,19 +6,21 @@
   "scripts": {
     "start": "set NODE_OPTIONS=--dns-result-order=ipv4first && node server.js",
     "dev": "set NODE_OPTIONS=--dns-result-order=ipv4first && nodemon server.js",
-    "setup": "node setup-mongodb.js",
-    "sample-data": "node add-sample-data.js",
+    "setup": "echo Run SQL in supabase/migrations/001_initial_schema.sql via Supabase SQL Editor",
+    "sample-data": "echo Sample data: use Supabase SQL Editor or POST /api/departments/seed and POST /api/auth/seed-users",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "hospital",
     "feedback",
     "api",
-    "mongodb"
+    "supabase"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
+    "@supabase/supabase-js": "^2.100.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -26,8 +28,8 @@
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.0.3",
     "multer": "^2.1.1",
+    "nodemailer": "^8.0.4",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {

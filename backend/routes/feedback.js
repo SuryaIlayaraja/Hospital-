@@ -1,345 +1,359 @@
 const express = require("express");
+const { getSupabase } = require("../lib/supabase");
+const { feedbackRowToClient } = require("../lib/mappers");
+
 const router = express.Router();
-const { OPDFeedback, IPDFeedback } = require("../models/Feedback");
 
-// Department → feedback field mapping for filtering
-// When a department is selected, only records where that field exists & is non-empty are included.
 const DEPARTMENT_FIELD_MAP = {
-  "Nursing":         "nursingCare",
-  "Operations":      "appointmentBooking",
-  "House Keeping":   "hospitalCleanliness",
-  "Maintenance":     "hospitalCleanliness",
-  "Medical":         "counsellingSession",
-  "F&B":             null, // no direct field
-  "Security":        null,
-  "Transport":       null,
-  "IT":              null,
-  "Laundry":         null,
-  "Billing":         "billingProcess",
+  Nursing: "nursingCare",
+  Operations: "appointmentBooking",
+  "House Keeping": "hospitalCleanliness",
+  Maintenance: "hospitalCleanliness",
+  Medical: "counsellingSession",
+  "F&B": null,
+  Security: null,
+  Transport: null,
+  IT: null,
+  Laundry: null,
+  Billing: "billingProcess",
   "Insurance / TPA": "billingProcess",
-  "MRD":             "registrationProcess",
-  "Lab":             "labStaffSkilled",
-  "Radiology":       "radiologyStaffSkilled",
-  "Blood Bank":      "labStaffSkilled",
-  "Pharmacy":        "pharmacyWaitingTime",
+  MRD: "registrationProcess",
+  Lab: "labStaffSkilled",
+  Radiology: "radiologyStaffSkilled",
+  "Blood Bank": "labStaffSkilled",
+  Pharmacy: "pharmacyWaitingTime",
 };
 
-// Build an extra $match stage for department filtering
-const buildDeptMatch = (department) => {
-  if (!department || department === "all") return null;
+function buildDeptPredicate(department) {
+  if (!department || department === "all") return () => true;
   const field = DEPARTMENT_FIELD_MAP[department];
-  if (!field) return null; // departments without a mapped field → no filter
-  return { [field]: { $exists: true, $ne: "" } };
-};
+  if (!field) return () => true;
+  return (data) => {
+    const v = data?.[field];
+    return v != null && String(v).trim() !== "";
+  };
+}
 
-// Day-wise analysis for a particular week
-// GET /feedback/daywise?start=YYYY-MM-DD&end=YYYY-MM-DD&type=all|opd|ipd&department=<name>
+function aggregateDaywiseLikeMongo(rows) {
+  const dayMap = {};
+  rows.forEach((row) => {
+    const day = new Date(row.timestamp).toISOString().slice(0, 10);
+    const exp = row.overall_experience;
+    const cat =
+      exp === "Excellent"
+        ? "Will Recommend"
+        : exp === "Good"
+          ? "May Recommend"
+          : "Will Not Recommend";
+    if (!dayMap[day]) {
+      dayMap[day] = {
+        "Will Recommend": 0,
+        "May Recommend": 0,
+        "Will Not Recommend": 0,
+        total: 0,
+      };
+    }
+    dayMap[day][cat] += 1;
+    dayMap[day].total += 1;
+  });
+
+  return Object.entries(dayMap)
+    .map(([day, v]) => ({
+      day,
+      willRecommend: v["Will Recommend"]
+        ? ((v["Will Recommend"] / v.total) * 100).toFixed(1)
+        : "0.0",
+      mayRecommend: v["May Recommend"]
+        ? ((v["May Recommend"] / v.total) * 100).toFixed(1)
+        : "0.0",
+      willNotRecommend: v["Will Not Recommend"]
+        ? ((v["Will Not Recommend"] / v.total) * 100).toFixed(1)
+        : "0.0",
+      total: v.total,
+    }))
+    .sort((a, b) => new Date(a.day) - new Date(b.day));
+}
+
+function aggregateMonthlyLikeMongo(rows) {
+  const monthMap = {};
+  rows.forEach((row) => {
+    const d = new Date(row.timestamp);
+    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const exp = row.overall_experience;
+    const cat =
+      exp === "Excellent"
+        ? "Will Recommend"
+        : exp === "Good"
+          ? "May Recommend"
+          : "Will Not Recommend";
+    if (!monthMap[month]) {
+      monthMap[month] = {
+        "Will Recommend": 0,
+        "May Recommend": 0,
+        "Will Not Recommend": 0,
+        total: 0,
+      };
+    }
+    monthMap[month][cat] += 1;
+    monthMap[month].total += 1;
+  });
+
+  return Object.entries(monthMap)
+    .map(([month, v]) => ({
+      month,
+      willRecommend: v["Will Recommend"]
+        ? ((v["Will Recommend"] / v.total) * 100).toFixed(1)
+        : "0.0",
+      mayRecommend: v["May Recommend"]
+        ? ((v["May Recommend"] / v.total) * 100).toFixed(1)
+        : "0.0",
+      willNotRecommend: v["Will Not Recommend"]
+        ? ((v["Will Not Recommend"] / v.total) * 100).toFixed(1)
+        : "0.0",
+      total: v.total,
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+}
+
+function aggregateYearlyLikeMongo(rows) {
+  const yearMap = {};
+  rows.forEach((row) => {
+    const year = String(new Date(row.timestamp).getFullYear());
+    const exp = row.overall_experience;
+    const cat =
+      exp === "Excellent"
+        ? "Will Recommend"
+        : exp === "Good"
+          ? "May Recommend"
+          : "Will Not Recommend";
+    if (!yearMap[year]) {
+      yearMap[year] = {
+        "Will Recommend": 0,
+        "May Recommend": 0,
+        "Will Not Recommend": 0,
+        total: 0,
+      };
+    }
+    yearMap[year][cat] += 1;
+    yearMap[year].total += 1;
+  });
+
+  return Object.entries(yearMap)
+    .map(([year, v]) => ({
+      year,
+      willRecommend: v["Will Recommend"]
+        ? ((v["Will Recommend"] / v.total) * 100).toFixed(1)
+        : "0.0",
+      mayRecommend: v["May Recommend"]
+        ? ((v["May Recommend"] / v.total) * 100).toFixed(1)
+        : "0.0",
+      willNotRecommend: v["Will Not Recommend"]
+        ? ((v["Will Not Recommend"] / v.total) * 100).toFixed(1)
+        : "0.0",
+      total: v.total,
+    }))
+    .sort((a, b) => a.year.localeCompare(b.year));
+}
+
+const ipdFields = [
+  "registrationProcess",
+  "roomReadiness",
+  "roomCleanliness",
+  "doctorExplanation",
+  "nurseCommunication",
+  "planExplanation",
+  "promptnessAttending",
+  "pharmacyTimeliness",
+  "billingCourtesy",
+  "operationsHospitality",
+  "dischargeProcess",
+];
+
 router.get("/daywise", async (req, res) => {
   try {
     const { start, end, type = "all", department } = req.query;
     if (!start || !end) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Start and end dates are required (YYYY-MM-DD)",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Start and end dates are required (YYYY-MM-DD)",
+      });
     }
 
-    // Parse dates
     const startDate = new Date(start);
     const endDate = new Date(end);
-    endDate.setHours(23, 59, 59, 999); // include the whole end day
+    endDate.setHours(23, 59, 59, 999);
 
-    // Build department-specific field filter (if any)
-    const deptMatch = buildDeptMatch(department);
-    const baseMatch = { timestamp: { $gte: startDate, $lte: endDate }, ...(deptMatch || {}) };
-
-    // Helper to aggregate for a model
-    const aggregateDaywise = (Model) =>
-      Model.aggregate([
-        { $match: baseMatch },
-        {
-          $group: {
-            _id: {
-              day: {
-                $dateToString: { format: "%Y-%m-%d", date: "$timestamp" },
-              },
-              overallExperience: "$overallExperience",
-            },
-            count: { $sum: 1 },
-          },
-        },
-      ]);
-
-    // Determine which models to query based on type.
-    // Departments tied to OPD-only fields → skip IPD when filtering.
+    const deptPred = buildDeptPredicate(department);
     const deptField = department ? DEPARTMENT_FIELD_MAP[department] : null;
-    const ipdFields = ["registrationProcess", "roomReadiness", "roomCleanliness",
-      "doctorExplanation", "nurseCommunication", "planExplanation",
-      "promptnessAttending", "pharmacyTimeliness", "billingCourtesy",
-      "operationsHospitality", "dischargeProcess"];
     const opdOnlyField = deptField && !ipdFields.includes(deptField);
     const ipdOnlyField = deptField && ipdFields.includes(deptField);
 
-    let all = [];
-    if (type === "opd" || (type === "all" && opdOnlyField)) {
-      all = await aggregateDaywise(OPDFeedback);
-    } else if (type === "ipd" || (type === "all" && ipdOnlyField)) {
-      all = await aggregateDaywise(IPDFeedback);
-    } else {
-      // Default: combine both OPD and IPD
-      const [opd, ipd] = await Promise.all([
-        aggregateDaywise(OPDFeedback),
-        aggregateDaywise(IPDFeedback),
-      ]);
-      all = [...opd, ...ipd];
+    const supabase = getSupabase();
+
+    async function loadOpd() {
+      const { data, error } = await supabase
+        .from("feedback_opd")
+        .select("timestamp, overall_experience, data")
+        .gte("timestamp", startDate.toISOString())
+        .lte("timestamp", endDate.toISOString());
+      if (error) throw error;
+      return (data || []).filter((r) => deptPred(r.data || {}));
     }
-    // Map: { day: { Will Recommend: n, May Recommend: n, Will Not Recommend: n, total: n } }
-    const dayMap = {};
-    all.forEach(({ _id, count }) => {
-      const day = _id.day;
-      const cat =
-        _id.overallExperience === "Excellent"
-          ? "Will Recommend"
-          : _id.overallExperience === "Good"
-          ? "May Recommend"
-          : "Will Not Recommend"; // Fair (Average) and Poor
-      if (!dayMap[day])
-        dayMap[day] = {
-          "Will Recommend": 0,
-          "May Recommend": 0,
-          "Will Not Recommend": 0,
-          total: 0,
-        };
-      dayMap[day][cat] += count;
-      dayMap[day].total += count;
-    });
 
-    // Format for frontend: [{ day, willRecommend, mayRecommend, willNotRecommend }]
-    const result = Object.entries(dayMap)
-      .map(([day, v]) => ({
-        day,
-        willRecommend: v["Will Recommend"]
-          ? ((v["Will Recommend"] / v.total) * 100).toFixed(1)
-          : "0.0",
-        mayRecommend: v["May Recommend"]
-          ? ((v["May Recommend"] / v.total) * 100).toFixed(1)
-          : "0.0",
-        willNotRecommend: v["Will Not Recommend"]
-          ? ((v["Will Not Recommend"] / v.total) * 100).toFixed(1)
-          : "0.0",
-        total: v.total,
-      }))
-      .sort((a, b) => new Date(a.day) - new Date(b.day));
+    async function loadIpd() {
+      const { data, error } = await supabase
+        .from("feedback_ipd")
+        .select("timestamp, overall_experience, data")
+        .gte("timestamp", startDate.toISOString())
+        .lte("timestamp", endDate.toISOString());
+      if (error) throw error;
+      return (data || []).filter((r) => deptPred(r.data || {}));
+    }
 
+    let rows = [];
+    if (type === "opd" || (type === "all" && opdOnlyField)) {
+      rows = await loadOpd();
+    } else if (type === "ipd" || (type === "all" && ipdOnlyField)) {
+      rows = await loadIpd();
+    } else {
+      const [opd, ipd] = await Promise.all([loadOpd(), loadIpd()]);
+      rows = [...opd, ...ipd];
+    }
+
+    const result = aggregateDaywiseLikeMongo(rows);
     res.json({ success: true, data: result });
   } catch (error) {
     console.error("Error in daywise feedback analysis:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error in daywise feedback analysis",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error in daywise feedback analysis",
+      error: error.message,
+    });
   }
 });
 
-// Monthly analysis for a particular year
-// GET /feedback/monthly?year=YYYY&type=all|opd|ipd&department=<name>
 router.get("/monthly", async (req, res) => {
   try {
     const { year = new Date().getFullYear(), type = "all", department } = req.query;
     const startDate = new Date(`${year}-01-01`);
     const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
 
-    const deptMatch = buildDeptMatch(department);
-    const baseMatch = { timestamp: { $gte: startDate, $lte: endDate }, ...(deptMatch || {}) };
-
-    const aggregateMonthly = (Model) =>
-      Model.aggregate([
-        { $match: baseMatch },
-        {
-          $group: {
-            _id: {
-              month: {
-                $dateToString: { format: "%Y-%m", date: "$timestamp" },
-              },
-              overallExperience: "$overallExperience",
-            },
-            count: { $sum: 1 },
-          },
-        },
-      ]);
-
+    const deptPred = buildDeptPredicate(department);
     const deptField = department ? DEPARTMENT_FIELD_MAP[department] : null;
-    const ipdFields = ["registrationProcess", "roomReadiness", "roomCleanliness",
-      "doctorExplanation", "nurseCommunication", "planExplanation",
-      "promptnessAttending", "pharmacyTimeliness", "billingCourtesy",
-      "operationsHospitality", "dischargeProcess"];
     const opdOnlyField = deptField && !ipdFields.includes(deptField);
     const ipdOnlyField = deptField && ipdFields.includes(deptField);
 
-    let all = [];
-    if (type === "opd" || (type === "all" && opdOnlyField)) {
-      all = await aggregateMonthly(OPDFeedback);
-    } else if (type === "ipd" || (type === "all" && ipdOnlyField)) {
-      all = await aggregateMonthly(IPDFeedback);
-    } else {
-      const [opd, ipd] = await Promise.all([
-        aggregateMonthly(OPDFeedback),
-        aggregateMonthly(IPDFeedback),
-      ]);
-      all = [...opd, ...ipd];
+    const supabase = getSupabase();
+
+    async function loadOpd() {
+      const { data, error } = await supabase
+        .from("feedback_opd")
+        .select("timestamp, overall_experience, data")
+        .gte("timestamp", startDate.toISOString())
+        .lte("timestamp", endDate.toISOString());
+      if (error) throw error;
+      return (data || []).filter((r) => deptPred(r.data || {}));
     }
 
-    const monthMap = {};
-    all.forEach(({ _id, count }) => {
-      const month = _id.month;
-      const cat =
-        _id.overallExperience === "Excellent"
-          ? "Will Recommend"
-          : _id.overallExperience === "Good"
-          ? "May Recommend"
-          : "Will Not Recommend";
-      if (!monthMap[month])
-        monthMap[month] = {
-          "Will Recommend": 0,
-          "May Recommend": 0,
-          "Will Not Recommend": 0,
-          total: 0,
-        };
-      monthMap[month][cat] += count;
-      monthMap[month].total += count;
-    });
+    async function loadIpd() {
+      const { data, error } = await supabase
+        .from("feedback_ipd")
+        .select("timestamp, overall_experience, data")
+        .gte("timestamp", startDate.toISOString())
+        .lte("timestamp", endDate.toISOString());
+      if (error) throw error;
+      return (data || []).filter((r) => deptPred(r.data || {}));
+    }
 
-    const result = Object.entries(monthMap)
-      .map(([month, v]) => ({
-        month,
-        willRecommend: v["Will Recommend"]
-          ? ((v["Will Recommend"] / v.total) * 100).toFixed(1)
-          : "0.0",
-        mayRecommend: v["May Recommend"]
-          ? ((v["May Recommend"] / v.total) * 100).toFixed(1)
-          : "0.0",
-        willNotRecommend: v["Will Not Recommend"]
-          ? ((v["Will Not Recommend"] / v.total) * 100).toFixed(1)
-          : "0.0",
-        total: v.total,
-      }))
-      .sort((a, b) => a.month.localeCompare(b.month));
+    let rows = [];
+    if (type === "opd" || (type === "all" && opdOnlyField)) {
+      rows = await loadOpd();
+    } else if (type === "ipd" || (type === "all" && ipdOnlyField)) {
+      rows = await loadIpd();
+    } else {
+      const [opd, ipd] = await Promise.all([loadOpd(), loadIpd()]);
+      rows = [...opd, ...ipd];
+    }
 
+    const result = aggregateMonthlyLikeMongo(rows);
     res.json({ success: true, data: result });
   } catch (error) {
     console.error("Error in monthly feedback analysis:", error);
-    res.status(500).json({ success: false, message: "Error in monthly analysis", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error in monthly analysis",
+      error: error.message,
+    });
   }
 });
 
-// Yearly analysis
-// GET /feedback/yearly?type=all|opd|ipd&department=<name>
 router.get("/yearly", async (req, res) => {
   try {
     const { type = "all", department } = req.query;
-
-    const deptMatch = buildDeptMatch(department);
-    const baseMatch = deptMatch ? { ...deptMatch } : {};
-
-    const aggregateYearly = (Model) => {
-      const pipeline = [];
-      if (Object.keys(baseMatch).length > 0) pipeline.push({ $match: baseMatch });
-      pipeline.push({
-        $group: {
-          _id: {
-            year: { $dateToString: { format: "%Y", date: "$timestamp" } },
-            overallExperience: "$overallExperience",
-          },
-          count: { $sum: 1 },
-        },
-      });
-      return Model.aggregate(pipeline);
-    };
-
+    const deptPred = buildDeptPredicate(department);
     const deptField = department ? DEPARTMENT_FIELD_MAP[department] : null;
-    const ipdFields = ["registrationProcess", "roomReadiness", "roomCleanliness",
-      "doctorExplanation", "nurseCommunication", "planExplanation",
-      "promptnessAttending", "pharmacyTimeliness", "billingCourtesy",
-      "operationsHospitality", "dischargeProcess"];
     const opdOnlyField = deptField && !ipdFields.includes(deptField);
     const ipdOnlyField = deptField && ipdFields.includes(deptField);
 
-    let all = [];
-    if (type === "opd" || (type === "all" && opdOnlyField)) {
-      all = await aggregateYearly(OPDFeedback);
-    } else if (type === "ipd" || (type === "all" && ipdOnlyField)) {
-      all = await aggregateYearly(IPDFeedback);
-    } else {
-      const [opd, ipd] = await Promise.all([
-        aggregateYearly(OPDFeedback),
-        aggregateYearly(IPDFeedback),
-      ]);
-      all = [...opd, ...ipd];
+    const supabase = getSupabase();
+
+    async function loadOpd() {
+      const { data, error } = await supabase.from("feedback_opd").select("timestamp, overall_experience, data");
+      if (error) throw error;
+      return (data || []).filter((r) => deptPred(r.data || {}));
     }
 
-    const yearMap = {};
-    all.forEach(({ _id, count }) => {
-      const year = _id.year;
-      const cat =
-        _id.overallExperience === "Excellent"
-          ? "Will Recommend"
-          : _id.overallExperience === "Good"
-          ? "May Recommend"
-          : "Will Not Recommend";
-      if (!yearMap[year])
-        yearMap[year] = {
-          "Will Recommend": 0,
-          "May Recommend": 0,
-          "Will Not Recommend": 0,
-          total: 0,
-        };
-      yearMap[year][cat] += count;
-      yearMap[year].total += count;
-    });
+    async function loadIpd() {
+      const { data, error } = await supabase.from("feedback_ipd").select("timestamp, overall_experience, data");
+      if (error) throw error;
+      return (data || []).filter((r) => deptPred(r.data || {}));
+    }
 
-    const result = Object.entries(yearMap)
-      .map(([year, v]) => ({
-        year,
-        willRecommend: v["Will Recommend"]
-          ? ((v["Will Recommend"] / v.total) * 100).toFixed(1)
-          : "0.0",
-        mayRecommend: v["May Recommend"]
-          ? ((v["May Recommend"] / v.total) * 100).toFixed(1)
-          : "0.0",
-        willNotRecommend: v["Will Not Recommend"]
-          ? ((v["Will Not Recommend"] / v.total) * 100).toFixed(1)
-          : "0.0",
-        total: v.total,
-      }))
-      .sort((a, b) => a.year.localeCompare(b.year));
+    let rows = [];
+    if (type === "opd" || (type === "all" && opdOnlyField)) {
+      rows = await loadOpd();
+    } else if (type === "ipd" || (type === "all" && ipdOnlyField)) {
+      rows = await loadIpd();
+    } else {
+      const [opd, ipd] = await Promise.all([loadOpd(), loadIpd()]);
+      rows = [...opd, ...ipd];
+    }
 
+    const result = aggregateYearlyLikeMongo(rows);
     res.json({ success: true, data: result });
   } catch (error) {
     console.error("Error in yearly feedback analysis:", error);
-    res.status(500).json({ success: false, message: "Error in yearly analysis", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error in yearly analysis",
+      error: error.message,
+    });
   }
 });
 
-// Submit OPD Feedback
 router.post("/opd", async (req, res) => {
   try {
-    const feedbackData = {
-      ...req.body,
-      type: "OPD",
-    };
+    const feedbackData = { ...req.body, type: "OPD" };
+    const overall = feedbackData.overallExperience || feedbackData.overall_experience;
+    const ts = feedbackData.timestamp ? new Date(feedbackData.timestamp) : new Date();
 
-    const feedback = new OPDFeedback(feedbackData);
-    await feedback.save();
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("feedback_opd")
+      .insert({
+        data: feedbackData,
+        timestamp: ts.toISOString(),
+        overall_experience: overall,
+      })
+      .select("*")
+      .single();
+
+    if (error) throw error;
 
     res.status(201).json({
       success: true,
       message: "OPD feedback submitted successfully",
-      data: feedback,
+      data: feedbackRowToClient(data, "OPD"),
     });
   } catch (error) {
     console.error("Error submitting OPD feedback:", error);
@@ -351,21 +365,29 @@ router.post("/opd", async (req, res) => {
   }
 });
 
-// Submit IPD Feedback
 router.post("/ipd", async (req, res) => {
   try {
-    const feedbackData = {
-      ...req.body,
-      type: "IPD",
-    };
+    const feedbackData = { ...req.body, type: "IPD" };
+    const overall = feedbackData.overallExperience || feedbackData.overall_experience;
+    const ts = feedbackData.timestamp ? new Date(feedbackData.timestamp) : new Date();
 
-    const feedback = new IPDFeedback(feedbackData);
-    await feedback.save();
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("feedback_ipd")
+      .insert({
+        data: feedbackData,
+        timestamp: ts.toISOString(),
+        overall_experience: overall,
+      })
+      .select("*")
+      .single();
+
+    if (error) throw error;
 
     res.status(201).json({
       success: true,
       message: "IPD feedback submitted successfully",
-      data: feedback,
+      data: feedbackRowToClient(data, "IPD"),
     });
   } catch (error) {
     console.error("Error submitting IPD feedback:", error);
@@ -377,21 +399,30 @@ router.post("/ipd", async (req, res) => {
   }
 });
 
-// Get all feedback (for admin panel)
 router.get("/all", async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 50;
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const supabase = getSupabase();
 
-    const [opdFeedback, ipdFeedback] = await Promise.all([
-      OPDFeedback.find().sort({ timestamp: -1 }).limit(limit).lean(),
-      IPDFeedback.find().sort({ timestamp: -1 }).limit(limit).lean(),
-    ]);
+    const { data: opdRows, error: oErr } = await supabase
+      .from("feedback_opd")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .limit(limit);
+    if (oErr) throw oErr;
+
+    const { data: ipdRows, error: iErr } = await supabase
+      .from("feedback_ipd")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .limit(limit);
+    if (iErr) throw iErr;
 
     res.json({
       success: true,
       data: {
-        opd: opdFeedback,
-        ipd: ipdFeedback,
+        opd: (opdRows || []).map((r) => feedbackRowToClient(r, "OPD")),
+        ipd: (ipdRows || []).map((r) => feedbackRowToClient(r, "IPD")),
       },
     });
   } catch (error) {
@@ -404,19 +435,20 @@ router.get("/all", async (req, res) => {
   }
 });
 
-// Get OPD feedback only
 router.get("/opd", async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 50;
-
-    const feedback = await OPDFeedback.find()
-      .sort({ timestamp: -1 })
-      .limit(limit)
-      .lean();
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("feedback_opd")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
 
     res.json({
       success: true,
-      data: feedback,
+      data: (data || []).map((r) => feedbackRowToClient(r, "OPD")),
     });
   } catch (error) {
     console.error("Error fetching OPD feedback:", error);
@@ -428,19 +460,20 @@ router.get("/opd", async (req, res) => {
   }
 });
 
-// Get IPD feedback only
 router.get("/ipd", async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 50;
-
-    const feedback = await IPDFeedback.find()
-      .sort({ timestamp: -1 })
-      .limit(limit)
-      .lean();
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("feedback_ipd")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
 
     res.json({
       success: true,
-      data: feedback,
+      data: (data || []).map((r) => feedbackRowToClient(r, "IPD")),
     });
   } catch (error) {
     console.error("Error fetching IPD feedback:", error);
@@ -452,42 +485,38 @@ router.get("/ipd", async (req, res) => {
   }
 });
 
-// Get feedback statistics
 router.get("/stats", async (req, res) => {
   try {
-    const [opdCount, ipdCount] = await Promise.all([
-      OPDFeedback.countDocuments(),
-      IPDFeedback.countDocuments(),
-    ]);
+    const supabase = getSupabase();
 
-    // Get overall experience distribution
-    const [opdExperienceStats, ipdExperienceStats] = await Promise.all([
-      OPDFeedback.aggregate([
-        {
-          $group: {
-            _id: "$overallExperience",
-            count: { $sum: 1 },
-          },
-        },
-      ]),
-      IPDFeedback.aggregate([
-        {
-          $group: {
-            _id: "$overallExperience",
-            count: { $sum: 1 },
-          },
-        },
-      ]),
-    ]);
+    const { count: opdCount } = await supabase
+      .from("feedback_opd")
+      .select("*", { count: "exact", head: true });
+
+    const { count: ipdCount } = await supabase
+      .from("feedback_ipd")
+      .select("*", { count: "exact", head: true });
+
+    const { data: opdRows } = await supabase.from("feedback_opd").select("overall_experience");
+    const { data: ipdRows } = await supabase.from("feedback_ipd").select("overall_experience");
+
+    const group = (rows) => {
+      const m = {};
+      (rows || []).forEach((r) => {
+        const k = r.overall_experience || "unknown";
+        m[k] = (m[k] || 0) + 1;
+      });
+      return Object.entries(m).map(([k, v]) => ({ _id: k, count: v }));
+    };
 
     res.json({
       success: true,
       data: {
-        totalSubmissions: opdCount + ipdCount,
-        opdCount,
-        ipdCount,
-        opdExperienceStats,
-        ipdExperienceStats,
+        totalSubmissions: (opdCount || 0) + (ipdCount || 0),
+        opdCount: opdCount || 0,
+        ipdCount: ipdCount || 0,
+        opdExperienceStats: group(opdRows),
+        ipdExperienceStats: group(ipdRows),
       },
     });
   } catch (error) {

@@ -1,7 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
-const Patient = require("../models/Patient");
+const { getSupabase } = require("../lib/supabase");
 
 const router = express.Router();
 
@@ -31,7 +31,6 @@ function hashOtp(phone, otp) {
     .digest("hex");
 }
 
-// Request OTP
 router.post("/request-otp", async (req, res) => {
   try {
     const phone = normalizePhone(req.body?.phone);
@@ -39,14 +38,22 @@ router.post("/request-otp", async (req, res) => {
       return res.status(400).json({ success: false, message: "Valid phone is required" });
     }
 
+    const supabase = getSupabase();
     const now = new Date();
     const otp = generateOtp();
     const otpHash = hashOtp(phone, otp);
-    const otpExpiresAt = new Date(now.getTime() + OTP_TTL_MINUTES * 60 * 1000);
+    const otpExpiresAt = new Date(now.getTime() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
 
-    const existing = await Patient.findOne({ phone }).select("+otpLastSentAt");
-    if (existing?.otpLastSentAt) {
-      const secondsSince = Math.floor((now.getTime() - existing.otpLastSentAt.getTime()) / 1000);
+    const { data: existing } = await supabase
+      .from("patients")
+      .select("otp_last_sent_at")
+      .eq("phone", phone)
+      .maybeSingle();
+
+    if (existing?.otp_last_sent_at) {
+      const secondsSince = Math.floor(
+        (now.getTime() - new Date(existing.otp_last_sent_at).getTime()) / 1000
+      );
       if (secondsSince < OTP_RESEND_COOLDOWN_SECONDS) {
         return res.status(429).json({
           success: false,
@@ -55,26 +62,25 @@ router.post("/request-otp", async (req, res) => {
       }
     }
 
-    const patient = await Patient.findOneAndUpdate(
-      { phone },
+    const { error } = await supabase.from("patients").upsert(
       {
-        $set: {
-          phone,
-          otpHash,
-          otpExpiresAt,
-          otpLastSentAt: now,
-        },
+        phone,
+        otp_hash: otpHash,
+        otp_expires_at: otpExpiresAt,
+        otp_last_sent_at: now.toISOString(),
+        updated_at: now.toISOString(),
       },
-      { upsert: true, new: true }
+      { onConflict: "phone" }
     );
 
-    // TODO: integrate SMS provider (Twilio, etc). For now: log OTP.
-    console.log(`[OTP] phone=${phone} otp=${otp} expires=${otpExpiresAt.toISOString()}`);
+    if (error) throw error;
+
+    console.log(`[OTP] phone=${phone} otp=${otp} expires=${otpExpiresAt}`);
 
     res.json({
       success: true,
       message: "OTP sent",
-      data: { phone, expiresAt: otpExpiresAt.toISOString() },
+      data: { phone, expiresAt: otpExpiresAt },
       ...(OTP_DEV_RETURN ? { otp } : {}),
     });
   } catch (error) {
@@ -83,37 +89,48 @@ router.post("/request-otp", async (req, res) => {
   }
 });
 
-// Verify OTP
 router.post("/verify-otp", async (req, res) => {
   try {
     const phone = normalizePhone(req.body?.phone);
     const otp = String(req.body?.otp || "").trim();
     if (!phone || phone.length < 10 || otp.length !== 6) {
-      return res.status(400).json({ success: false, message: "Phone and 6-digit OTP are required" });
+      return res.status(400).json({
+        success: false,
+        message: "Phone and 6-digit OTP are required",
+      });
     }
 
-    const patient = await Patient.findOne({ phone }).select("+otpHash +otpExpiresAt");
-    if (!patient || !patient.otpHash || !patient.otpExpiresAt) {
+    const supabase = getSupabase();
+    const { data: patient, error } = await supabase
+      .from("patients")
+      .select("id, otp_hash, otp_expires_at")
+      .eq("phone", phone)
+      .maybeSingle();
+
+    if (error || !patient || !patient.otp_hash || !patient.otp_expires_at) {
       return res.status(401).json({ success: false, message: "OTP not requested" });
     }
 
-    if (patient.otpExpiresAt.getTime() < Date.now()) {
+    if (new Date(patient.otp_expires_at).getTime() < Date.now()) {
       return res.status(401).json({ success: false, message: "OTP expired" });
     }
 
-    const expected = patient.otpHash;
-    const provided = hashOtp(phone, otp);
-    if (expected !== provided) {
+    if (patient.otp_hash !== hashOtp(phone, otp)) {
       return res.status(401).json({ success: false, message: "Invalid OTP" });
     }
 
-    patient.isVerified = true;
-    patient.otpHash = undefined;
-    patient.otpExpiresAt = undefined;
-    await patient.save();
+    await supabase
+      .from("patients")
+      .update({
+        is_verified: true,
+        otp_hash: null,
+        otp_expires_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", patient.id);
 
     const token = jwt.sign(
-      { patientId: patient._id, phone, role: "Patient" },
+      { patientId: patient.id, phone, role: "Patient" },
       JWT_SECRET,
       { expiresIn: PATIENT_JWT_EXPIRES_IN }
     );
@@ -122,8 +139,8 @@ router.post("/verify-otp", async (req, res) => {
       success: true,
       message: "Login successful",
       token,
-      patient: { id: patient._id, phone, isVerified: true },
-      data: { token, patient: { id: patient._id, phone, isVerified: true } },
+      patient: { id: patient.id, phone, isVerified: true },
+      data: { token, patient: { id: patient.id, phone, isVerified: true } },
     });
   } catch (error) {
     console.error("verify-otp error:", error);
@@ -132,4 +149,3 @@ router.post("/verify-otp", async (req, res) => {
 });
 
 module.exports = router;
-

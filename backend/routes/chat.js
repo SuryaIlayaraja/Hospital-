@@ -1,10 +1,13 @@
 const express = require("express");
 const path = require("path");
 const multer = require("multer");
-const ChatMessage = require("../models/ChatMessage");
-const { authenticate } = require("../middleware/authMiddleware");
-const Ticket = require("../models/Ticket");
 const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+const { getSupabase } = require("../lib/supabase");
+const { authenticate } = require("../middleware/authMiddleware");
+const { chatMessageRowToClient } = require("../lib/mappers");
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 const router = express.Router();
 
@@ -20,68 +23,100 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
+
+async function getTicketById(ticketId) {
+  const supabase = getSupabase();
+  const { data } = await supabase.from("tickets").select("*").eq("id", ticketId).maybeSingle();
+  return data;
+}
 
 const requireTicketAccess = async (req, res, next) => {
   try {
-    // Admin access (JWT)
+    const { ticketId } = req.params;
+
+    // Per-ticket secret: check first so anonymous tickets work even when the browser
+    // also sends a patient OTP JWT (Patient bearer alone requires ticket.patient_id).
+    const chatToken =
+      (typeof req.headers["x-chat-token"] === "string" ? req.headers["x-chat-token"].trim() : "") ||
+      (typeof req.query.token === "string" ? req.query.token.trim() : "");
+
+    if (chatToken) {
+      const tokenHash = crypto.createHash("sha256").update(chatToken).digest("hex");
+      const t = await getTicketById(ticketId);
+      if (t?.patient_chat_token_hash && t.patient_chat_token_hash === tokenHash) {
+        req.patient = { ticketId };
+        return next();
+      }
+      // Wrong/missing hash — fall through; Bearer may still authorize linked tickets.
+    }
+
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
-      // could be admin OR patient JWT; authenticate will parse and attach req.user
-      await new Promise((resolve) => authenticate(req, res, resolve));
+      try {
+        const decoded = jwt.verify(authHeader.substring(7), JWT_SECRET);
+        req.user = {
+          userId: decoded.userId,
+          email: decoded.email,
+          role: decoded.role,
+          departmentName: decoded.departmentName,
+          patientId: decoded.patientId,
+          phone: decoded.phone,
+        };
+      } catch {
+        return res.status(401).json({ success: false, message: "Invalid token" });
+      }
+
       if (req.user?.role === "Patient") {
-        const { ticketId } = req.params;
-        const t = await Ticket.findOne({ id: ticketId });
-        if (!t || !t.patientId || String(t.patientId) !== String(req.user.patientId)) {
+        const t = await getTicketById(ticketId);
+        if (
+          !t ||
+          !t.patient_id ||
+          String(t.patient_id) !== String(req.user.patientId)
+        ) {
           return res.status(403).json({ success: false, message: "Access denied" });
         }
       }
       return next();
     }
 
-    // Patient access (ticket token)
-    const token =
-      (typeof req.headers["x-chat-token"] === "string" ? req.headers["x-chat-token"] : "") ||
-      (typeof req.query.token === "string" ? req.query.token : "");
-
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Missing chat token" });
-    }
-
-    const { ticketId } = req.params;
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const t = await Ticket.findOne({ id: ticketId }).select("+patientChatTokenHash");
-    if (!t || !t.patientChatTokenHash || t.patientChatTokenHash !== tokenHash) {
+    if (chatToken) {
       return res.status(403).json({ success: false, message: "Invalid chat token" });
     }
 
-    req.patient = { ticketId };
-    next();
+    return res.status(401).json({ success: false, message: "Missing chat token or authorization" });
   } catch (error) {
     console.error("requireTicketAccess error:", error);
     res.status(500).json({ success: false, message: "Failed to authorize chat access" });
   }
 };
 
-// Get chat history for a ticket (public: patient has no auth in current app)
 router.get("/:ticketId", requireTicketAccess, async (req, res) => {
   try {
     const { ticketId } = req.params;
     const limit = Math.min(parseInt(req.query.limit, 10) || 200, 500);
 
-    const messages = await ChatMessage.find({ ticketId })
-      .sort({ createdAt: 1 })
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("ticket_id", ticketId)
+      .order("created_at", { ascending: true })
       .limit(limit);
 
-    res.json({ success: true, data: messages });
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: (data || []).map(chatMessageRowToClient),
+    });
   } catch (error) {
     console.error("Error fetching chat messages:", error);
     res.status(500).json({ success: false, message: "Failed to fetch messages" });
   }
 });
 
-// Upload a file/image for a ticket chat (admin OR patient-with-token)
 router.post("/:ticketId/upload", requireTicketAccess, upload.single("file"), async (req, res) => {
   try {
     const { ticketId } = req.params;
@@ -109,44 +144,66 @@ router.post("/:ticketId/upload", requireTicketAccess, upload.single("file"), asy
   }
 });
 
-// Send message via REST (admin-only; patients should use socket)
 router.post("/:ticketId", authenticate, async (req, res) => {
   try {
+    if (req.user?.role === "Patient") {
+      return res.status(403).json({ success: false, message: "Admin only" });
+    }
+
     const { ticketId } = req.params;
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
     const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
     if (!message && attachments.length === 0) {
-      return res.status(400).json({ success: false, message: "Message or attachment is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Message or attachment is required",
+      });
     }
 
-    const doc = await ChatMessage.create({
-      ticketId,
-      senderType: "admin",
-      senderId: req.user?.userId,
-      message,
-      attachments,
-    });
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .insert({
+        ticket_id: ticketId,
+        sender_type: "admin",
+        sender_id: req.user?.userId ? String(req.user.userId) : null,
+        message,
+        attachments,
+      })
+      .select("*")
+      .single();
 
-    res.status(201).json({ success: true, data: doc });
+    if (error) throw error;
+
+    res.status(201).json({ success: true, data: chatMessageRowToClient(data) });
   } catch (error) {
     console.error("Error sending chat message:", error);
     res.status(500).json({ success: false, message: "Failed to send message" });
   }
 });
 
-// Mark chat as read (admin-only; patient read is via socket for now)
 router.post("/:ticketId/read", authenticate, async (req, res) => {
   try {
     const { ticketId } = req.params;
-    const role = "admin";
-    const now = new Date();
+    const now = new Date().toISOString();
+    const supabase = getSupabase();
 
-    await ChatMessage.updateMany(
-      { ticketId, "readBy.adminAt": { $exists: false } },
-      { $set: { "readBy.adminAt": now } }
-    );
+    const { data: rows, error: fetchErr } = await supabase
+      .from("chat_messages")
+      .select("id, read_by")
+      .eq("ticket_id", ticketId);
 
-    res.json({ success: true, data: { ticketId, role, readAt: now.toISOString() } });
+    if (fetchErr) throw fetchErr;
+
+    for (const r of rows || []) {
+      const rb = { ...(r.read_by || {}), adminAt: now };
+      await supabase.from("chat_messages").update({ read_by: rb }).eq("id", r.id);
+    }
+
+    res.json({
+      success: true,
+      data: { ticketId, role: "admin", readAt: now },
+    });
   } catch (error) {
     console.error("Error marking chat as read:", error);
     res.status(500).json({ success: false, message: "Failed to mark read" });
@@ -154,4 +211,3 @@ router.post("/:ticketId/read", authenticate, async (req, res) => {
 });
 
 module.exports = router;
-

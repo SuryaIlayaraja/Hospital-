@@ -13,6 +13,21 @@ import FormInput from "./FormInput";
 import ProgressBar from "./ProgressBar";
 import { useLanguage } from "../contexts/LanguageContext";
 import { submitIPDFeedback } from "../services/apiService";
+import {
+  DEFAULT_IPD_QUESTIONS,
+  STORAGE_KEY_IPD,
+  type FeedbackQuestion,
+} from "./FeedbackQuestionsEditor";
+
+// Load questions (custom or default)
+function getIPDQuestions(): FeedbackQuestion[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_IPD);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return DEFAULT_IPD_QUESTIONS;
+}
+
 
 const IPDFeedback: React.FC = () => {
   const { t } = useLanguage();
@@ -315,63 +330,19 @@ const IPDFeedback: React.FC = () => {
             {t("ipd.service.quality")}
           </h3>
           <div className="space-y-1">
-            <RatingSelector
-              label={t("ipd.registration.process")}
-              value={formData.registrationProcess}
-              onChange={(value) => updateField("registrationProcess", value)}
-            />
-            <RatingSelector
-              label={t("ipd.room.readiness")}
-              value={formData.roomReadiness}
-              onChange={(value) => updateField("roomReadiness", value)}
-            />
-            <RatingSelector
-              label={t("ipd.room.cleanliness")}
-              value={formData.roomCleanliness}
-              onChange={(value) => updateField("roomCleanliness", value)}
-            />
-            <RatingSelector
-              label={t("ipd.doctor.explanation")}
-              value={formData.doctorExplanation}
-              onChange={(value) => updateField("doctorExplanation", value)}
-            />
-            <RatingSelector
-              label={t("ipd.nurse.communication")}
-              value={formData.nurseCommunication}
-              onChange={(value) => updateField("nurseCommunication", value)}
-            />
-            <RatingSelector
-              label={t("ipd.plan.explanation")}
-              value={formData.planExplanation}
-              onChange={(value) => updateField("planExplanation", value)}
-            />
-            <RatingSelector
-              label={t("ipd.promptness.attending")}
-              value={formData.promptnessAttending}
-              onChange={(value) => updateField("promptnessAttending", value)}
-            />
-            <RatingSelector
-              label={t("ipd.pharmacy.timeliness")}
-              value={formData.pharmacyTimeliness}
-              onChange={(value) => updateField("pharmacyTimeliness", value)}
-            />
-            <RatingSelector
-              label={t("ipd.billing.courtesy")}
-              value={formData.billingCourtesy}
-              onChange={(value) => updateField("billingCourtesy", value)}
-            />
-            <RatingSelector
-              label={t("ipd.operations.hospitality")}
-              value={formData.operationsHospitality}
-              onChange={(value) => updateField("operationsHospitality", value)}
-            />
-            <RatingSelector
-              label={t("ipd.discharge.process")}
-              value={formData.dischargeProcess}
-              onChange={(value) => updateField("dischargeProcess", value)}
-            />
+            {getIPDQuestions()
+              .filter((q) => q.enabled)
+              .map((q) => (
+                <RatingSelector
+                  key={q.id}
+                  label={q.label}
+                  value={formData[q.id as keyof typeof formData] || ""}
+                  onChange={(value) => updateField(q.id, value)}
+                />
+              ))}
           </div>
         </div>
+
 
         {/* Employee Nomination & Comments */}
         <div className="space-y-6">

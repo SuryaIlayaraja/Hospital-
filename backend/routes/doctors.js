@@ -1,52 +1,52 @@
 const express = require("express");
-const Doctor = require("../models/Doctor");
+const { getSupabase } = require("../lib/supabase");
+const { doctorRowToClient } = require("../lib/mappers");
 
 const router = express.Router();
 
-// Debug: Log all requests to doctors routes
 router.use((req, res, next) => {
   console.log(`[Doctors Route] ${req.method} ${req.path}`);
   next();
 });
 
-// Test endpoint to verify routes are working
 router.get("/test", (req, res) => {
-  res.json({
-    success: true,
-    message: "Doctors routes are working!",
-  });
+  res.json({ success: true, message: "Doctors routes are working!" });
 });
 
-// Get all doctors
 router.get("/all", async (req, res) => {
   try {
-    const doctors = await Doctor.find()
-      .sort({ displayOrder: 1, createdAt: -1 })
-      .select("-__v");
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("doctors")
+      .select("*")
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false });
+    if (error) throw error;
     res.json({
       success: true,
-      data: doctors,
-      count: doctors.length,
+      data: (data || []).map(doctorRowToClient),
+      count: data?.length || 0,
     });
   } catch (error) {
     console.error("Error fetching doctors:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch doctors",
-    });
+    res.status(500).json({ success: false, message: "Failed to fetch doctors" });
   }
 });
 
-// Get active doctors only
 router.get("/active", async (req, res) => {
   try {
-    const doctors = await Doctor.find({ isActive: true })
-      .sort({ displayOrder: 1, createdAt: -1 })
-      .select("-__v");
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("doctors")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false });
+    if (error) throw error;
     res.json({
       success: true,
-      data: doctors,
-      count: doctors.length,
+      data: (data || []).map(doctorRowToClient),
+      count: data?.length || 0,
     });
   } catch (error) {
     console.error("Error fetching active doctors:", error);
@@ -57,36 +57,24 @@ router.get("/active", async (req, res) => {
   }
 });
 
-// Get a single doctor by ID
 router.get("/:id", async (req, res) => {
   try {
-    const doctor = await Doctor.findById(req.params.id).select("-__v");
-    if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+    const supabase = getSupabase();
+    const { data, error } = await supabase.from("doctors").select("*").eq("id", req.params.id).maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
     }
-    res.json({
-      success: true,
-      data: doctor,
-    });
+    res.json({ success: true, data: doctorRowToClient(data) });
   } catch (error) {
     console.error("Error fetching doctor:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch doctor",
-    });
+    res.status(500).json({ success: false, message: "Failed to fetch doctor" });
   }
 });
 
-// Create a new doctor
 router.post("/create", async (req, res) => {
   try {
-    console.log("Doctor create request received:", req.body);
     const { name, studies, specialization, displayOrder, image } = req.body;
-
-    // Validate required fields
     if (!name || !studies) {
       return res.status(400).json({
         success: false,
@@ -94,12 +82,10 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // Validate image size if it's a base64 string (max 5MB)
     if (image && image.startsWith("data:image")) {
       const base64Length = image.length - (image.indexOf(",") + 1);
       const sizeInBytes = (base64Length * 3) / 4;
-      const sizeInMB = sizeInBytes / (1024 * 1024);
-      if (sizeInMB > 5) {
+      if (sizeInBytes / (1024 * 1024) > 5) {
         return res.status(400).json({
           success: false,
           message: "Image size exceeds 5MB limit. Please use a smaller image.",
@@ -107,21 +93,26 @@ router.post("/create", async (req, res) => {
       }
     }
 
-    const doctor = new Doctor({
-      name,
-      studies,
-      specialization: specialization || "",
-      image: image || "",
-      displayOrder: displayOrder ? parseInt(displayOrder) : 0,
-      isActive: true,
-    });
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("doctors")
+      .insert({
+        name,
+        studies,
+        specialization: specialization || "",
+        image: image || "",
+        display_order: displayOrder ? parseInt(displayOrder, 10) : 0,
+        is_active: true,
+      })
+      .select("*")
+      .single();
 
-    await doctor.save();
+    if (error) throw error;
 
     res.status(201).json({
       success: true,
       message: "Doctor created successfully",
-      data: doctor,
+      data: doctorRowToClient(data),
     });
   } catch (error) {
     console.error("Error creating doctor:", error);
@@ -133,27 +124,25 @@ router.post("/create", async (req, res) => {
   }
 });
 
-// Update a doctor
 router.put("/:id", async (req, res) => {
   try {
-    console.log("Doctor update request received for ID:", req.params.id);
     const { name, studies, specialization, isActive, displayOrder, image } = req.body;
+    const supabase = getSupabase();
 
-    // Check if doctor exists
-    const doctor = await Doctor.findById(req.params.id);
+    const { data: doctor, error: findErr } = await supabase
+      .from("doctors")
+      .select("*")
+      .eq("id", req.params.id)
+      .maybeSingle();
+    if (findErr) throw findErr;
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+      return res.status(404).json({ success: false, message: "Doctor not found" });
     }
 
-    // Validate image size if it's a base64 string (max 5MB)
     if (image && image.startsWith("data:image")) {
       const base64Length = image.length - (image.indexOf(",") + 1);
       const sizeInBytes = (base64Length * 3) / 4;
-      const sizeInMB = sizeInBytes / (1024 * 1024);
-      if (sizeInMB > 5) {
+      if (sizeInBytes / (1024 * 1024) > 5) {
         return res.status(400).json({
           success: false,
           message: "Image size exceeds 5MB limit. Please use a smaller image.",
@@ -161,20 +150,27 @@ router.put("/:id", async (req, res) => {
       }
     }
 
-    // Update fields
-    if (name !== undefined) doctor.name = name;
-    if (studies !== undefined) doctor.studies = studies;
-    if (specialization !== undefined) doctor.specialization = specialization;
-    if (isActive !== undefined) doctor.isActive = isActive === "true" || isActive === true;
-    if (displayOrder !== undefined) doctor.displayOrder = parseInt(displayOrder);
-    if (image !== undefined) doctor.image = image;
+    const updates = { updated_at: new Date().toISOString() };
+    if (name !== undefined) updates.name = name;
+    if (studies !== undefined) updates.studies = studies;
+    if (specialization !== undefined) updates.specialization = specialization;
+    if (isActive !== undefined) updates.is_active = isActive === "true" || isActive === true;
+    if (displayOrder !== undefined) updates.display_order = parseInt(displayOrder, 10);
+    if (image !== undefined) updates.image = image;
 
-    await doctor.save();
+    const { data, error } = await supabase
+      .from("doctors")
+      .update(updates)
+      .eq("id", req.params.id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
 
     res.json({
       success: true,
       message: "Doctor updated successfully",
-      data: doctor,
+      data: doctorRowToClient(data),
     });
   } catch (error) {
     console.error("Error updating doctor:", error);
@@ -186,32 +182,23 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Delete a doctor
 router.delete("/:id", async (req, res) => {
   try {
-    const doctor = await Doctor.findById(req.params.id);
+    const supabase = getSupabase();
+    const { data: doctor } = await supabase.from("doctors").select("*").eq("id", req.params.id).maybeSingle();
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+      return res.status(404).json({ success: false, message: "Doctor not found" });
     }
-
-    await Doctor.findByIdAndDelete(req.params.id);
-
+    await supabase.from("doctors").delete().eq("id", req.params.id);
     res.json({
       success: true,
       message: "Doctor deleted successfully",
-      data: doctor,
+      data: doctorRowToClient(doctor),
     });
   } catch (error) {
     console.error("Error deleting doctor:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete doctor",
-    });
+    res.status(500).json({ success: false, message: "Failed to delete doctor" });
   }
 });
 
 module.exports = router;
-

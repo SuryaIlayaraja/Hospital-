@@ -65,7 +65,16 @@ const API_BASE_URL =
 // Authentication Types
 export interface LoginCredentials {
   email: string;
-  password: string;
+  password?: string; // Change password to optional since we are adding OTP
+}
+
+export interface OTPLoginCredentials {
+  email: string;
+  otp: string;
+}
+
+export interface RequestOTPData {
+  email: string;
 }
 
 export interface AuthUser {
@@ -94,14 +103,24 @@ export const setAuthToken = (token: string | null) => {
   authToken = token;
   if (token) {
     localStorage.setItem("authToken", token);
+    console.log("[Auth] Token set:", {
+      tokenLength: token.length,
+      tokenStart: token.substring(0, 20),
+      inLocalStorage: !!localStorage.getItem("authToken"),
+    });
   } else {
     localStorage.removeItem("authToken");
+    console.log("[Auth] Token cleared");
   }
 };
 
 export const getAuthToken = (): string | null => {
   if (!authToken) {
     authToken = localStorage.getItem("authToken");
+    console.log("[Auth] Token retrieved from localStorage:", {
+      found: !!authToken,
+      tokenLength: authToken ? authToken.length : 0,
+    });
   }
   return authToken;
 };
@@ -292,7 +311,43 @@ export const getFeedbackStats = async (): Promise<
 export const login = async (
   credentials: LoginCredentials
 ): Promise<ApiResponse<LoginResponse>> => {
+  console.log("[Auth] Attempting login with email:", credentials.email);
   const response = await apiRequest<LoginResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+  
+  console.log("[Auth] Login response:", {
+    success: response.success,
+    hasToken: !!response.data?.token,
+    tokenLength: response.data?.token ? response.data.token.length : 0,
+  });
+  
+  // If login successful, store token
+  if (response.success && response.data?.token) {
+    setAuthToken(response.data.token);
+    localStorage.setItem("authUser", JSON.stringify(response.data.user));
+    console.log("[Auth] Token stored after login");
+  }
+  
+  return response;
+};
+
+// Request OTP for email login
+export const requestOTP = async (
+  email: string
+): Promise<ApiResponse<any>> => {
+  return apiRequest<any>("/auth/request-otp", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+};
+
+// Login with OTP
+export const loginWithOTP = async (
+  credentials: OTPLoginCredentials
+): Promise<ApiResponse<LoginResponse>> => {
+  const response = await apiRequest<LoginResponse>("/auth/login-otp", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -611,9 +666,78 @@ export const getDepartmentHierarchy = async (
   return apiRequest<DepartmentHierarchy>(`/departments/${id}/hierarchy`);
 };
 
+// Hospital Settings Management
+export interface HospitalSettings {
+  hospital_name: string;
+  hospital_location: string;
+  contact_email: string;
+  contact_phone: string;
+  whatsapp_number: string;
+  chat_support_link: string;
+  show_testimonials?: boolean;
+  years_experience?: number;
+  expert_doctors?: number;
+  successful_procedures?: string;
+  lives_touched?: string;
+}
+
+export interface Testimonial {
+  id?: number;
+  name: string;
+  role: string;
+  hospital?: string;
+  image?: string;
+  text: string;
+  order_index?: number;
+}
+
+export const getHospitalSettings = async (): Promise<ApiResponse<HospitalSettings>> => {
+  return apiRequest<HospitalSettings>("/settings");
+};
+
+export const updateHospitalSettings = async (
+  settings: HospitalSettings
+): Promise<ApiResponse<any>> => {
+  return apiRequest<any>("/settings", {
+    method: "PUT",
+    body: JSON.stringify(settings),
+  });
+};
+
 // Seed initial departments
 export const seedDepartments = async (): Promise<ApiResponse<{ count: number }>> => {
   return apiRequest<{ count: number }>("/departments/seed", {
     method: "POST",
+  });
+};
+
+// Testimonials Functions
+export const getTestimonials = async (): Promise<ApiResponse<Testimonial[]>> => {
+  return apiRequest<Testimonial[]>("/testimonials");
+};
+
+export const createTestimonial = async (data: Testimonial): Promise<ApiResponse<Testimonial>> => {
+  return apiRequest<Testimonial>("/testimonials", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const updateTestimonial = async (id: number, data: Testimonial): Promise<ApiResponse<Testimonial>> => {
+  return apiRequest<Testimonial>(`/testimonials/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
+export const deleteTestimonial = async (id: number): Promise<ApiResponse<any>> => {
+  return apiRequest<any>(`/testimonials/${id}`, {
+    method: "DELETE",
+  });
+};
+
+export const deleteAllTestimonials = async (): Promise<ApiResponse<any>> => {
+  return apiRequest<any>(`/testimonials`, {
+    method: "DELETE",
   });
 };

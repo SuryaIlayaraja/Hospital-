@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DaywiseAnalysisPage from "./DaywiseAnalysisPage";
-import OPDNPSDashboard from "./OPDNPSDashboard";
+import FeedbackQuestionsEditor from "./FeedbackQuestionsEditor";
 import {
   Database,
   Eye,
@@ -14,20 +14,17 @@ import {
   AlertTriangle,
   BarChart3,
   Mail,
-  Building2,
   Bell,
   Plus,
   Edit,
   Trash2,
-  UserPlus,
   Stethoscope,
   Image as ImageIcon,
   ExternalLink,
-  GitBranch,
-  Shield,
   EyeOff,
-  BedDouble,
   Activity,
+  Settings,
+  MessageSquareQuote,
 } from "lucide-react";
 
 import LoginShapes from "./LoginShapes";
@@ -56,15 +53,25 @@ import {
   login,
   logout as apiLogout,
   verifyToken,
-  seedUsers,
   AuthUser,
   getAuthToken,
+  HospitalSettings,
+  getHospitalSettings,
+  updateHospitalSettings,
+  Testimonial,
+  getTestimonials,
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
+  deleteAllTestimonials,
 } from "../services/apiService";
 import { useTickets, Ticket } from "../hooks/useTickets";
 import ComplaintHeatmap from "./ComplaintHeatmap";
 import TicketChat from "./TicketChat";
 import { useChatNotifications } from "../hooks/useChatNotifications";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // Feedback data type (union of OPD and IPD feedback)
 type FeedbackData = {
@@ -78,12 +85,17 @@ type FeedbackData = {
   [key: string]: any; // Allow additional fields
 };
 
-const AdminPanel: React.FC = () => {
+interface AdminPanelProps {
+  onSettingsUpdate?: () => void;
+}
+
+const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate }) => {
   // State to show/hide daywise analysis page
   const [showDaywisePage, setShowDaywisePage] = useState(false);
   
-  // State to show/hide OPD NPS Dashboard
-  const [showOPDDashboard, setShowOPDDashboard] = useState(false);
+  // State to show/hide Feedback Questions Editor
+  // State to show/hide Feedback Questions Editor
+  const [showQuestionsEditor, setShowQuestionsEditor] = useState(false);
 
   const [feedback, setFeedback] = useState<{
     opd: FeedbackData[];
@@ -95,7 +107,7 @@ const AdminPanel: React.FC = () => {
   }>({ opd: [], ipd: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"opd" | "ipd" | "tickets">("opd");
-  const [mainView, setMainView] = useState<"feedbacks" | "tickets" | "floors" | "doctors" | "departments" | "rooms">("feedbacks");
+  const [mainView, setMainView] = useState<"feedbacks" | "tickets" | "floors" | "doctors" | "departments" | "settings" | "testimonials">("feedbacks");
 
   // Floor management states
   const [floors, setFloors] = useState<Floor[]>([]);
@@ -151,6 +163,30 @@ const AdminPanel: React.FC = () => {
     phone: "",
   });
 
+  // Testimonials management states
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [testimonialsLoading, setTestimonialsLoading] = useState(false);
+  const [showTestimonialForm, setShowTestimonialForm] = useState(false);
+  const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
+  const [testimonialFormData, setTestimonialFormData] = useState<Testimonial>({
+    name: "",
+    role: "",
+    hospital: "",
+    text: "",
+    image: "",
+    order_index: 0,
+  });
+
+  // Image Cropping States
+  const [showCropper, setShowCropper] = useState(false);
+  const [rawImage, setRawImage] = useState<string | null>(null);
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
+  const [cropScale, setCropScale] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const cropperRef = React.useRef<HTMLDivElement>(null);
+  const cropperImgRef = React.useRef<HTMLImageElement>(null);
+
   // Ticket management
   const {
     tickets,
@@ -193,10 +229,10 @@ const AdminPanel: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Escalated tickets state (COO only)
   const [escalatedTickets, setEscalatedTickets] = useState<Ticket[]>([]);
@@ -244,6 +280,52 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  // Hospital settings state
+  const [hospitalSettings, setHospitalSettings] = useState<HospitalSettings>({
+    hospital_name: "Vikram ENT Hospital",
+    hospital_location: "Coimbatore",
+    contact_email: "info@vikramhospital.com",
+    contact_phone: "+91 422 1234567",
+    whatsapp_number: "+91 9876543210",
+    chat_support_link: "https://wa.me/919876543210"
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
+  // Load hospital settings
+  const loadHospitalSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const response = await getHospitalSettings();
+      if (response.success && response.data) {
+        setHospitalSettings(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to load settings:", error);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleUpdateSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsLoading(true);
+    try {
+      const response = await updateHospitalSettings(hospitalSettings);
+      if (response.success) {
+        alert("Settings updated successfully!");
+        // Refresh global state
+        if (onSettingsUpdate) onSettingsUpdate();
+      } else {
+        alert(response.message || "Failed to update settings");
+      }
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      alert("Failed to update settings");
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
   // Load departments
   const loadDepartments = async () => {
     setDepartmentsLoading(true);
@@ -256,6 +338,81 @@ const AdminPanel: React.FC = () => {
       console.error("Failed to load departments:", error);
     } finally {
       setDepartmentsLoading(false);
+    }
+  };
+
+  // Testimonials handling
+  const loadTestimonials = async () => {
+    setTestimonialsLoading(true);
+    try {
+      const response = await getTestimonials();
+      if (response.success && response.data) {
+        setTestimonials(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to load testimonials:", error);
+    } finally {
+      setTestimonialsLoading(false);
+    }
+  };
+
+  const handleCreateOrUpdateTestimonial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTestimonialsLoading(true);
+    try {
+      let response;
+      if (editingTestimonial && editingTestimonial.id) {
+        response = await updateTestimonial(editingTestimonial.id, testimonialFormData);
+      } else {
+        response = await createTestimonial(testimonialFormData);
+      }
+
+      if (response.success) {
+        alert(editingTestimonial ? "Testimonial updated!" : "Testimonial created!");
+        setShowTestimonialForm(false);
+        setEditingTestimonial(null);
+        setTestimonialFormData({ name: "", role: "", hospital: "", text: "", image: "", order_index: 0 });
+        loadTestimonials();
+      } else {
+        alert("Failed to save testimonial");
+      }
+    } catch (error) {
+      console.error("Error saving testimonial:", error);
+    } finally {
+      setTestimonialsLoading(false);
+    }
+  };
+
+  const handleDeleteTestimonial = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this testimonial?")) return;
+    try {
+      const response = await deleteTestimonial(id);
+      if (response.success) {
+        loadTestimonials();
+      }
+    } catch (error) {
+      console.error("Error deleting testimonial:", error);
+    }
+  };
+
+  const handleDeleteAllTestimonials = async () => {
+    if (!window.confirm("DANGER: Are you sure you want to delete ALL testimonials? This action cannot be undone.")) return;
+    if (!window.confirm("FINAL CONFIRMATION: Please confirm again that you want to permanently delete every testimonial.")) return;
+    
+    setTestimonialsLoading(true);
+    try {
+      const response = await deleteAllTestimonials();
+      if (response.success) {
+        alert("All testimonials deleted successfully.");
+        loadTestimonials();
+      } else {
+        alert(response.message || "Failed to delete testimonials");
+      }
+    } catch (error) {
+      console.error("Error deleting all testimonials:", error);
+      alert("An unexpected error occurred while deleting testimonials.");
+    } finally {
+      setTestimonialsLoading(false);
     }
   };
 
@@ -337,6 +494,7 @@ const AdminPanel: React.FC = () => {
         loadFeedback();
         loadFloors();
         loadDoctors();
+        loadHospitalSettings();
       } else if (currentUser.role === "Supervisor") {
         // Set default view to departments for Supervisors
         setMainView("departments");
@@ -385,9 +543,8 @@ const AdminPanel: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!email || !password) {
-      setLoginError("Email and password are required");
+      setLoginError("Please enter both email and password");
       return;
     }
 
@@ -395,51 +552,30 @@ const AdminPanel: React.FC = () => {
     setLoginError("");
 
     try {
-      console.log("Attempting login with:", email);
       const response = await login({ email, password });
-
-      console.log("Login response in component:", response);
-
-      // Extremely robust check for success
-      const isSuccess = response.success === true || (response as any).token;
-      const data = (response.data || response) as any; // Use the response itselt as data if .data is missing
-      const userData = data.user;
-      const token = data.token;
-
-      if (isSuccess && userData) {
-        console.log("Login logic success! User:", userData);
-
-        // Show success message first
+      
+      if (response.success && response.data?.user) {
         setLoginSuccess(true);
         setIsLoggingIn(false);
-        setLoginError("");
+        
+        const userData = response.data.user;
+        const token = response.data.token;
 
-        // Ensure tokens/user are stored if not already by apiService
-        if (token) {
-          localStorage.setItem("authToken", token);
-        }
+        if (token) localStorage.setItem("authToken", token);
         localStorage.setItem("authUser", JSON.stringify(userData));
-
-        // Set user data immediately
         setCurrentUser(userData);
 
-        // Delay setting authenticated state to allow success animation to show
         setTimeout(() => {
           setIsAuthenticated(true);
-          setLoginSuccess(false); // Reset success state
-          console.log("Authentication state updated - switching to admin panel");
+          setLoginSuccess(false);
         }, 1500);
       } else {
-        console.error("Login logical failure:", response);
-        const errorMessage = response.message || (response as any).error || "Login failed. Please check your credentials.";
-        setLoginError(errorMessage);
-        setPassword("");
+        setLoginError(response.message || "Invalid credentials. Please try again.");
         setIsLoggingIn(false);
       }
     } catch (error) {
-      console.error("Login error:", error);
-      setLoginError("Login failed. Please try again.");
-      setPassword("");
+      console.error("Login attempt failed:", error);
+      setLoginError("Login failed. Please check your connection.");
       setIsLoggingIn(false);
     }
   };
@@ -729,6 +865,79 @@ const AdminPanel: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleTestimonialImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setRawImage(reader.result as string);
+        setShowCropper(true);
+        setCropPosition({ x: 0, y: 0 });
+        setCropScale(1);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleApplyCrop = () => {
+    if (!cropperImgRef.current || !cropperRef.current) return;
+    
+    const canvas = document.createElement('canvas');
+    const size = 400; // Final resolution
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      const img = cropperImgRef.current;
+      const maskSize = 300; // The size of the circle in the UI
+      
+      // Calculate how much of the original image is visible in the 300x300 container
+      // then scale that to the 400x400 canvas
+      const scaleFactor = img.naturalWidth / (img.width);
+      
+      // The math effectively maps the UI container state to the natural image pixels
+      const drawX = (cropPosition.x - (img.width - maskSize)/2) * (img.naturalWidth / img.width);
+      const drawY = (cropPosition.y - (img.height - maskSize)/2) * (img.naturalHeight / img.naturalHeight);
+      
+      // Simplified: Just draw what's visible in the container
+      // Actually, let's use a simpler approach: draw the current view onto canvas
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+      ctx.clip();
+      
+      // Draw centered with scaling
+      const renderSize = size * cropScale;
+      const offsetX = (size - renderSize) / 2 + (cropPosition.x * (size / maskSize));
+      const offsetY = (size - renderSize) / 2 + (cropPosition.y * (size / maskSize));
+      
+      ctx.drawImage(img, offsetX, offsetY, renderSize, renderSize * (img.naturalHeight / img.naturalWidth));
+      
+      setTestimonialFormData({
+        ...testimonialFormData,
+        image: canvas.toDataURL('image/webp', 0.8)
+      });
+      setShowCropper(false);
+    }
+  };
+
+  const handleCropperDrag = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    const dx = clientX - dragStart.x;
+    const dy = clientY - dragStart.y;
+    
+    setCropPosition({
+      x: cropPosition.x + dx,
+      y: cropPosition.y + dy
+    });
+    
+    setDragStart({ x: clientX, y: clientY });
   };
 
   // Department management functions
@@ -1043,80 +1252,150 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  // Generate and send report to CEO via Gmail
+  // Generate and download daily report as PDF for CEO
   const sendReportToCEO = () => {
     const today = new Date();
-    const todayStr = today.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    const todayStr = today.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
-
-    // Calculate statistics
     const todayDate = today.toISOString().split("T")[0];
-    const todayOPD = feedback.opd.filter(f => f.date === todayDate).length;
-    const todayIPD = feedback.ipd.filter(f => f.date === todayDate).length;
-    const todayTickets = tickets.filter(t => {
+
+    // Create PDF document
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+
+    // Header
+    doc.setFillColor(25, 25, 25);
+    doc.rect(0, 0, pageWidth, 40, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("DAILY PERFORMANCE REPORT", 15, 22);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Report Period: ${todayStr}`, 15, 30);
+
+    // Summary Section
+    doc.setTextColor(40, 40, 40);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Daily Summary", 15, 55);
+
+    const todayOPD = feedback.opd.filter((f) => f.date === todayDate).length;
+    const todayIPD = feedback.ipd.filter((f) => f.date === todayDate).length;
+    const todayTickets = tickets.filter((t) => {
       const ticketDate = new Date(t.createdAt).toISOString().split("T")[0];
       return ticketDate === todayDate;
     }).length;
 
-    // Calculate rating distribution
-    const allTodayFeedback = [...feedback.opd.filter(f => f.date === todayDate), ...feedback.ipd.filter(f => f.date === todayDate)];
-    const excellent = allTodayFeedback.filter(f => f.overallExperience === "Excellent").length;
-    const good = allTodayFeedback.filter(f => f.overallExperience === "Good").length;
-    const fair = allTodayFeedback.filter(f => f.overallExperience === "Fair").length;
-    const poor = allTodayFeedback.filter(f => f.overallExperience === "Poor").length;
+    const allTodayFeedback = [
+      ...feedback.opd.filter((f) => f.date === todayDate),
+      ...feedback.ipd.filter((f) => f.date === todayDate),
+    ];
     const totalFeedback = allTodayFeedback.length;
 
-    // Ticket status breakdown
-    const openTickets = tickets.filter(t => t.status === "open").length;
-    const inProgressTickets = tickets.filter(t => t.status === "in-progress").length;
-    const resolvedTickets = tickets.filter(t => t.status === "resolved").length;
+    // Summary Table
+    autoTable(doc, {
+      startY: 60,
+      head: [["Category", "Volume"]],
+      body: [
+        ["OPD Feedback Received", todayOPD.toString()],
+        ["IPD Feedback Received", todayIPD.toString()],
+        ["Total Feedbacks Today", totalFeedback.toString()],
+        ["New Support Tickets", todayTickets.toString()],
+      ],
+      theme: "striped",
+      headStyles: { fillColor: [79, 70, 229] },
+    });
 
-    // Generate report body
-    const reportBody = `Dear CEO,
+    // Rating Distribution Section
+    const excellent = allTodayFeedback.filter(
+      (f) => f.overallExperience === "Excellent"
+    ).length;
+    const good = allTodayFeedback.filter(
+      (f) => f.overallExperience === "Good"
+    ).length;
+    const fair = allTodayFeedback.filter(
+      (f) => f.overallExperience === "Fair" || f.overallExperience === "Average"
+    ).length;
+    const poor = allTodayFeedback.filter(
+      (f) => f.overallExperience === "Poor"
+    ).length;
 
-Please find below the daily feedback and ticket report for ${todayStr}:
+    const ratingData = [
+      [
+        "Excellent",
+        excellent.toString(),
+        totalFeedback > 0 ? `${((excellent / totalFeedback) * 100).toFixed(1)}%` : "0%",
+      ],
+      [
+        "Good",
+        good.toString(),
+        totalFeedback > 0 ? `${((good / totalFeedback) * 100).toFixed(1)}%` : "0%",
+      ],
+      [
+        "Fair/Average",
+        fair.toString(),
+        totalFeedback > 0 ? `${((fair / totalFeedback) * 100).toFixed(1)}%` : "0%",
+      ],
+      [
+        "Poor",
+        poor.toString(),
+        totalFeedback > 0 ? `${((poor / totalFeedback) * 100).toFixed(1)}%` : "0%",
+      ],
+    ];
 
-=== TODAY'S SUMMARY ===
+    doc.setFontSize(16);
+    doc.text("Patient Experience Ratings", 15, (doc as any).lastAutoTable.finalY + 15);
 
-FEEDBACK RECEIVED:
-• OPD Feedback: ${todayOPD}
-• IPD Feedback: ${todayIPD}
-• Total Feedback: ${totalFeedback}
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [["Rating", "Count", "Percentage"]],
+      body: ratingData,
+      theme: "grid",
+      headStyles: { fillColor: [5, 150, 105] },
+    });
 
-OVERALL EXPERIENCE RATINGS:
-• Excellent: ${excellent} (${totalFeedback > 0 ? ((excellent / totalFeedback) * 100).toFixed(1) : 0}%)
-• Good: ${good} (${totalFeedback > 0 ? ((good / totalFeedback) * 100).toFixed(1) : 0}%)
-• Fair: ${fair} (${totalFeedback > 0 ? ((fair / totalFeedback) * 100).toFixed(1) : 0}%)
-• Poor: ${poor} (${totalFeedback > 0 ? ((poor / totalFeedback) * 100).toFixed(1) : 0}%)
+    // Ticket Status Section
+    const openTickets = tickets.filter((t) => t.status === "open").length;
+    const inProgressTickets = tickets.filter(
+      (t) => t.status === "in-progress"
+    ).length;
+    const resolvedTickets = tickets.filter((t) => t.status === "resolved").length;
 
-TICKET STATUS:
-• New Tickets Today: ${todayTickets}
-• Open Tickets: ${openTickets}
-• In Progress: ${inProgressTickets}
-• Resolved: ${resolvedTickets}
-• Total Tickets: ${tickets.length}
+    doc.setFontSize(16);
+    doc.text("Ticket Management Status", 15, (doc as any).lastAutoTable.finalY + 15);
 
-=== OVERALL STATISTICS ===
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [["Status", "Current Count"]],
+      body: [
+        ["Open Tickets", openTickets.toString()],
+        ["In Progress", inProgressTickets.toString()],
+        ["Resolved Tickets", resolvedTickets.toString()],
+        ["Total Database Tickets", tickets.length.toString()],
+      ],
+      theme: "striped",
+      headStyles: { fillColor: [245, 158, 11] },
+    });
 
-• Total OPD Feedback: ${feedback.opd.length}
-• Total IPD Feedback: ${feedback.ipd.length}
-• Total Feedback: ${feedback.opd.length + feedback.ipd.length}
-• Total Tickets: ${tickets.length}
+    // Footer with generated time
+    const footerY = doc.internal.pageSize.height - 10;
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(
+      `Generated by Admin Dashboard on ${new Date().toLocaleString()} | Confidential Daily Report`,
+      15,
+      footerY
+    );
 
-Best regards,
-Admin Panel - Vikram ENT Hospital`;
-
-    // Create mailto link
-    const subject = encodeURIComponent(`Daily Feedback Report - ${todayStr}`);
-    const body = encodeURIComponent(reportBody);
-    const mailtoLink = `https://mail.google.com/mail/?view=cm&fs=1&to=&su=${subject}&body=${body}`;
-
-    // Open Gmail compose window
-    window.open(mailtoLink, '_blank');
+    // Save/Download the PDF
+    doc.save(`CEO_Daily_Report_${todayDate}.pdf`);
   };
 
   const exportToExcel = (data: any[], type: string) => {
@@ -1543,11 +1822,6 @@ Admin Panel - Vikram ENT Hospital`;
     return <DaywiseAnalysisPage onBack={() => setShowDaywisePage(false)} />;
   }
 
-  // Show OPD NPS Dashboard
-  if (showOPDDashboard) {
-    return <OPDNPSDashboard onBack={() => setShowOPDDashboard(false)} />;
-  }
-
   // Show login form if not authenticated
   if (!isAuthenticated) {
     console.log("Rendering login view. State:", { isLoggingIn, loginSuccess });
@@ -1577,8 +1851,8 @@ Admin Panel - Vikram ENT Hospital`;
             </div>
 
             <div className="mb-8 text-center lg:text-left">
-              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Welcome back!</h1>
-              <p className="text-gray-500 dark:text-gray-400">Please enter your details</p>
+              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Admin Login</h1>
+              <p className="text-gray-500 dark:text-gray-400">Please enter your credentials to access the panel</p>
             </div>
 
             {loginSuccess ? (
@@ -1586,20 +1860,18 @@ Admin Panel - Vikram ENT Hospital`;
                 <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4 animate-bounce">
                   <CheckCircle2 className="w-8 h-8 text-white" />
                 </div>
-                <p className="text-green-600 font-bold text-lg animate-pulse">Login successful! Redirecting...</p>
+                <p className="text-green-600 font-bold text-lg animate-pulse">Verification successful! Redirecting...</p>
               </div>
             ) : isLoggingIn ? (
               <div className="flex flex-col items-center justify-center py-12">
-                <div className="w-16 h-16 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-600 font-medium animate-pulse">Logging in...</p>
+                <div className="w-16 h-16 border-4 border-gray-200 border-t-black dark:border-t-white rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400 font-medium animate-pulse">Authenticating...</p>
               </div>
             ) : (
               <form onSubmit={handleLogin} className="space-y-6">
-
-
-                {/* Email Input */}
+                
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Email</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Admin Email</label>
                   <input
                     type="email"
                     value={email}
@@ -1608,12 +1880,14 @@ Admin Panel - Vikram ENT Hospital`;
                     onBlur={() => setFocusedInput(null)}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 focus:ring-2 focus:ring-black dark:focus:ring-indigo-500/50 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white bg-gray-50 dark:bg-[#1a1a1a]/50"
                     placeholder="admin@hospital.com"
+                    autoComplete="email"
                   />
                 </div>
 
-                {/* Password Input */}
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Password</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Password</label>
+                  </div>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -1621,54 +1895,38 @@ Admin Panel - Vikram ENT Hospital`;
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setFocusedInput('password')}
                       onBlur={() => setFocusedInput(null)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 focus:ring-2 focus:ring-black dark:focus:ring-indigo-500/50 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white bg-gray-50 dark:bg-[#1a1a1a]/50 pr-10"
-                      placeholder="Enter password"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 focus:ring-2 focus:ring-black dark:focus:ring-indigo-500/50 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white bg-gray-50 dark:bg-[#1a1a1a]/50"
+                      placeholder="••••••••"
+                      autoComplete="current-password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
-                  {loginError && (
-                    <p className="text-red-500 text-sm mt-1">{loginError}</p>
-                  )}
                 </div>
 
-                {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
-                    />
-                    <span className="text-sm text-gray-600 font-medium">Remember for 30 days</span>
-                  </label>
-                  <button type="button" className="text-sm font-semibold text-gray-900 dark:text-gray-300 hover:underline">
-                    Forgot password?
-                  </button>
-                </div>
+                {loginError && (
+                  <p className="text-red-500 text-sm mt-1 flex items-center gap-1 font-medium">
+                    <AlertTriangle className="h-4 w-4" />
+                    {loginError}
+                  </p>
+                )}
 
-                {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-lg transform hover:scale-[1.02] duration-200"
+                  className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg transform hover:scale-[1.02] active:scale-[0.98] duration-200 flex items-center justify-center gap-2"
                 >
-                  Log in
+                  Sign In
+                  <Eye className="h-5 w-5" />
                 </button>
 
-                {/* Info text */}
                 <div className="text-center mt-6">
-                  <p className="text-sm text-gray-500">
-                    Use your hospital credentials to sign in
+                  <p className="text-xs text-gray-500 uppercase tracking-widest font-semibold">
+                    Secure Administrative Access
                   </p>
                 </div>
 
@@ -1681,6 +1939,7 @@ Admin Panel - Vikram ENT Hospital`;
   }
 
   return (
+    <>
     <div className="w-full min-h-screen bg-white dark:bg-[#030303] text-gray-900 dark:text-white">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-transparent pointer-events-none" />
@@ -1698,7 +1957,7 @@ Admin Panel - Vikram ENT Hospital`;
           <div className="flex gap-4 flex-wrap">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 px-4 py-2 rounded-xl transition-all duration-300"
+              className="flex items-center gap-2 bg-red-50 dark:bg-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/30 border border-red-200 dark:border-red-500/50 text-red-600 dark:text-red-400 px-4 py-2 rounded-xl transition-all duration-300 font-bold"
             >
               <X className="h-4 w-4" />
               Logout
@@ -1706,9 +1965,9 @@ Admin Panel - Vikram ENT Hospital`;
 
             <button
               onClick={loadFeedback}
-              className="flex items-center gap-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-all duration-300"
+              className="flex items-center gap-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-xl transition-all duration-300 font-bold shadow-sm"
             >
-              <Eye className="h-4 w-4" />
+              <Eye className="h-4 w-4 text-indigo-500" />
               Refresh Data
             </button>
 
@@ -1725,15 +1984,15 @@ Admin Panel - Vikram ENT Hospital`;
                 (mainView === "tickets" && filteredTickets.length === 0) ||
                 (mainView !== "feedbacks" && mainView !== "tickets")
               }
-              className="flex items-center gap-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold shadow-sm"
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4 text-purple-500" />
               Export {mainView === "tickets" ? "TICKETS" : activeTab.toUpperCase()} Excel
             </button>
 
             <button
               onClick={sendReportToCEO}
-              className="flex items-center gap-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 text-green-400 px-4 py-2 rounded-xl hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-300"
+              className="flex items-center gap-2 bg-emerald-50 dark:bg-green-500/20 border border-emerald-200 dark:border-green-500/50 text-emerald-700 dark:text-green-400 px-4 py-2 rounded-xl hover:bg-emerald-100 dark:hover:bg-green-500/30 transition-all duration-300 font-bold shadow-sm"
             >
               <Mail className="h-4 w-4" />
               Send Report to CEO
@@ -1872,42 +2131,57 @@ Admin Panel - Vikram ENT Hospital`;
               Manage Doctors
             </button>
           )}
-          {isViewAllowed("rooms") && (
+          {isViewAllowed("testimonials") && (
             <button
               onClick={() => {
-                setMainView("rooms");
+                setMainView("testimonials");
+                loadTestimonials();
               }}
-              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "rooms"
-                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white scale-105 shadow-xl border border-cyan-500/50"
+              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "testimonials"
+                ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white scale-105 shadow-xl border border-blue-500/50"
                 : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
                 }`}
             >
-              <BedDouble className="h-5 w-5 inline-block mr-2" />
-              View Rooms
+              <MessageSquareQuote className="h-5 w-5 inline-block mr-2" />
+              Manage Testimonials
             </button>
           )}
+          {isViewAllowed("settings") && (
+            <button
+              onClick={() => {
+                setMainView("settings");
+                loadHospitalSettings();
+              }}
+              className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${mainView === "settings"
+                ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white scale-105 shadow-xl border border-teal-500/50"
+                : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
+                }`}
+            >
+              <Settings className="h-5 w-5 inline-block mr-2" />
+              Hospital Settings
+            </button>
+          )}
+
           {currentUser?.role === 'COO' && (
             <div className="flex gap-4 flex-wrap w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setShowDaywisePage(true)}
-                className={`flex-1 md:flex-none px-6 py-4 rounded-xl font-bold text-sm md:text-base transition-all duration-300 shadow-lg transform ${showDaywisePage
+                className={`flex-1 md:flex-none px-6 py-4 rounded-xl font-black text-sm md:text-base transition-all duration-300 shadow-lg transform ${showDaywisePage
                   ? "bg-blue-600 text-white scale-105 shadow-xl border border-blue-500/50"
-                  : "bg-white dark:bg-gray-800 border-2 border-blue-500 dark:border-blue-500/50 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 hover:scale-105"
+                  : "bg-blue-50 dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-500/50 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-gray-700 hover:scale-105"
                   }`}
               >
                 <BarChart3 className="h-5 w-5 inline-block mr-2" />
                 Show Day Wise Analysis
               </button>
               
+
               <button
-                onClick={() => setShowOPDDashboard(true)}
-                className={`flex-1 md:flex-none px-6 py-4 rounded-xl font-bold text-sm md:text-base transition-all duration-300 shadow-lg transform ${showOPDDashboard
-                  ? "bg-indigo-600 text-white scale-105 shadow-xl border border-indigo-500/50"
-                  : "bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 hover:scale-105 border border-indigo-500/30"
-                  }`}
+                onClick={() => setShowQuestionsEditor(true)}
+                className="flex-1 md:flex-none px-6 py-4 rounded-xl font-black text-sm md:text-base transition-all duration-300 shadow-lg transform bg-violet-50 dark:bg-gray-800 border-2 border-violet-200 dark:border-violet-500/50 text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-gray-700 hover:scale-105"
               >
-                <Activity className="h-5 w-5 inline-block mr-2" />
-                OPD NPS Dashboard
+                <Edit className="h-5 w-5 inline-block mr-2" />
+                Edit Feedback Questions
               </button>
             </div>
           )}
@@ -2692,76 +2966,455 @@ Admin Panel - Vikram ENT Hospital`;
           </>
         )}
 
-        {/* Rooms Section - Only show when mainView is "rooms" */}
-        {mainView === "rooms" && (
+
+
+        {/* Settings Section - Only show when mainView is "settings" */}
+        {mainView === "settings" && (
           <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-3xl p-8 shadow-2xl mb-8">
             <div className="flex items-center gap-4 mb-8">
-              <div className="p-3 bg-cyan-500/20 rounded-2xl">
-                <BedDouble className="h-8 w-8 text-cyan-400" />
+              <div className="p-3 bg-teal-500/20 rounded-2xl">
+                <Settings className="h-8 w-8 text-teal-400" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Hospital Rooms & Beds</h2>
-                <p className="text-gray-500 dark:text-gray-400">Inventory and categorization of all available beds</p>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Hospital Settings</h2>
+                <p className="text-gray-500 dark:text-gray-400">Manage hospital name and contact information</p>
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-xl">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-yellow-500/90 shadow-lg">
-                    <th className="px-6 py-4 text-sm font-black text-black uppercase tracking-wider">S.No</th>
-                    <th className="px-6 py-4 text-sm font-black text-black uppercase tracking-wider">Bed Category</th>
-                    <th className="px-6 py-4 text-sm font-black text-black uppercase tracking-wider">Room No.s</th>
-                    <th className="px-6 py-4 text-sm font-black text-black uppercase tracking-wider text-right">Total Beds</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {[
-                    { sno: 1, category: "General Ward", rooms: "3001-3023", beds: 23 },
-                    { sno: 2, category: "Twin Sharing Room", rooms: "2010-2020", beds: 10 },
-                    { sno: 3, category: "Single Room AC", rooms: "1001-1025", beds: 25 },
-                    { sno: 4, category: "Single Room Non AC", rooms: "1026-1036", beds: 10 },
-                    { sno: 5, category: "Deluxe Rooms", rooms: "2021-2035", beds: 15 },
-                    { sno: 6, category: "Suite Rooms", rooms: "3024-3030", beds: 6 },
-                    { sno: 7, category: "ICU", rooms: "0001-0040", beds: 40 },
-                    { sno: 8, category: "CT ICU", rooms: "1101-1110", beds: 10 },
-                    { sno: 9, category: "Labour ward", rooms: "2101-2105", beds: 5 }
-                  ].map((room, idx) => (
-                    <tr key={idx} className="hover:bg-white/5 transition-colors group">
-                      <td className="px-6 py-4 text-gray-500 dark:text-gray-400 group-hover:text-yellow-500 dark:group-hover:text-yellow-400 transition-colors font-bold">{room.sno}</td>
-                      <td className="px-6 py-4 font-semibold text-gray-800 dark:text-gray-200">{room.category}</td>
-                      <td className="px-6 py-4 text-gray-600 dark:text-gray-300 font-mono">{room.rooms}</td>
-                      <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
-                        <span className="inline-block px-3 py-1 bg-white/5 rounded-lg border border-white/10 group-hover:border-yellow-500/30 transition-all">
-                          {room.beds}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-blue-600 shadow-[0_-4px_20px_rgba(37,99,235,0.3)]">
-                    <td colSpan={3} className="px-6 py-5 text-right font-black text-white text-xl uppercase tracking-widest">Total Beds</td>
-                    <td className="px-6 py-5 text-right font-black text-white text-3xl">144</td>
-                  </tr>
-                </tfoot>
-              </table>
+            <form onSubmit={handleUpdateSettings} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Hospital Name</label>
+                  <input
+                    type="text"
+                    value={hospitalSettings.hospital_name}
+                    onChange={(e) => setHospitalSettings({...hospitalSettings, hospital_name: e.target.value})}
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all outline-none text-gray-800 dark:text-white"
+                    placeholder="Enter hospital name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Location</label>
+                  <input
+                    type="text"
+                    value={hospitalSettings.hospital_location}
+                    onChange={(e) => setHospitalSettings({...hospitalSettings, hospital_location: e.target.value})}
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all outline-none text-gray-800 dark:text-white"
+                    placeholder="Enter location (e.g. Coimbatore)"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Contact Email</label>
+                  <input
+                    type="email"
+                    value={hospitalSettings.contact_email}
+                    onChange={(e) => setHospitalSettings({...hospitalSettings, contact_email: e.target.value})}
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all outline-none text-gray-800 dark:text-white"
+                    placeholder="Email address for links"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Contact Phone</label>
+                  <input
+                    type="text"
+                    value={hospitalSettings.contact_phone}
+                    onChange={(e) => setHospitalSettings({...hospitalSettings, contact_phone: e.target.value})}
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all outline-none text-gray-800 dark:text-white"
+                    placeholder="Phone number for links"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">WhatsApp Number</label>
+                  <input
+                    type="text"
+                    value={hospitalSettings.whatsapp_number}
+                    onChange={(e) => setHospitalSettings({...hospitalSettings, whatsapp_number: e.target.value})}
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all outline-none text-gray-800 dark:text-white"
+                    placeholder="WhatsApp number with country code"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Chat Support Link</label>
+                  <input
+                    type="text"
+                    value={hospitalSettings.chat_support_link}
+                    onChange={(e) => setHospitalSettings({...hospitalSettings, chat_support_link: e.target.value})}
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all outline-none text-gray-800 dark:text-white"
+                    placeholder="Direct link for chat support"
+                  />
+                </div>
+              </div>
+
+              {/* Hospital Stats Section */}
+              <div className="mt-8 border-t border-gray-200 dark:border-white/5 pt-8">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-indigo-400" />
+                  Hero Section Statistics
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Years of Experience</label>
+                    <input
+                      type="number"
+                      value={hospitalSettings.years_experience || 0}
+                      onChange={(e) => setHospitalSettings({...hospitalSettings, years_experience: parseInt(e.target.value)})}
+                      className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none text-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Expert Doctors</label>
+                    <input
+                      type="number"
+                      value={hospitalSettings.expert_doctors || 0}
+                      onChange={(e) => setHospitalSettings({...hospitalSettings, expert_doctors: parseInt(e.target.value)})}
+                      className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none text-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Successful Procedures</label>
+                    <input
+                      type="text"
+                      value={hospitalSettings.successful_procedures}
+                      onChange={(e) => setHospitalSettings({...hospitalSettings, successful_procedures: e.target.value})}
+                      className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none text-gray-800 dark:text-white"
+                      placeholder="e.g. 5,00,000+"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Lives Touched</label>
+                    <input
+                      type="text"
+                      value={hospitalSettings.lives_touched}
+                      onChange={(e) => setHospitalSettings({...hospitalSettings, lives_touched: e.target.value})}
+                      className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none text-gray-800 dark:text-white"
+                      placeholder="e.g. 50,00,000+"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-6">
+                <button
+                  type="submit"
+                  disabled={settingsLoading}
+                  className="px-10 py-4 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-bold rounded-2xl shadow-xl hover:shadow-teal-500/20 transition-all flex items-center gap-2"
+                >
+                  {settingsLoading ? "Saving..." : "Save Settings"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Testimonials Management Section - Only show when mainView is "testimonials" */}
+        {mainView === "testimonials" && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header */}
+            <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-white/5 rounded-3xl p-8 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-blue-500/20 rounded-2xl">
+                  <MessageSquareQuote className="h-8 w-8 text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Manage Testimonials</h2>
+                  <div className="flex items-center gap-3 mt-1 cursor-pointer select-none group/toggle"
+                    onClick={async () => {
+                      const newValue = !hospitalSettings.show_testimonials;
+                      setHospitalSettings({...hospitalSettings, show_testimonials: newValue});
+                      const response = await updateHospitalSettings({...hospitalSettings, show_testimonials: newValue});
+                      if (response.success && onSettingsUpdate) onSettingsUpdate();
+                    }}
+                  >
+                    <div className={`w-10 h-5 rounded-full transition-colors relative ${hospitalSettings.show_testimonials ? 'bg-blue-500' : 'bg-gray-400'}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all transform ${hospitalSettings.show_testimonials ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                    </div>
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400 group-hover/toggle:text-blue-400 transition-colors">
+                      {hospitalSettings.show_testimonials ? 'Visible on Dashboard' : 'Hidden from Dashboard'}
+                    </span>
+                    {hospitalSettings.show_testimonials ? <Eye className="h-4 w-4 text-blue-400 opacity-50" /> : <EyeOff className="h-4 w-4 text-gray-500 opacity-50" />}
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                {testimonials.length > 0 && (
+                  <button 
+                    onClick={handleDeleteAllTestimonials}
+                    disabled={testimonialsLoading}
+                    className="flex items-center justify-center gap-2 bg-red-500/10 border border-red-500/30 text-red-500 px-6 py-4 rounded-2xl font-bold hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                    Delete All
+                  </button>
+                )}
+                <button 
+                  onClick={() => {
+                    setEditingTestimonial(null);
+                    setTestimonialFormData({ name: "", role: "", hospital: "", text: "", image: "", order_index: (testimonials.length + 1) });
+                    setShowTestimonialForm(true);
+                  }}
+                  className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-105"
+                >
+                  <Plus className="h-5 w-5" />
+                  Add Testimonial
+                </button>
+              </div>
             </div>
 
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 rounded-2xl">
-                <p className="text-indigo-400 font-bold text-sm uppercase mb-2">Ward Capacity</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">23 <span className="text-sm font-normal text-gray-500">General Beds</span></p>
-              </div>
-              <div className="p-6 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-2xl">
-                <p className="text-cyan-400 font-bold text-sm uppercase mb-2">Critical Care</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">50 <span className="text-sm font-normal text-gray-500">ICU Beds</span></p>
-              </div>
-              <div className="p-6 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl">
-                <p className="text-purple-400 font-bold text-sm uppercase mb-2">Private Rooms</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">56 <span className="text-sm font-normal text-gray-500">Premium Units</span></p>
+            {/* Testimonial Form Modal */}
+            {showTestimonialForm && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-white/10 animate-in zoom-in-95 duration-200">
+                  <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {editingTestimonial ? "Edit Testimonial" : "Add New Testimonial"}
+                    </h3>
+                    <button 
+                      onClick={() => setShowTestimonialForm(false)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors"
+                    >
+                      <X className="h-6 w-6 text-gray-500" />
+                    </button>
+                  </div>
+                  
+                  <div className="overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
+                    <form onSubmit={handleCreateOrUpdateTestimonial} className="p-8 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Doctor Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={testimonialFormData.name}
+                          onChange={(e) => setTestimonialFormData({...testimonialFormData, name: e.target.value})}
+                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                          placeholder="Dr. John Doe"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Role/Designation</label>
+                        <input
+                          type="text"
+                          required
+                          value={testimonialFormData.role}
+                          onChange={(e) => setTestimonialFormData({...testimonialFormData, role: e.target.value})}
+                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                          placeholder="ENT Specialist"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Hospital (Optional)</label>
+                        <input
+                          type="text"
+                          value={testimonialFormData.hospital}
+                          onChange={(e) => setTestimonialFormData({...testimonialFormData, hospital: e.target.value})}
+                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                          placeholder="City Medical Center"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Display Order</label>
+                        <input
+                          type="number"
+                          value={testimonialFormData.order_index}
+                          onChange={(e) => setTestimonialFormData({...testimonialFormData, order_index: parseInt(e.target.value)})}
+                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Testimonial Text</label>
+                      <textarea
+                        required
+                        rows={4}
+                        value={testimonialFormData.text}
+                        onChange={(e) => setTestimonialFormData({...testimonialFormData, text: e.target.value})}
+                        className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none resize-none"
+                        placeholder="Write the testimonial content here..."
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Testimonial Image (URL or Upload)</label>
+                      <div className="flex flex-col gap-3">
+                        <input
+                          type="url"
+                          value={testimonialFormData.image}
+                          onChange={(e) => setTestimonialFormData({...testimonialFormData, image: e.target.value})}
+                          className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                          placeholder="https://example.com/image.jpg"
+                        />
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleTestimonialImageUpload}
+                            className="hidden"
+                            id="testimonial-image-upload"
+                          />
+                          <label
+                            htmlFor="testimonial-image-upload"
+                            className="flex items-center gap-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 px-6 py-3 rounded-2xl hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all cursor-pointer w-fit text-sm font-bold shadow-sm"
+                          >
+                            <ImageIcon className="h-5 w-5" />
+                            Upload from Device
+                          </label>
+                        </div>
+                      </div>
+                      
+                      {testimonialFormData.image && (
+                        <div className="mt-4 flex items-center gap-6 p-4 bg-blue-500/5 rounded-3xl border border-blue-500/10 w-fit">
+                          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl">
+                            <img 
+                              src={testimonialFormData.image} 
+                              alt="Preview" 
+                              className="w-full h-full object-cover"
+                              onError={(e) => (e.currentTarget.style.display = 'none')}
+                            />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">Image Preview</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 max-w-[150px] leading-tight">This photo will appear in the circle next to the doctor's name</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="submit"
+                        disabled={testimonialsLoading}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                      >
+                        {testimonialsLoading ? "Saving..." : editingTestimonial ? "Update Testimonial" : "Add Testimonial"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
+          )}
+
+            {/* Testimonials List */}
+            {testimonialsLoading && testimonials.length === 0 ? (
+              <div className="flex items-center justify-center p-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+              </div>
+            ) : testimonials.length === 0 ? (
+              <div className="bg-white dark:bg-gray-800/40 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-[3rem] p-20 flex flex-col items-center justify-center text-center">
+                <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6">
+                  <MessageSquareQuote className="h-10 w-10 text-blue-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Manage Testimonials</h3>
+                <p className="text-gray-500 dark:text-gray-400 max-w-md pb-6">
+                  Add patient or doctor testimonials to build trust. You can start by loading our sample testimonials and then customize them.
+                </p>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  <button 
+                    onClick={async () => {
+                      setTestimonialsLoading(true);
+                      try {
+                        const defaults = [
+                          { 
+                            name: `Dr. Pradnya Gajallewar`, 
+                            role: `Consultant and Anesthesiologist`, 
+                            hospital: `Bethany Hospital Thane`, 
+                            text: `I thank Dr.Vishal Jadhav for your Knowledge and guidance in bringing my project to a good shape. I have already had some positive feedback about my project from some of my friends.`, 
+                            image: `https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=150&q=80`, 
+                            order_index: 1 
+                          },
+                          { 
+                            name: `Dr. Rajesh Kumar`, 
+                            role: `Senior Surgeon`, 
+                            hospital: `City Medical Center`, 
+                            text: `The clinical management system has significantly improved our workflow. The attention to detail and professional support provided by the team at Vikram ENT is exceptional.`, 
+                            image: `https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=150&q=80`, 
+                            order_index: 2 
+                          },
+                          { 
+                            name: `Dr. Anita Sharma`, 
+                            role: `ENT Specialist`, 
+                            hospital: `Global Health Hospital`, 
+                            text: `I highly recommend the specialized training and facilities at Vikram ENT. It has been a pleasure collaborating on complex cases and witnessing the 'Flow of Healing' firsthand.`, 
+                            image: `https://images.unsplash.com/photo-1559839734-2b71f1536783?auto=format&fit=crop&w=150&q=80`, 
+                            order_index: 3 
+                          }
+                        ];
+                        for (const item of defaults) {
+                          await createTestimonial(item);
+                        }
+                        loadTestimonials();
+                      } catch (error) {
+                        console.error("Error seeding testimonials:", error);
+                      } finally {
+                        setTestimonialsLoading(false);
+                      }
+                    }}
+                    className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 text-blue-500 px-6 py-3 rounded-xl font-bold hover:bg-blue-500 hover:text-white transition-all transition-all hover:scale-105"
+                  >
+                    <Star className="h-5 w-5" />
+                    Load Sample Testimonials
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setEditingTestimonial(null);
+                      setTestimonialFormData({ name: "", role: "", hospital: "", text: "", image: "", order_index: 1 });
+                      setShowTestimonialForm(true);
+                    }}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-105"
+                  >
+                    <Plus className="h-5 w-5" />
+                    Add Your Custom One
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {testimonials.map((t) => (
+                  <div key={t.id} className="bg-white dark:bg-gray-800/40 border border-gray-200 dark:border-white/5 rounded-[2rem] p-6 hover:border-blue-500/30 transition-all duration-300 shadow-lg group">
+                    <div className="flex items-start gap-4 mb-6">
+                      <img 
+                        src={t.image || 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=150&q=80'} 
+                        className="w-16 h-16 rounded-full object-cover border-2 border-blue-500/20"
+                        alt={t.name}
+                      />
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-gray-900 dark:text-white truncate">{t.name}</h4>
+                        <p className="text-xs text-blue-500 font-medium truncate">{t.role}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{t.hospital}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 italic mb-6 line-clamp-4 font-medium leading-relaxed">
+                      "{t.text}"
+                    </p>
+                    <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-white/5">
+                      <button 
+                        onClick={() => {
+                          setEditingTestimonial(t);
+                          setTestimonialFormData(t);
+                          setShowTestimonialForm(true);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => t.id && handleDeleteTestimonial(t.id)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 py-2.5 rounded-xl text-sm font-bold hover:bg-red-100 dark:hover:bg-red-500/20 transition-all"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -3141,9 +3794,108 @@ Admin Panel - Vikram ENT Hospital`;
               )}
             </div>
           )}
-      </div>
+      {/* Circular Image Cropper Modal */}
+      {showCropper && rawImage && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-white dark:bg-[#111] rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl border border-white/10">
+            <div className="p-8 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Customize Profile Photo</h3>
+                <p className="text-sm text-gray-500 mt-1">Center the face inside the circular guide</p>
+              </div>
+              <button 
+                onClick={() => setShowCropper(false)}
+                className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              >
+                <X className="h-6 w-6 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="p-10 flex flex-col items-center">
+              <div 
+                ref={cropperRef}
+                className="relative w-[300px] h-[300px] bg-gray-100 dark:bg-black rounded-full overflow-hidden cursor-move touch-none border-8 border-blue-500/10 shadow-2xl"
+                onMouseDown={(e) => { setIsDragging(true); setDragStart({ x: e.clientX, y: e.clientY }); }}
+                onMouseMove={handleCropperDrag}
+                onMouseUp={() => setIsDragging(false)}
+                onMouseLeave={() => setIsDragging(false)}
+                onTouchStart={(e) => { setIsDragging(true); setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY }); }}
+                onTouchMove={handleCropperDrag}
+                onTouchEnd={() => setIsDragging(false)}
+              >
+                <img 
+                  ref={cropperImgRef}
+                  src={rawImage}
+                  alt="Crop Target"
+                  className="absolute pointer-events-none max-w-none origin-center"
+                  style={{
+                    transform: `translate(${cropPosition.x}px, ${cropPosition.y}px) scale(${cropScale})`,
+                    transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+                  }}
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    if (img.width > img.height) {
+                       img.style.height = '300px';
+                       img.style.width = 'auto';
+                    } else {
+                       img.style.width = '300px';
+                       img.style.height = 'auto';
+                    }
+                  }}
+                />
+                {/* Circular Guide Overlay */}
+                <div className="absolute inset-0 pointer-events-none ring-[100px] ring-black/60 rounded-full" />
+                <div className="absolute inset-0 pointer-events-none border-4 border-blue-500 rounded-full" />
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/40 to-transparent opacity-50" />
+              </div>
+              
+              <div className="w-full mt-12 space-y-8">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Adjust Zoom</span>
+                    <span className="text-xs font-bold text-blue-500 px-3 py-1 bg-blue-500/10 rounded-full">{Math.round(cropScale * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="4" 
+                    step="0.01"
+                    value={cropScale}
+                    onChange={(e) => setCropScale(parseFloat(e.target.value))}
+                    className="w-full accent-blue-600 h-2 bg-gray-200 dark:bg-gray-800 rounded-full appearance-none cursor-pointer"
+                  />
+                </div>
+                
+                <div className="flex gap-4">
+                  <button 
+                    onClick={() => setShowCropper(false)}
+                    className="flex-1 py-5 px-6 rounded-3xl font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 transition-all active:scale-95"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleApplyCrop}
+                    className="flex-1 py-5 px-6 rounded-3xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-500/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="h-5 w-5" />
+                    Save Crop
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  </div>
+
+      {/* Feedback Questions Editor Modal - COO only */}
+      {showQuestionsEditor && (
+        <FeedbackQuestionsEditor onClose={() => setShowQuestionsEditor(false)} />
+      )}
+    </>
   );
 };
+
 
 export default AdminPanel;

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { getAuthToken } from "../services/apiService";
 
 export interface Ticket {
   id: string;
@@ -10,6 +11,7 @@ export interface Ticket {
   createdAt: string;
   status: "open" | "in-progress" | "resolved";
   updatedAt?: string;
+  clerkUserId?: string;
 }
 
 export type TicketCreateResult = { ticket: Ticket; patientChatToken?: string };
@@ -17,35 +19,87 @@ export type TicketCreateResult = { ticket: Ticket; patientChatToken?: string };
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-export const useTickets = () => {
+export type UseTicketsOptions = {
+  /** Clerk session token — used to load only this user’s tickets from GET /tickets/mine (never loads other accounts). */
+  getClerkToken?: () => Promise<string | null | undefined>;
+};
+
+function mergeLocalTicketsWithChatTokens(apiTickets: Ticket[]): Ticket[] {
+  const byId = new Map(apiTickets.map((t) => [t.id, t]));
+  try {
+    const stored = localStorage.getItem("hospital_tickets");
+    if (!stored) return apiTickets;
+    const local: Ticket[] = JSON.parse(stored);
+    for (const t of local) {
+      if (byId.has(t.id)) continue;
+      if (localStorage.getItem(`ticket_chat_token:${t.id}`)) {
+        byId.set(t.id, t);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}
+
+export const useTickets = (options?: UseTicketsOptions) => {
+  const getClerkToken = options?.getClerkToken;
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load tickets from API on mount
-  useEffect(() => {
-    fetchTickets();
-  }, []);
-
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/tickets/all`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch tickets");
+      const adminToken = getAuthToken();
+
+      if (adminToken) {
+        const response = await fetch(`${API_BASE_URL}/tickets/all`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch tickets");
+        }
+        const data = await response.json();
+        if (data.success) {
+          setTickets(data.data);
+        } else {
+          throw new Error(data.message || "Failed to fetch tickets");
+        }
+        return;
       }
-      const data = await response.json();
-      if (data.success) {
-        setTickets(data.data);
-      } else {
-        throw new Error(data.message || "Failed to fetch tickets");
+
+      if (getClerkToken) {
+        const ct = await getClerkToken();
+        if (ct) {
+          const response = await fetch(`${API_BASE_URL}/tickets/mine`, {
+            headers: { Authorization: `Bearer ${ct}` },
+          });
+          if (response.status === 503) {
+            throw new Error("Server cannot verify patient session");
+          }
+          if (!response.ok) {
+            throw new Error("Failed to fetch tickets");
+          }
+          const data = await response.json();
+          if (data.success) {
+            setTickets(mergeLocalTicketsWithChatTokens(data.data || []));
+          } else {
+            throw new Error(data.message || "Failed to fetch tickets");
+          }
+          return;
+        }
       }
+
+      setTickets([]);
     } catch (error) {
       console.error("Error fetching tickets:", error);
       setError(
-        error instanceof Error ? error.message : "Failed to fetch tickets"
+        error instanceof Error ? error.message : "Failed to fetch tickets",
       );
-      // Fallback to localStorage if API fails
       const stored = localStorage.getItem("hospital_tickets");
       if (stored) {
         try {
@@ -57,10 +111,15 @@ export const useTickets = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getClerkToken]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
 
   const addTicket = async (
-    ticket: Omit<Ticket, "id" | "createdAt" | "status">
+    ticket: Omit<Ticket, "id" | "createdAt" | "status">,
+    clerkUserId?: string
   ) => {
     try {
       const patientToken = localStorage.getItem("patientToken");
@@ -70,7 +129,10 @@ export const useTickets = () => {
           "Content-Type": "application/json",
           ...(patientToken ? { Authorization: `Bearer ${patientToken}` } : {}),
         },
-        body: JSON.stringify(ticket),
+        body: JSON.stringify({
+          ...ticket,
+          clerkUserId: clerkUserId // Associate with Clerk ID
+        }),
       });
 
       if (!response.ok) {
@@ -80,6 +142,11 @@ export const useTickets = () => {
       const data = await response.json();
       if (data.success) {
         setTickets((prev) => [data.data, ...prev]);
+        // Update local storage for redundancy
+        const stored = localStorage.getItem("hospital_tickets");
+        const currentTickets = stored ? JSON.parse(stored) : [];
+        localStorage.setItem("hospital_tickets", JSON.stringify([data.data, ...currentTickets]));
+
         return { ticket: data.data as Ticket, patientChatToken: data.patientChatToken as string | undefined };
       } else {
         throw new Error(data.message || "Failed to create ticket");
@@ -93,7 +160,13 @@ export const useTickets = () => {
         createdAt: new Date().toISOString(),
         status: "open",
       };
-      setTickets((prev) => [newTicket, ...prev]);
+      
+      const stored = localStorage.getItem("hospital_tickets");
+      const currentTickets = stored ? JSON.parse(stored) : [];
+      const updatedTickets = [newTicket, ...currentTickets];
+      localStorage.setItem("hospital_tickets", JSON.stringify(updatedTickets));
+      setTickets(updatedTickets);
+
       return { ticket: newTicket };
     }
   };

@@ -13,6 +13,21 @@ import FormInput from "./FormInput";
 import ProgressBar from "./ProgressBar";
 import { useLanguage } from "../contexts/LanguageContext";
 import { submitOPDFeedback } from "../services/apiService";
+import {
+  DEFAULT_OPD_QUESTIONS,
+  STORAGE_KEY_OPD,
+  type FeedbackQuestion,
+} from "./FeedbackQuestionsEditor";
+
+// Load questions (custom or default)
+function getOPDQuestions(): FeedbackQuestion[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_OPD);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return DEFAULT_OPD_QUESTIONS;
+}
+
 
 const OPDFeedback: React.FC = () => {
   const { t } = useLanguage();
@@ -328,78 +343,19 @@ const OPDFeedback: React.FC = () => {
             {t("opd.service.quality")}
           </h3>
           <div className="space-y-1">
-            <RatingSelector
-              label={t("opd.appointment.booking")}
-              value={formData.appointmentBooking}
-              onChange={(value) => updateField("appointmentBooking", value)}
-            />
-            <RatingSelector
-              label={t("opd.reception.staff")}
-              value={formData.receptionStaff}
-              onChange={(value) => updateField("receptionStaff", value)}
-            />
-            <RatingSelector
-              label={t("opd.billing.process")}
-              value={formData.billingProcess}
-              onChange={(value) => updateField("billingProcess", value)}
-            />
-            <RatingSelector
-              label={t("opd.nursing.care")}
-              value={formData.nursingCare}
-              onChange={(value) => updateField("nursingCare", value)}
-            />
-            <RatingSelector
-              label={t("opd.lab.staff")}
-              value={formData.labStaffSkilled}
-              onChange={(value) => updateField("labStaffSkilled", value)}
-            />
-            <RatingSelector
-              label={t("opd.lab.waiting")}
-              value={formData.labWaitingTime}
-              onChange={(value) => updateField("labWaitingTime", value)}
-            />
-            <RatingSelector
-              label={t("opd.radiology.staff")}
-              value={formData.radiologyStaffSkilled}
-              onChange={(value) => updateField("radiologyStaffSkilled", value)}
-            />
-            <RatingSelector
-              label={t("opd.radiology.waiting")}
-              value={formData.radiologyWaitingTime}
-              onChange={(value) => updateField("radiologyWaitingTime", value)}
-            />
-            <RatingSelector
-              label={t("opd.pharmacy.waiting")}
-              value={formData.pharmacyWaitingTime}
-              onChange={(value) => updateField("pharmacyWaitingTime", value)}
-            />
-            <RatingSelector
-              label={t("opd.medication.dispensed")}
-              value={formData.medicationDispensed}
-              onChange={(value) => updateField("medicationDispensed", value)}
-            />
-            <RatingSelector
-              label={t("opd.drug.explanation")}
-              value={formData.drugExplanation}
-              onChange={(value) => updateField("drugExplanation", value)}
-            />
-            <RatingSelector
-              label={t("opd.counselling.session")}
-              value={formData.counsellingSession}
-              onChange={(value) => updateField("counsellingSession", value)}
-            />
-            <RatingSelector
-              label={t("opd.audiology.staff")}
-              value={formData.audiologyStaffSkilled}
-              onChange={(value) => updateField("audiologyStaffSkilled", value)}
-            />
-            <RatingSelector
-              label={t("opd.hospital.cleanliness")}
-              value={formData.hospitalCleanliness}
-              onChange={(value) => updateField("hospitalCleanliness", value)}
-            />
+            {getOPDQuestions()
+              .filter((q) => q.enabled)
+              .map((q) => (
+                <RatingSelector
+                  key={q.id}
+                  label={q.label}
+                  value={formData[q.id as keyof typeof formData] || ""}
+                  onChange={(value) => updateField(q.id, value)}
+                />
+              ))}
           </div>
         </div>
+
 
         {/* Employee Nomination & Comments */}
         <div className="space-y-6">

@@ -1,75 +1,272 @@
 const express = require("express");
-const { Department, COO } = require("../models/Department");
+const { getSupabase } = require("../lib/supabase");
+const { departmentRowToClient, cooRowToClient } = require("../lib/mappers");
 
 const router = express.Router();
 
-// ============================================
-// DEPARTMENT ROUTES
-// ============================================
-
-// Get all departments
 router.get("/all", async (req, res) => {
   try {
-    const departments = await Department.find().sort({ serialNumber: 1 });
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("departments")
+      .select("*")
+      .order("serial_number", { ascending: true });
+    if (error) throw error;
     res.json({
       success: true,
-      data: departments,
-      count: departments.length,
+      data: (data || []).map(departmentRowToClient),
+      count: data?.length || 0,
     });
   } catch (error) {
     console.error("Error fetching departments:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch departments",
-    });
+    res.status(500).json({ success: false, message: "Failed to fetch departments" });
   }
 });
 
-// Get a single department by ID
-router.get("/:id", async (req, res) => {
+router.get("/coo/info", async (req, res) => {
   try {
-    const department = await Department.findById(req.params.id);
-    if (!department) {
-      return res.status(404).json({
-        success: false,
-        message: "Department not found",
-      });
+    const supabase = getSupabase();
+    let { data: coo } = await supabase.from("coo").select("*").limit(1).maybeSingle();
+
+    if (!coo) {
+      const { data: inserted, error: insErr } = await supabase
+        .from("coo")
+        .insert({
+          designation: "COO",
+          name: "Chief Operating Officer",
+          access: "All Departments",
+          ward_access: "All Wards",
+        })
+        .select("*")
+        .single();
+      if (insErr) throw insErr;
+      coo = inserted;
     }
+
+    res.json({ success: true, data: cooRowToClient(coo) });
+  } catch (error) {
+    console.error("Error fetching COO:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch COO information" });
+  }
+});
+
+router.put("/coo/update", async (req, res) => {
+  try {
+    const { designation, name, access, wardAccess, email, phone, isActive } = req.body;
+    const supabase = getSupabase();
+
+    let { data: coo } = await supabase.from("coo").select("*").limit(1).maybeSingle();
+
+    const row = {
+      updated_at: new Date().toISOString(),
+      designation: designation || coo?.designation || "COO",
+      name: name || coo?.name || "Chief Operating Officer",
+      access: access || coo?.access || "All Departments",
+      ward_access: wardAccess || coo?.ward_access || "All Wards",
+      email: email !== undefined ? email : coo?.email ?? "",
+      phone: phone !== undefined ? phone : coo?.phone ?? "",
+      is_active: typeof isActive === "boolean" ? isActive : coo?.is_active ?? true,
+    };
+
+    if (!coo) {
+      const { data, error } = await supabase.from("coo").insert(row).select("*").single();
+      if (error) throw error;
+      coo = data;
+    } else {
+      const { data, error } = await supabase
+        .from("coo")
+        .update(row)
+        .eq("id", coo.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      coo = data;
+    }
+
     res.json({
       success: true,
-      data: department,
+      message: "COO updated successfully",
+      data: cooRowToClient(coo),
     });
   } catch (error) {
-    console.error("Error fetching department:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch department",
-    });
+    console.error("Error updating COO:", error);
+    res.status(500).json({ success: false, message: "Failed to update COO" });
   }
 });
 
-// Create a new department
+router.post("/seed", async (req, res) => {
+  try {
+    const initialDepartments = [
+      {
+        serial_number: 1,
+        department_name: "Nursing",
+        first_level: { designation: "Nursing Supervisor", access: "Particular Ward" },
+        second_level: {
+          designation: "Chief Nursing Officer",
+          access: "All Wards of Nursing Department",
+        },
+      },
+      {
+        serial_number: 2,
+        department_name: "Operations",
+        first_level: { designation: "Operations Executive", access: "Particular Ward" },
+        second_level: {
+          designation: "Head Operations / Manager",
+          access: "All Wards of Operations Department",
+        },
+      },
+      {
+        serial_number: 3,
+        department_name: "House Keeping",
+        first_level: { designation: "House Keeping Supervisor", access: "Particular Ward" },
+        second_level: {
+          designation: "House Keeping Manager",
+          access: "All Wards of House Keeping Department",
+        },
+      },
+      {
+        serial_number: 4,
+        department_name: "Maintenance",
+        first_level: { designation: "Maintenance Supervisor", access: "Particular Ward" },
+        second_level: {
+          designation: "Maintenance Manager",
+          access: "All Wards of Maintenance Department",
+        },
+      },
+      {
+        serial_number: 5,
+        department_name: "Medical",
+        first_level: { designation: "Deputy Medical Superintendant", access: "Particular Ward" },
+        second_level: {
+          designation: "Medical Superintendant",
+          access: "All Wards of Medical Department",
+        },
+      },
+      {
+        serial_number: 6,
+        department_name: "F&B",
+        first_level: { designation: "Dietician", access: "Particular Ward" },
+        second_level: { designation: "F&B Manager", access: "All Wards of F&B Department" },
+      },
+      {
+        serial_number: 7,
+        department_name: "Security",
+        first_level: { designation: "Assistant Security Officer", access: "Particular Ward" },
+        second_level: {
+          designation: "Security Officer",
+          access: "All Wards of Security Department",
+        },
+      },
+      {
+        serial_number: 8,
+        department_name: "Transport",
+        first_level: { designation: "Ambulance/Transport Incharge", access: "All Wards" },
+        second_level: {
+          designation: "Transport Manager",
+          access: "All Wards of Transport Department",
+        },
+      },
+      {
+        serial_number: 9,
+        department_name: "IT",
+        first_level: { designation: "IT Executive", access: "All Wards" },
+        second_level: { designation: "IT Manager", access: "All Wards" },
+      },
+      {
+        serial_number: 10,
+        department_name: "Laundry",
+        first_level: { designation: "Laundry Supervisor", access: "All Wards" },
+        second_level: { designation: "Laundry Manager", access: "All Wards" },
+      },
+      {
+        serial_number: 11,
+        department_name: "Billing",
+        first_level: { designation: "Asst Manager Billing", access: "All Wards" },
+        second_level: { designation: "Billing Manager", access: "All Wards" },
+      },
+      {
+        serial_number: 12,
+        department_name: "Insurance / TPA",
+        first_level: { designation: "Asst Manager Insurance", access: "All Wards" },
+        second_level: { designation: "Billing Manager", access: "All Wards" },
+      },
+      {
+        serial_number: 13,
+        department_name: "MRD",
+        first_level: { designation: "Asst Manager Medical Records", access: "All Wards" },
+        second_level: { designation: "Manager Medical Records", access: "All Wards" },
+      },
+      {
+        serial_number: 14,
+        department_name: "Lab",
+        first_level: { designation: "Lab Incharge", access: "All Wards" },
+        second_level: { designation: "Head of Lab Services", access: "All Wards" },
+      },
+      {
+        serial_number: 15,
+        department_name: "Radiology",
+        first_level: { designation: "Radiology In Charge", access: "All Wards" },
+        second_level: { designation: "Head of Radiology Services", access: "All Wards" },
+      },
+      {
+        serial_number: 16,
+        department_name: "Blood Bank",
+        first_level: { designation: "Blood Bank In Charge", access: "All Wards" },
+        second_level: { designation: "Head of Blood Bank", access: "All Wards" },
+      },
+    ];
+
+    const supabase = getSupabase();
+    await supabase.from("users").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("departments").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
+    const { error: insErr } = await supabase.from("departments").insert(
+      initialDepartments.map((d) => ({
+        serial_number: d.serial_number,
+        department_name: d.department_name,
+        first_level: d.first_level,
+        second_level: d.second_level,
+        is_active: true,
+      }))
+    );
+    if (insErr) throw insErr;
+
+    await supabase.from("coo").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("coo").insert({
+      designation: "COO",
+      name: "Chief Operating Officer",
+      access: "All Departments",
+      ward_access: "All Wards",
+      email: "suryailayarajaprof@gmail.com",
+    });
+
+    res.json({
+      success: true,
+      message: "Departments seeded successfully",
+      count: initialDepartments.length,
+    });
+  } catch (error) {
+    console.error("Error seeding departments:", error);
+    res.status(500).json({ success: false, message: "Failed to seed departments" });
+  }
+});
+
 router.post("/create", async (req, res) => {
   try {
     const { departmentName, firstLevel, secondLevel } = req.body;
 
-    // Validate required fields
     if (!departmentName || !firstLevel || !secondLevel) {
       return res.status(400).json({
         success: false,
         message: "Department name, first level, and second level are required",
       });
     }
-
-    // Validate first level structure
     if (!firstLevel.designation || !firstLevel.access) {
       return res.status(400).json({
         success: false,
         message: "First level designation and access are required",
       });
     }
-
-    // Validate second level structure
     if (!secondLevel.designation || !secondLevel.access) {
       return res.status(400).json({
         success: false,
@@ -77,233 +274,88 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // Get the next serial number
-    const lastDepartment = await Department.findOne().sort({ serialNumber: -1 });
-    const nextSerialNumber = lastDepartment ? lastDepartment.serialNumber + 1 : 1;
+    const supabase = getSupabase();
+    const { data: last } = await supabase
+      .from("departments")
+      .select("serial_number")
+      .order("serial_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const department = new Department({
-      serialNumber: nextSerialNumber,
-      departmentName,
-      firstLevel: {
-        designation: firstLevel.designation,
-        access: firstLevel.access,
-        email: firstLevel.email || "",
-        phone: firstLevel.phone || "",
-      },
-      secondLevel: {
-        designation: secondLevel.designation,
-        access: secondLevel.access,
-        email: secondLevel.email || "",
-        phone: secondLevel.phone || "",
-      },
-    });
+    const nextSerial = last ? last.serial_number + 1 : 1;
 
-    await department.save();
+    const { data, error } = await supabase
+      .from("departments")
+      .insert({
+        serial_number: nextSerial,
+        department_name: departmentName,
+        first_level: {
+          designation: firstLevel.designation,
+          access: firstLevel.access,
+          email: firstLevel.email || "",
+          phone: firstLevel.phone || "",
+        },
+        second_level: {
+          designation: secondLevel.designation,
+          access: secondLevel.access,
+          email: secondLevel.email || "",
+          phone: secondLevel.phone || "",
+        },
+        is_active: true,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      if (error.code === "23505") {
+        return res.status(400).json({
+          success: false,
+          message: "Department with this name already exists",
+        });
+      }
+      throw error;
+    }
 
     res.status(201).json({
       success: true,
       message: "Department created successfully",
-      data: department,
+      data: departmentRowToClient(data),
     });
   } catch (error) {
     console.error("Error creating department:", error);
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "Department with this name already exists",
-      });
-    }
-    res.status(500).json({
-      success: false,
-      message: "Failed to create department",
-    });
+    res.status(500).json({ success: false, message: "Failed to create department" });
   }
 });
 
-// Update a department
-router.put("/:id", async (req, res) => {
-  try {
-    const { departmentName, firstLevel, secondLevel, isActive } = req.body;
-
-    const updateData = {};
-    if (departmentName) updateData.departmentName = departmentName;
-    if (firstLevel) {
-      updateData.firstLevel = {
-        designation: firstLevel.designation,
-        access: firstLevel.access,
-        email: firstLevel.email || "",
-        phone: firstLevel.phone || "",
-      };
-    }
-    if (secondLevel) {
-      updateData.secondLevel = {
-        designation: secondLevel.designation,
-        access: secondLevel.access,
-        email: secondLevel.email || "",
-        phone: secondLevel.phone || "",
-      };
-    }
-    if (typeof isActive === "boolean") updateData.isActive = isActive;
-
-    const department = await Department.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
-
-    if (!department) {
-      return res.status(404).json({
-        success: false,
-        message: "Department not found",
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Department updated successfully",
-      data: department,
-    });
-  } catch (error) {
-    console.error("Error updating department:", error);
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "Department with this name already exists",
-      });
-    }
-    res.status(500).json({
-      success: false,
-      message: "Failed to update department",
-    });
-  }
-});
-
-// Delete a department
-router.delete("/:id", async (req, res) => {
-  try {
-    const department = await Department.findByIdAndDelete(req.params.id);
-
-    if (!department) {
-      return res.status(404).json({
-        success: false,
-        message: "Department not found",
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Department deleted successfully",
-    });
-  } catch (error) {
-    console.error("Error deleting department:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete department",
-    });
-  }
-});
-
-// ============================================
-// COO ROUTES
-// ============================================
-
-// Get COO (there should only be one)
-router.get("/coo/info", async (req, res) => {
-  try {
-    let coo = await COO.findOne();
-    
-    // If no COO exists, create a default one
-    if (!coo) {
-      coo = new COO({
-        designation: "COO",
-        name: "Chief Operating Officer",
-        access: "All Departments",
-        wardAccess: "All Wards",
-      });
-      await coo.save();
-    }
-
-    res.json({
-      success: true,
-      data: coo,
-    });
-  } catch (error) {
-    console.error("Error fetching COO:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch COO information",
-    });
-  }
-});
-
-// Update COO
-router.put("/coo/update", async (req, res) => {
-  try {
-    const { designation, name, access, wardAccess, email, phone, isActive } = req.body;
-
-    let coo = await COO.findOne();
-
-    if (!coo) {
-      // Create new COO if doesn't exist
-      coo = new COO({
-        designation: designation || "COO",
-        name: name || "Chief Operating Officer",
-        access: access || "All Departments",
-        wardAccess: wardAccess || "All Wards",
-        email: email || "",
-        phone: phone || "",
-      });
-    } else {
-      // Update existing COO
-      if (designation) coo.designation = designation;
-      if (name) coo.name = name;
-      if (access) coo.access = access;
-      if (wardAccess) coo.wardAccess = wardAccess;
-      if (email !== undefined) coo.email = email;
-      if (phone !== undefined) coo.phone = phone;
-      if (typeof isActive === "boolean") coo.isActive = isActive;
-    }
-
-    await coo.save();
-
-    res.json({
-      success: true,
-      message: "COO updated successfully",
-      data: coo,
-    });
-  } catch (error) {
-    console.error("Error updating COO:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update COO",
-    });
-  }
-});
-
-// Get escalation hierarchy for a specific department
 router.get("/:id/hierarchy", async (req, res) => {
   try {
-    const department = await Department.findById(req.params.id);
+    const supabase = getSupabase();
+    const { data: department, error } = await supabase
+      .from("departments")
+      .select("*")
+      .eq("id", req.params.id)
+      .maybeSingle();
+
+    if (error) throw error;
     if (!department) {
-      return res.status(404).json({
-        success: false,
-        message: "Department not found",
-      });
+      return res.status(404).json({ success: false, message: "Department not found" });
     }
 
-    const coo = await COO.findOne();
+    const { data: coo } = await supabase.from("coo").select("*").limit(1).maybeSingle();
 
     res.json({
       success: true,
       data: {
-        departmentName: department.departmentName,
-        firstLevel: department.firstLevel,
-        secondLevel: department.secondLevel,
-        nextLevel: coo || {
-          designation: "COO",
-          access: "All Departments",
-          wardAccess: "All Wards",
-        },
+        departmentName: department.department_name,
+        firstLevel: department.first_level,
+        secondLevel: department.second_level,
+        nextLevel: coo
+          ? cooRowToClient(coo)
+          : {
+              designation: "COO",
+              access: "All Departments",
+              wardAccess: "All Wards",
+            },
       },
     });
   } catch (error) {
@@ -315,134 +367,93 @@ router.get("/:id/hierarchy", async (req, res) => {
   }
 });
 
-// Seed initial departments (for development/setup)
-router.post("/seed", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const initialDepartments = [
-      {
-        serialNumber: 1,
-        departmentName: "Nursing",
-        firstLevel: { designation: "Nursing Supervisor", access: "Particular Ward" },
-        secondLevel: { designation: "Chief Nursing Officer", access: "All Wards of Nursing Department" },
-      },
-      {
-        serialNumber: 2,
-        departmentName: "Operations",
-        firstLevel: { designation: "Operations Executive", access: "Particular Ward" },
-        secondLevel: { designation: "Head Operations / Manager", access: "All Wards of Operations Department" },
-      },
-      {
-        serialNumber: 3,
-        departmentName: "House Keeping",
-        firstLevel: { designation: "House Keeping Supervisor", access: "Particular Ward" },
-        secondLevel: { designation: "House Keeping Manager", access: "All Wards of House Keeping Department" },
-      },
-      {
-        serialNumber: 4,
-        departmentName: "Maintenance",
-        firstLevel: { designation: "Maintenance Supervisor", access: "Particular Ward" },
-        secondLevel: { designation: "Maintenance Manager", access: "All Wards of Maintenance Department" },
-      },
-      {
-        serialNumber: 5,
-        departmentName: "Medical",
-        firstLevel: { designation: "Deputy Medical Superintendant", access: "Particular Ward" },
-        secondLevel: { designation: "Medical Superintendant", access: "All Wards of Medical Department" },
-      },
-      {
-        serialNumber: 6,
-        departmentName: "F&B",
-        firstLevel: { designation: "Dietician", access: "Particular Ward" },
-        secondLevel: { designation: "F&B Manager", access: "All Wards of F&B Department" },
-      },
-      {
-        serialNumber: 7,
-        departmentName: "Security",
-        firstLevel: { designation: "Assistant Security Officer", access: "Particular Ward" },
-        secondLevel: { designation: "Security Officer", access: "All Wards of Security Department" },
-      },
-      {
-        serialNumber: 8,
-        departmentName: "Transport",
-        firstLevel: { designation: "Ambulance/Transport Incharge", access: "All Wards" },
-        secondLevel: { designation: "Transport Manager", access: "All Wards of Transport Department" },
-      },
-      {
-        serialNumber: 9,
-        departmentName: "IT",
-        firstLevel: { designation: "IT Executive", access: "All Wards" },
-        secondLevel: { designation: "IT Manager", access: "All Wards" },
-      },
-      {
-        serialNumber: 10,
-        departmentName: "Laundry",
-        firstLevel: { designation: "Laundry Supervisor", access: "All Wards" },
-        secondLevel: { designation: "Laundry Manager", access: "All Wards" },
-      },
-      {
-        serialNumber: 11,
-        departmentName: "Billing",
-        firstLevel: { designation: "Asst Manager Billing", access: "All Wards" },
-        secondLevel: { designation: "Billing Manager", access: "All Wards" },
-      },
-      {
-        serialNumber: 12,
-        departmentName: "Insurance / TPA",
-        firstLevel: { designation: "Asst Manager Insurance", access: "All Wards" },
-        secondLevel: { designation: "Billing Manager", access: "All Wards" },
-      },
-      {
-        serialNumber: 13,
-        departmentName: "MRD",
-        firstLevel: { designation: "Asst Manager Medical Records", access: "All Wards" },
-        secondLevel: { designation: "Manager Medical Records", access: "All Wards" },
-      },
-      {
-        serialNumber: 14,
-        departmentName: "Lab",
-        firstLevel: { designation: "Lab Incharge", access: "All Wards" },
-        secondLevel: { designation: "Head of Lab Services", access: "All Wards" },
-      },
-      {
-        serialNumber: 15,
-        departmentName: "Radiology",
-        firstLevel: { designation: "Radiology In Charge", access: "All Wards" },
-        secondLevel: { designation: "Head of Radiology Services", access: "All Wards" },
-      },
-      {
-        serialNumber: 16,
-        departmentName: "Blood Bank",
-        firstLevel: { designation: "Blood Bank In Charge", access: "All Wards" },
-        secondLevel: { designation: "Head of Blood Bank", access: "All Wards" },
-      },
-    ];
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("departments")
+      .select("*")
+      .eq("id", req.params.id)
+      .maybeSingle();
 
-    // Clear existing departments
-    await Department.deleteMany({});
+    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ success: false, message: "Department not found" });
+    }
 
-    // Insert new departments
-    await Department.insertMany(initialDepartments);
+    res.json({ success: true, data: departmentRowToClient(data) });
+  } catch (error) {
+    console.error("Error fetching department:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch department" });
+  }
+});
 
-    // Create/Update COO
-    await COO.deleteMany({});
-    await COO.create({
-      designation: "COO",
-      name: "Chief Operating Officer",
-      access: "All Departments",
-      wardAccess: "All Wards",
-    });
+router.put("/:id", async (req, res) => {
+  try {
+    const { departmentName, firstLevel, secondLevel, isActive } = req.body;
+    const supabase = getSupabase();
+
+    const updateData = { updated_at: new Date().toISOString() };
+    if (departmentName) updateData.department_name = departmentName;
+    if (firstLevel) {
+      updateData.first_level = {
+        designation: firstLevel.designation,
+        access: firstLevel.access,
+        email: firstLevel.email || "",
+        phone: firstLevel.phone || "",
+      };
+    }
+    if (secondLevel) {
+      updateData.second_level = {
+        designation: secondLevel.designation,
+        access: secondLevel.access,
+        email: secondLevel.email || "",
+        phone: secondLevel.phone || "",
+      };
+    }
+    if (typeof isActive === "boolean") updateData.is_active = isActive;
+
+    const { data, error } = await supabase
+      .from("departments")
+      .update(updateData)
+      .eq("id", req.params.id)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      if (error.code === "23505") {
+        return res.status(400).json({
+          success: false,
+          message: "Department with this name already exists",
+        });
+      }
+      throw error;
+    }
+    if (!data) {
+      return res.status(404).json({ success: false, message: "Department not found" });
+    }
 
     res.json({
       success: true,
-      message: "Departments seeded successfully",
-      count: initialDepartments.length,
+      message: "Department updated successfully",
+      data: departmentRowToClient(data),
     });
   } catch (error) {
-    console.error("Error seeding departments:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to seed departments",
-    });
+    console.error("Error updating department:", error);
+    res.status(500).json({ success: false, message: "Failed to update department" });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const supabase = getSupabase();
+    const { error } = await supabase.from("departments").delete().eq("id", req.params.id);
+    if (error) throw error;
+
+    res.json({ success: true, message: "Department deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting department:", error);
+    res.status(500).json({ success: false, message: "Failed to delete department" });
   }
 });
 

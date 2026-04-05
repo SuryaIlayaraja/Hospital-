@@ -5,13 +5,13 @@ import {
   ChatSenderType,
   createChatSocket,
   fetchChatHistory,
-  uploadChatFile,
 } from "../services/chatService";
 
 type Props = {
   ticketId: string;
   role: ChatSenderType;
   patientChatToken?: string;
+  clerkUserId?: string;
   onClose?: () => void;
   title?: string;
 };
@@ -20,6 +20,7 @@ const TicketChat: React.FC<Props> = ({
   ticketId,
   role,
   patientChatToken,
+  clerkUserId,
   onClose,
   title,
 }) => {
@@ -29,9 +30,12 @@ const TicketChat: React.FC<Props> = ({
   const [text, setText] = useState("");
   const [otherOnline, setOtherOnline] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
-  const [uploading, setUploading] = useState(false);
+
+  const [socketConnected, setSocketConnected] = useState(false);
+
   const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const typingTimeoutRef = useRef<number | null>(null);
 
   const headerTitle = useMemo(() => {
@@ -42,83 +46,152 @@ const TicketChat: React.FC<Props> = ({
   useEffect(() => {
     let active = true;
 
-    const init = async () => {
+    // Resolve the best available token for this patient
+    const resolvedToken =
+      patientChatToken ||
+      localStorage.getItem(`ticket_chat_token:${ticketId}`) ||
+      undefined;
+
+    // Create socket FIRST so we don't miss messages that arrive during history fetch
+    console.log("[TicketChat] Creating socket", {
+      ticketId,
+      role,
+      hasPatientToken: !!patientChatToken,
+      hasResolvedToken: !!resolvedToken,
+      clerkUserId,
+    });
+    
+    // For admin, ensure we have an auth token
+    if (role === "admin") {
+      const adminToken = localStorage.getItem("authToken");
+      console.log("[TicketChat] Admin token check:", {
+        hasAdminToken: !!adminToken,
+        tokenLength: adminToken ? adminToken.length : 0,
+      });
+      if (!adminToken) {
+        console.warn("[TicketChat] Admin opening chat without token!");
+      }
+    }
+    
+    const sock = createChatSocket(role, resolvedToken, clerkUserId);
+    socketRef.current = sock;
+
+    sock.on("connect", () => {
+      console.log("[TicketChat] Socket connected", { ticketId, role, socketId: sock.id });
+      if (active) setSocketConnected(true);
+      setError(null);
+      // Join the ticket room once connected
+      sock.emit("join_ticket", { ticketId });
+    });
+
+    sock.on("disconnect", () => {
+      console.log("[TicketChat] Socket disconnected", { ticketId, role });
+      if (active) setSocketConnected(false);
+    });
+
+    sock.on("connect_error", (err: Error) => {
+      console.log("[TicketChat] Socket connection error", { ticketId, role, error: err.message });
+      if (active) {
+        setSocketConnected(false);
+        setError(`Connection failed: ${err.message}`);
+      }
+    });
+
+    // If already connected before listeners registered, join immediately
+    if (sock.connected) {
+      setSocketConnected(true);
+      sock.emit("join_ticket", { ticketId });
+    }
+
+    // Accept all new_message events (we're already in the correct room on the server)
+    sock.on("new_message", (msg: ChatMessage) => {
+      if (!msg) return;
+      setMessages((prev) => {
+        // Deduplicate by _id in case the message was already added
+        if (prev.some((m) => m._id === msg._id)) return prev;
+        return [...prev, msg];
+      });
+    });
+
+    sock.on("chat_error", (payload: any) => {
+      const m = typeof payload?.message === "string" ? payload.message : "Chat error";
+      setError(m);
+    });
+
+    sock.on("join_error", (payload: any) => {
+      const m = typeof payload?.message === "string" ? payload.message : "Failed to join chat";
+      setError(`Chat access denied: ${m}. Your chat token may be missing or expired.`);
+    });
+
+    sock.on("presence", (payload: any) => {
+      if (payload?.ticketId !== ticketId) return;
+      const isOtherOnline =
+        role === "admin" ? !!payload?.patientOnline : !!payload?.adminOnline;
+      setOtherOnline(isOtherOnline);
+    });
+
+    sock.on("typing", (payload: any) => {
+      if (payload?.ticketId !== ticketId) return;
+      if (payload?.from === role) return;
+      setOtherTyping(!!payload?.isTyping);
+    });
+
+    sock.on("read_receipt", (payload: any) => {
+      if (payload?.ticketId !== ticketId) return;
+      const r = payload?.role as ChatSenderType | undefined;
+      const readAt = typeof payload?.readAt === "string" ? payload.readAt : undefined;
+      if (!r || !readAt) return;
+      setMessages((prev) =>
+        prev.map((m) => ({
+          ...m,
+          readBy: {
+            ...m.readBy,
+            ...(r === "admin" ? { adminAt: readAt } : { patientAt: readAt }),
+          },
+        }))
+      );
+    });
+
+    // Fetch chat history after socket is set up
+    const loadHistory = async () => {
       setLoading(true);
       setError(null);
-
       try {
-        const history = await fetchChatHistory(ticketId, 200, patientChatToken);
+        const history = await fetchChatHistory(ticketId, 200, resolvedToken);
         if (!active) return;
-        setMessages(history.data || []);
+        // Merge history with any socket messages that arrived during the fetch
+        setMessages((prev) => {
+          const historical = history.data || [];
+          const existingIds = new Set(historical.map((m) => m._id));
+          // Append any socket messages not already in history (avoid duplicates)
+          const extra = prev.filter((m) => !existingIds.has(m._id));
+          return [...historical, ...extra];
+        });
       } catch (e) {
         if (!active) return;
-        setError(e instanceof Error ? e.message : "Failed to load chat");
+        setError(e instanceof Error ? e.message : "Failed to load chat history");
       } finally {
         if (active) setLoading(false);
       }
-
-      const sock = createChatSocket(role, patientChatToken);
-      socketRef.current = sock;
-
-      sock.emit("join_ticket", { ticketId });
-      sock.on("new_message", (msg: ChatMessage) => {
-        if (!msg || msg.ticketId !== ticketId) return;
-        setMessages((prev) => [...prev, msg]);
-      });
-
-      sock.on("chat_error", (payload: any) => {
-        const m = typeof payload?.message === "string" ? payload.message : "Chat error";
-        setError(m);
-      });
-
-      sock.on("presence", (payload: any) => {
-        if (payload?.ticketId !== ticketId) return;
-        const isOtherOnline =
-          role === "admin" ? !!payload?.patientOnline : !!payload?.adminOnline;
-        setOtherOnline(isOtherOnline);
-      });
-
-      sock.on("typing", (payload: any) => {
-        if (payload?.ticketId !== ticketId) return;
-        if (payload?.from === role) return;
-        setOtherTyping(!!payload?.isTyping);
-      });
-
-      sock.on("read_receipt", (payload: any) => {
-        if (payload?.ticketId !== ticketId) return;
-        const r = payload?.role as ChatSenderType | undefined;
-        const readAt = typeof payload?.readAt === "string" ? payload.readAt : undefined;
-        if (!r || !readAt) return;
-        setMessages((prev) =>
-          prev.map((m) => ({
-            ...m,
-            readBy: {
-              ...m.readBy,
-              ...(r === "admin" ? { adminAt: readAt } : { patientAt: readAt }),
-            },
-          }))
-        );
-      });
     };
 
-    init();
+    loadHistory();
 
     return () => {
       active = false;
-      const sock = socketRef.current;
+      const s = socketRef.current;
       socketRef.current = null;
       try {
-        sock?.emit("leave_ticket", { ticketId });
-        sock?.disconnect();
+        s?.emit("leave_ticket", { ticketId });
+        s?.disconnect();
       } catch {
         // ignore
       }
     };
-  }, [ticketId, role]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketId, role, patientChatToken]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+  // Auto-scroll disabled — users scroll manually
 
   useEffect(() => {
     if (loading) return;
@@ -128,9 +201,15 @@ const TicketChat: React.FC<Props> = ({
   const send = () => {
     const clean = text.trim();
     if (!clean) return;
-    socketRef.current?.emit("send_message", { ticketId, message: clean });
+    const sock = socketRef.current;
+    if (!sock || !sock.connected) {
+      setError("Not connected to chat. Please wait a moment and try again.");
+      return;
+    }
+    sock.emit("send_message", { ticketId, message: clean });
     setText("");
   };
+
 
   const otherLabel = role === "admin" ? "Patient" : "Admin";
   const otherRole: ChatSenderType = role === "admin" ? "patient" : "admin";
@@ -158,40 +237,34 @@ const TicketChat: React.FC<Props> = ({
     return new Date(otherReadAt).getTime() >= new Date(myLast.createdAt).getTime();
   }, [messages, myLastMessageId, otherReadAt]);
 
-  const onPickFile = async (file: File | null) => {
-    if (!file) return;
-    setError(null);
-    try {
-      setUploading(true);
-      const uploaded = await uploadChatFile(ticketId, file);
-      socketRef.current?.emit("send_message", {
-        ticketId,
-        message: "",
-        attachments: [uploaded.data],
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
+
 
   return (
     <div className="w-full h-full flex flex-col bg-white dark:bg-gray-900/70 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60">
         <div className="min-w-0">
-          <div className="font-bold text-gray-900 dark:text-white truncate">
-            {headerTitle}
+          <div className="flex items-center gap-2">
+            <div className="font-bold text-gray-900 dark:text-white truncate">
+              {headerTitle}
+            </div>
+            <div
+              className={`flex-shrink-0 w-2 h-2 rounded-full ${socketConnected ? "bg-green-500" : "bg-orange-400 animate-pulse"}`}
+              title={socketConnected ? "Connected" : "Connecting…"}
+            />
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            You are chatting as {role}. {otherLabel}:{" "}
-            <span className={otherOnline ? "text-green-600 dark:text-green-400 font-bold" : "text-gray-500"}>
-              {otherOnline ? "Online" : "Offline"}
-            </span>
+            {socketConnected ? `${otherLabel}: ` : "Connecting to chat… "}
+            {socketConnected && (
+              <span className={otherOnline ? "text-green-600 dark:text-green-400 font-bold" : "text-gray-500"}>
+                {otherOnline ? "Online" : "Offline"}
+              </span>
+            )}
           </div>
         </div>
+
         {onClose && (
           <button
+            type="button"
             onClick={onClose}
             className="px-3 py-1 rounded-lg text-sm font-bold bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-gray-200"
           >
@@ -200,7 +273,7 @@ const TicketChat: React.FC<Props> = ({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading ? (
           <div className="text-sm text-gray-500 dark:text-gray-400">Loading chat…</div>
         ) : messages.length === 0 ? (
@@ -279,20 +352,7 @@ const TicketChat: React.FC<Props> = ({
           </div>
         )}
         <div className="flex gap-2">
-          <label className="px-3 py-2 rounded-xl font-bold bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-gray-200 cursor-pointer text-sm">
-            {uploading ? "Uploading…" : "Attach"}
-            <input
-              type="file"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0] || null;
-                // allow selecting same file again later
-                e.target.value = "";
-                onPickFile(f);
-              }}
-              disabled={uploading}
-            />
-          </label>
+
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -310,6 +370,7 @@ const TicketChat: React.FC<Props> = ({
             className="flex-1 px-4 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
+            type="button"
             onClick={send}
             className="px-4 py-2 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white"
           >

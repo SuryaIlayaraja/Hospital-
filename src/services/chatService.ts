@@ -36,7 +36,7 @@ const SOCKET_BASE_URL =
 export async function fetchChatHistory(
   ticketId: string,
   limit: number = 200,
-  patientChatToken?: string
+  patientChatToken?: string,
 ) {
   const token = getAuthToken();
   const patientJwt = localStorage.getItem("patientToken");
@@ -47,7 +47,7 @@ export async function fetchChatHistory(
 
   const res = await fetch(
     `${API_BASE_URL}/chat/${encodeURIComponent(ticketId)}?limit=${limit}`,
-    { headers }
+    { headers },
   );
   const data = await res.json();
   if (!res.ok) {
@@ -61,11 +61,14 @@ export async function uploadChatFile(ticketId: string, file: File) {
   const form = new FormData();
   form.append("file", file);
 
-  const res = await fetch(`${API_BASE_URL}/chat/${encodeURIComponent(ticketId)}/upload`, {
-    method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: form,
-  });
+  const res = await fetch(
+    `${API_BASE_URL}/chat/${encodeURIComponent(ticketId)}/upload`,
+    {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: form,
+    },
+  );
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data?.message || "Failed to upload file");
@@ -85,22 +88,43 @@ export async function uploadChatFile(ticketId: string, file: File) {
 
 export function createChatSocket(
   role: ChatSenderType,
-  patientChatToken?: string
+  patientChatToken?: string,
+  clerkUserId?: string,
 ): Socket {
   const token = getAuthToken();
   const patientJwt = localStorage.getItem("patientToken");
+  
+  // Debug logging
+  const logData = {
+    role,
+    hasAdminToken: !!token,
+    adminToken: role === "admin" ? (token ? `${token.substring(0, 20)}...` : null) : undefined,
+    hasPatientChatToken: !!patientChatToken,
+    hasPatientJwt: !!patientJwt,
+    hasClerkUserId: !!clerkUserId,
+    localStorageAuthToken: role === "admin" ? (localStorage.getItem("authToken") ? "present" : "missing") : undefined,
+  };
+  console.log("[Socket] Creating chat socket", logData);
+
+  const authPayload =
+    role === "admin" && token
+      ? { token: `Bearer ${token}` }
+      : role === "patient"
+        ? {
+            ...(patientChatToken ? { chatToken: patientChatToken } : {}),
+            ...(patientJwt ? { patientToken: patientJwt } : {}),
+            ...(clerkUserId ? { clerkUserId } : {}),
+          }
+        : {};
+  
+  console.log("[Socket] Auth payload for admin:", {
+    role,
+    hasToken: !!token,
+    payloadKeys: Object.keys(authPayload),
+  });
+
   return io(SOCKET_BASE_URL, {
     transports: ["websocket"],
-    auth:
-      role === "admin" && token
-        ? { token: `Bearer ${token}` }
-        : role === "patient"
-          ? patientJwt
-            ? { patientToken: patientJwt }
-            : patientChatToken
-              ? { chatToken: patientChatToken }
-              : {}
-          : {},
+    auth: authPayload,
   });
 }
-
