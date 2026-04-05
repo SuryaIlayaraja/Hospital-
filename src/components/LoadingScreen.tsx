@@ -134,26 +134,26 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
           <div className="inline-flex items-center justify-center w-24 h-24 bg-[#2563eb] rounded-full shadow-lg mb-4 shadow-[#2563eb]/20">
             <Building2 className="w-12 h-12 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 flex items-center justify-center">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 flex items-center justify-center">
             {hospitalName ? (
               hospitalName
             ) : (
-              <span className="h-10 w-48 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-lg" />
+              <span className="h-8 sm:h-10 w-32 sm:w-48 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-lg" />
             )}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">Patient Feedback Management System</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-lg px-4 truncate">Patient Feedback Management System</p>
         </div>
 
         {/* Doctor Image */}
         <div className="mb-8">
           <div className="relative">
-            <div className="w-48 h-48 mx-auto rounded-full overflow-hidden shadow-2xl border-4 border-gray-800 animate-pulse">
+            <div className="w-32 h-32 sm:w-48 sm:h-48 mx-auto rounded-full overflow-hidden shadow-2xl border-4 border-gray-800 animate-pulse">
               <img
                 src="/images/doctor1.jpg"
                 alt="Doctor"
                 className="w-full h-full object-cover object-center"
                 style={{
-                  objectPosition: 'center 25%'
+                  objectPosition: 'center 15%'
                 }}
                 onError={(e) => {
                   e.currentTarget.src = FALLBACK_DOCTOR;
@@ -176,8 +176,8 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
         </div>
 
         {/* Loading Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center mb-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-center mb-4 scale-75 sm:scale-100">
             {steps.map((step, index) => (
               <div key={index} className="flex items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${index <= currentStep
@@ -187,13 +187,13 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
                   <step.icon className="w-5 h-5" />
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`w-16 h-1 mx-2 transition-all duration-500 ${index < currentStep ? 'bg-[#2563eb]' : 'bg-gray-800'
+                  <div className={`w-8 sm:w-16 h-1 mx-1 sm:mx-2 transition-all duration-500 ${index < currentStep ? 'bg-[#2563eb]' : 'bg-gray-800'
                     }`} />
                 )}
               </div>
             ))}
           </div>
-          <p className="text-gray-700 dark:text-gray-300 text-lg font-medium">
+          <p className="text-gray-700 dark:text-gray-300 text-base sm:text-lg font-medium">
             {steps[currentStep].text}
           </p>
         </div>
@@ -254,8 +254,16 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
             }
             @keyframes ping-large {
               75%, 100% {
-                transform: scale(3.5);
+                transform: scale(2.2);
                 opacity: 0;
+              }
+            }
+            @media (min-width: 640px) {
+              @keyframes ping-large {
+                75%, 100% {
+                  transform: scale(3.5);
+                  opacity: 0;
+                }
               }
             }
             .animate-ping-large {
