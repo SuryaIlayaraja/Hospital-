@@ -131,8 +131,8 @@ const AppContent: React.FC = () => {
         className={`min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-white transition-opacity duration-500 ${isLoading ? "opacity-0" : "opacity-100"
           }`}
       >
-        {/* Header - Only show when not on dashboard or raise-ticket */}
-        {activeTab !== "dashboard" && activeTab !== "raise-ticket" && (
+        {/* Header - Only hide when on specific full-screen views like raise-ticket */}
+        {activeTab !== "raise-ticket" && (
           <header className="relative bg-white dark:bg-[#0a0a0a] shadow-lg border-b border-gray-200 dark:border-gray-800 overflow-hidden">
 
             {/* Background Doctor Image */}
@@ -170,11 +170,14 @@ const AppContent: React.FC = () => {
               </div>
 
               {/* Tab Navigation — scrollable on mobile */}
-              <div className="overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
-              <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-lg w-fit border border-gray-200 dark:border-gray-700/50 min-w-max mx-auto">
+              <div className="w-full">
+              <div className="flex flex-col sm:flex-row sm:space-x-1 space-y-1.5 sm:space-y-0 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl w-full sm:w-fit border border-gray-200 dark:border-gray-700/50 mx-auto">
                 <button
                   onClick={() => setActiveTab("dashboard")}
-                  className="flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700/50"
+                  className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-lg font-bold transition-all duration-300 w-full sm:w-auto ${(activeTab as string) === "dashboard"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50"
+                    }`}
                 >
                   <Home className="h-4 w-4" />
                   {t("nav.dashboard")}
@@ -183,9 +186,9 @@ const AppContent: React.FC = () => {
                   <>
                     <button
                       onClick={() => setActiveTab("opd")}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 transform active:scale-95 ${activeTab === "opd"
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/30 scale-105"
-                        : "text-gray-600 dark:text-gray-400 hover:text-white hover:bg-gray-700/50"
+                      className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-lg font-bold transition-all duration-300 w-full sm:w-auto ${activeTab === "opd"
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-[1.02] sm:scale-105"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50"
                         }`}
                     >
                       <Users className="h-4 w-4" />
@@ -193,9 +196,9 @@ const AppContent: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setActiveTab("ipd")}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 transform active:scale-95 ${activeTab === "ipd"
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/30 scale-105"
-                        : "text-gray-600 dark:text-gray-400 hover:text-white hover:bg-gray-700/50"
+                      className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-lg font-bold transition-all duration-300 w-full sm:w-auto ${activeTab === "ipd"
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-[1.02] sm:scale-105"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50"
                         }`}
                     >
                       <UserCheck className="h-4 w-4" />
@@ -205,9 +208,9 @@ const AppContent: React.FC = () => {
                 )}
                 <button
                   onClick={() => setActiveTab("admin")}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 transform active:scale-95 ${activeTab === "admin"
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/30 scale-105"
-                    : "text-gray-600 dark:text-gray-400 hover:text-white hover:bg-gray-700/50"
+                  className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-lg font-bold transition-all duration-300 w-full sm:w-auto ${activeTab === "admin"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-[1.02] sm:scale-105"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50"
                     }`}
                 >
                   <Settings className="h-4 w-4" />

@@ -184,7 +184,7 @@ const ValueCard = ({ item, index }: { item: any; index: number }) => {
 };
 
 interface DashboardProps {
-  onNavigate?: (tab: "opd" | "ipd" | "admin") => void;
+  onNavigate?: (tab: "dashboard" | "opd" | "ipd" | "admin" | "raise-ticket") => void;
   onNavigateToTicket?: () => void;
   hospitalSettings?: HospitalSettings | null;
 }
