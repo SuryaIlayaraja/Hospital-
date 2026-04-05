@@ -11,7 +11,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 require("dotenv").config();
 
-// Fix for DNS resolution issues with MongoDB Atlas on some Windows environments
+// Fix for DNS resolution issues on some environments (replaces NODE_OPTIONS flag)
 if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder("ipv4first");
 }
@@ -36,16 +36,26 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration - must be before other middleware
-// Allow all origins in development, specific origin in production
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+  : ["http://localhost:5173"];
+
 const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_URL || "http://localhost:5173"
+      ? (origin, callback) => {
+          // Allow requests with no origin (mobile apps, curl, etc.)
+          if (!origin) return callback(null, true);
+          if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+          }
+          return callback(new Error("Not allowed by CORS"));
+        }
       : true, // Allow all origins in development
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-chat-token"],
   credentials: true,
-  optionsSuccessStatus: 200, // Support legacy browsers
+  optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 

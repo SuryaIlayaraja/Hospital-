@@ -4,11 +4,14 @@
   "description": "Backend API for hospital feedback system",
   "main": "server.js",
   "scripts": {
-    "start": "set NODE_OPTIONS=--dns-result-order=ipv4first && node server.js",
-    "dev": "set NODE_OPTIONS=--dns-result-order=ipv4first && nodemon server.js",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
     "setup": "echo Run SQL in supabase/migrations/001_initial_schema.sql via Supabase SQL Editor",
     "sample-data": "echo Sample data: use Supabase SQL Editor or POST /api/departments/seed and POST /api/auth/seed-users",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": [
     "hospital",
