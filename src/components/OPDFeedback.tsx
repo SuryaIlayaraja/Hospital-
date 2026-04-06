@@ -15,6 +15,7 @@ import FormInput from "./FormInput";
 import ProgressBar from "./ProgressBar";
 import { useLanguage } from "../contexts/LanguageContext";
 import { submitOPDFeedback } from "../services/apiService";
+import { useAuth } from "@clerk/clerk-react";
 import {
   DEFAULT_OPD_QUESTIONS,
   STORAGE_KEY_OPD,
@@ -36,6 +37,7 @@ interface OPDFeedbackProps {
 
 const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
   const { t } = useLanguage();
+  const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
@@ -154,7 +156,8 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
         hospitalCleanliness: formData.hospitalCleanliness ? mapRatingToBackend(formData.hospitalCleanliness) : "",
       };
 
-      const result = await submitOPDFeedback(submitData);
+      const clerkToken = await getToken();
+      const result = await submitOPDFeedback(submitData, clerkToken);
 
       if (result.success) {
         setSubmitStatus("success");

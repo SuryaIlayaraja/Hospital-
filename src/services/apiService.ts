@@ -203,16 +203,19 @@ const apiRequest = async <T>(
     const url = `${API_BASE_URL}${endpoint}`;
     console.log(`Making API request to: ${options.method || "GET"} ${url}`);
     
-    // Get auth token
-    const token = getAuthToken();
+    // Merge any explicitly passed headers first (they take priority)
+    const passedHeaders = (options.headers as Record<string, string>) || {};
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...options.headers as Record<string, string>,
+      ...passedHeaders,
     };
     
-    // Add authorization header if token exists
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
+    // Only fall back to the stored admin token if no Authorization was explicitly provided
+    if (!headers.Authorization) {
+      const token = getAuthToken();
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
     }
     
     const response = await fetch(url, {
@@ -255,23 +258,27 @@ const apiRequest = async <T>(
   }
 };
 
-// Submit OPD feedback
+// Submit OPD feedback (clerkToken: Clerk session JWT from useAuth().getToken())
 export const submitOPDFeedback = async (
-  feedbackData: OPDFeedbackData
+  feedbackData: OPDFeedbackData,
+  clerkToken?: string | null
 ): Promise<ApiResponse<any>> => {
   return apiRequest<any>("/feedback/opd", {
     method: "POST",
     body: JSON.stringify(feedbackData),
+    ...(clerkToken ? { headers: { Authorization: `Bearer ${clerkToken}` } } : {}),
   });
 };
 
-// Submit IPD feedback
+// Submit IPD feedback (clerkToken: Clerk session JWT from useAuth().getToken())
 export const submitIPDFeedback = async (
-  feedbackData: IPDFeedbackData
+  feedbackData: IPDFeedbackData,
+  clerkToken?: string | null
 ): Promise<ApiResponse<any>> => {
   return apiRequest<any>("/feedback/ipd", {
     method: "POST",
     body: JSON.stringify(feedbackData),
+    ...(clerkToken ? { headers: { Authorization: `Bearer ${clerkToken}` } } : {}),
   });
 };
 

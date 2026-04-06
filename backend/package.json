@@ -22,7 +22,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@clerk/clerk-sdk-node": "^4.13.23",
+    "@clerk/backend": "^2.0.0",
     "@supabase/supabase-js": "^2.100.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",

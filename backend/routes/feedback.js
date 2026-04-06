@@ -1,8 +1,31 @@
 const express = require("express");
+const { verifyToken } = require("@clerk/backend");
 const { getSupabase } = require("../lib/supabase");
 const { feedbackRowToClient } = require("../lib/mappers");
 
 const router = express.Router();
+
+/** Verify Clerk session token from Authorization header */
+async function requireClerkAuth(req, res) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ success: false, message: "Authentication required. Please sign in." });
+    return null;
+  }
+  const token = authHeader.substring(7);
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (!secretKey) {
+    res.status(503).json({ success: false, message: "Authentication service not configured on server." });
+    return null;
+  }
+  try {
+    const payload = await verifyToken(token, { secretKey });
+    return payload;
+  } catch {
+    res.status(401).json({ success: false, message: "Invalid or expired session. Please sign in again." });
+    return null;
+  }
+}
 
 const DEPARTMENT_FIELD_MAP = {
   Nursing: "nursingCare",
@@ -333,7 +356,11 @@ router.get("/yearly", async (req, res) => {
 
 router.post("/opd", async (req, res) => {
   try {
-    const feedbackData = { ...req.body, type: "OPD" };
+    // Verify Clerk session
+    const payload = await requireClerkAuth(req, res);
+    if (!payload) return;
+
+    const feedbackData = { ...req.body, type: "OPD", clerk_user_id: payload.sub };
     const overall = feedbackData.overallExperience || feedbackData.overall_experience;
     const ts = feedbackData.timestamp ? new Date(feedbackData.timestamp) : new Date();
 
@@ -367,7 +394,11 @@ router.post("/opd", async (req, res) => {
 
 router.post("/ipd", async (req, res) => {
   try {
-    const feedbackData = { ...req.body, type: "IPD" };
+    // Verify Clerk session
+    const payload = await requireClerkAuth(req, res);
+    if (!payload) return;
+
+    const feedbackData = { ...req.body, type: "IPD", clerk_user_id: payload.sub };
     const overall = feedbackData.overallExperience || feedbackData.overall_experience;
     const ts = feedbackData.timestamp ? new Date(feedbackData.timestamp) : new Date();
 

@@ -15,6 +15,7 @@ import FormInput from "./FormInput";
 import ProgressBar from "./ProgressBar";
 import { useLanguage } from "../contexts/LanguageContext";
 import { submitIPDFeedback } from "../services/apiService";
+import { useAuth } from "@clerk/clerk-react";
 import {
   DEFAULT_IPD_QUESTIONS,
   STORAGE_KEY_IPD,
@@ -36,6 +37,7 @@ interface IPDFeedbackProps {
 
 const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
   const { t } = useLanguage();
+  const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
@@ -144,7 +146,8 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
         dischargeProcess: formData.dischargeProcess ? mapRatingToBackend(formData.dischargeProcess) : "",
       };
 
-      const result = await submitIPDFeedback(submitData);
+      const clerkToken = await getToken();
+      const result = await submitIPDFeedback(submitData, clerkToken);
 
       if (result.success) {
         setSubmitStatus("success");
