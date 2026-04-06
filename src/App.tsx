@@ -176,6 +176,17 @@ const AppContent: React.FC = () => {
                         routing="hash" 
                         afterSignInUrl={window.location.href}
                         afterSignUpUrl={window.location.href}
+                        appearance={{
+                          elements: {
+                            // Hide all social/OAuth login buttons + divider
+                            socialButtonsRoot: { display: "none" },
+                            socialButtons: { display: "none" },
+                            socialButtonsBlockButton: { display: "none" },
+                            dividerRow: { display: "none" },
+                            dividerText: { display: "none" },
+                            dividerLine: { display: "none" },
+                          },
+                        }}
                       />
                     </div>
                     
