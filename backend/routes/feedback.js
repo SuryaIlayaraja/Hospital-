@@ -361,7 +361,7 @@ router.post("/opd", async (req, res) => {
     if (!payload) return;
 
     const feedbackData = { ...req.body, type: "OPD", clerk_user_id: payload.sub };
-    const overall = feedbackData.overallExperience || feedbackData.overall_experience;
+    const overall = feedbackData.overallExperience || feedbackData.overall_experience || "Not specified";
     const ts = feedbackData.timestamp ? new Date(feedbackData.timestamp) : new Date();
 
     const supabase = getSupabase();
@@ -375,7 +375,10 @@ router.post("/opd", async (req, res) => {
       .select("*")
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error submitting OPD feedback:", error);
+      throw error;
+    }
 
     res.status(201).json({
       success: true,
@@ -388,6 +391,7 @@ router.post("/opd", async (req, res) => {
       success: false,
       message: "Error submitting OPD feedback",
       error: error.message,
+      details: error.details || null,
     });
   }
 });
@@ -399,7 +403,7 @@ router.post("/ipd", async (req, res) => {
     if (!payload) return;
 
     const feedbackData = { ...req.body, type: "IPD", clerk_user_id: payload.sub };
-    const overall = feedbackData.overallExperience || feedbackData.overall_experience;
+    const overall = feedbackData.overallExperience || feedbackData.overall_experience || "Not specified";
     const ts = feedbackData.timestamp ? new Date(feedbackData.timestamp) : new Date();
 
     const supabase = getSupabase();
@@ -413,7 +417,10 @@ router.post("/ipd", async (req, res) => {
       .select("*")
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error submitting IPD feedback:", error);
+      throw error;
+    }
 
     res.status(201).json({
       success: true,
@@ -426,6 +433,7 @@ router.post("/ipd", async (req, res) => {
       success: false,
       message: "Error submitting IPD feedback",
       error: error.message,
+      details: error.details || null,
     });
   }
 });

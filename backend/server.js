@@ -11,7 +11,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 require("dotenv").config();
 
-// Fix for DNS resolution issues on some environments (replaces NODE_OPTIONS flag)
+// Fix for DNS resolution issues with MongoDB Atlas on some Windows environments
 if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder("ipv4first");
 }
@@ -36,26 +36,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration - must be before other middleware
-const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-  : ["http://localhost:5173"];
-
+// Allow all origins in development, specific origin in production
 const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
-      ? (origin, callback) => {
-          // Allow requests with no origin (mobile apps, curl, etc.)
-          if (!origin) return callback(null, true);
-          if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-          }
-          return callback(new Error("Not allowed by CORS"));
-        }
+      ? process.env.FRONTEND_URL || "http://localhost:5173"
       : true, // Allow all origins in development
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-chat-token"],
   credentials: true,
-  optionsSuccessStatus: 200,
+  optionsSuccessStatus: 200, // Support legacy browsers
 };
 app.use(cors(corsOptions));
 
@@ -269,38 +259,6 @@ const cryptoHash = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
 };
 
-/** Patient may use per-ticket chat token (anonymous) or OTP JWT when ticket.patient_id matches. */
-async function patientSocketCanAccessTicket(socket, ticketId) {
-  const t = await findTicketById(ticketId);
-  if (!t) return false;
-
-  if (socket.data.chatToken) {
-    const h = cryptoHash(socket.data.chatToken);
-    if (t.patient_chat_token_hash && t.patient_chat_token_hash === h) {
-      return true;
-    }
-  }
-
-  if (socket.data.patientToken) {
-    let decoded;
-    try {
-      decoded = jwt.verify(socket.data.patientToken, JWT_SECRET);
-    } catch {
-      return false;
-    }
-    if (decoded?.role !== "Patient" || !decoded?.patientId) return false;
-    socket.data.patientId = decoded.patientId;
-    if (
-      t.patient_id &&
-      String(t.patient_id) === String(decoded.patientId)
-    ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 io.on("connection", (socket) => {
   const admin = getAdminFromHandshake(socket);
   socket.data.role = admin ? "admin" : "patient";
@@ -322,33 +280,61 @@ io.on("connection", (socket) => {
         `[Chat] ${socket.data.role} trying to join ticket: ${ticketId}`,
       );
 
-      // Patient: per-ticket chat token and/or OTP JWT (see patientSocketCanAccessTicket)
+      // Patient must prove access token for this ticket
       if (socket.data.role === "patient") {
-        const ok = await patientSocketCanAccessTicket(socket, ticketId);
-        if (!ok) {
-          if (socket.data.patientToken) {
-            try {
-              jwt.verify(socket.data.patientToken, JWT_SECRET);
-            } catch {
-              socket.emit("join_error", {
-                ticketId,
-                message: "Invalid patient token",
-              });
-              return;
-            }
+        if (socket.data.patientToken) {
+          let decoded;
+          try {
+            decoded = jwt.verify(socket.data.patientToken, JWT_SECRET);
+          } catch {
+            socket.emit("join_error", {
+              ticketId,
+              message: "Invalid patient token",
+            });
+            return;
           }
-          if (!socket.data.chatToken && !socket.data.patientToken) {
+          if (decoded?.role !== "Patient" || !decoded?.patientId) {
+            socket.emit("join_error", { ticketId, message: "Unauthorized" });
+            return;
+          }
+          socket.data.patientId = decoded.patientId;
+          const t = await findTicketById(ticketId);
+          if (
+            !t ||
+            !t.patient_id ||
+            String(t.patient_id) !== String(decoded.patientId)
+          ) {
+            socket.emit("join_error", {
+              ticketId,
+              message: "Ticket not found or access denied",
+            });
+            return;
+          }
+        } else {
+          const token = socket.data.chatToken;
+          if (!token) {
             socket.emit("join_error", {
               ticketId,
               message: "No chat token provided",
             });
             return;
           }
-          socket.emit("join_error", {
-            ticketId,
-            message: "Ticket not found or access denied",
-          });
-          return;
+          const tokenHash = cryptoHash(token);
+          const t = await findTicketById(ticketId);
+          console.log(
+            `[join_ticket] ticketId=${ticketId} tokenHash=${tokenHash} storedHash=${t?.patient_chat_token_hash}`,
+          );
+          if (
+            !t ||
+            !t.patient_chat_token_hash ||
+            t.patient_chat_token_hash !== tokenHash
+          ) {
+            socket.emit("join_error", {
+              ticketId,
+              message: "Invalid or missing chat token",
+            });
+            return;
+          }
         }
       }
 
@@ -413,11 +399,45 @@ io.on("connection", (socket) => {
       const cleanAttachments = Array.isArray(attachments) ? attachments : [];
       if (!ticketId || (!cleanMessage && cleanAttachments.length === 0)) return;
 
+      // Patient must be authorized for this ticket
       if (socket.data.role === "patient") {
-        const ok = await patientSocketCanAccessTicket(socket, ticketId);
-        if (!ok) {
-          socket.emit("chat_error", { message: "Access denied" });
-          return;
+        if (socket.data.patientToken) {
+          let decoded;
+          try {
+            decoded = jwt.verify(socket.data.patientToken, JWT_SECRET);
+          } catch {
+            socket.emit("chat_error", { message: "Invalid patient token" });
+            return;
+          }
+          if (decoded?.role !== "Patient" || !decoded?.patientId) {
+            socket.emit("chat_error", { message: "Unauthorized" });
+            return;
+          }
+          const t = await findTicketById(ticketId);
+          if (
+            !t ||
+            !t.patient_id ||
+            String(t.patient_id) !== String(decoded.patientId)
+          ) {
+            socket.emit("chat_error", { message: "Access denied" });
+            return;
+          }
+        } else {
+          const token = socket.data.chatToken;
+          if (!token) {
+            socket.emit("chat_error", { message: "No chat token" });
+            return;
+          }
+          const tokenHash = cryptoHash(token);
+          const t = await findTicketById(ticketId);
+          if (
+            !t ||
+            !t.patient_chat_token_hash ||
+            t.patient_chat_token_hash !== tokenHash
+          ) {
+            socket.emit("chat_error", { message: "Invalid chat token" });
+            return;
+          }
         }
       }
 
