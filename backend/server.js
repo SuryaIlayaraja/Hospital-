@@ -33,6 +33,7 @@ const {
 } = require("./lib/socketDb");
 
 const app = express();
+app.set("trust proxy", 1); // Trust first proxy for express-rate-limit and IP resolution
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration - must be before other middleware
