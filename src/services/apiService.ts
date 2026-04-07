@@ -203,15 +203,14 @@ const apiRequest = async <T>(
     const url = `${API_BASE_URL}${endpoint}`;
     console.log(`Making API request to: ${options.method || "GET"} ${url}`);
     
-    // Get auth token
     const token = getAuthToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...options.headers as Record<string, string>,
     };
     
-    // Add authorization header if token exists
-    if (token) {
+    // Add authorization header if token exists and it wasn't explicitly passed
+    if (token && !headers.Authorization) {
       headers.Authorization = `Bearer ${token}`;
     }
     
@@ -257,22 +256,32 @@ const apiRequest = async <T>(
 
 // Submit OPD feedback
 export const submitOPDFeedback = async (
-  feedbackData: OPDFeedbackData
+  feedbackData: OPDFeedbackData,
+  clerkToken?: string | null
 ): Promise<ApiResponse<any>> => {
-  return apiRequest<any>("/feedback/opd", {
+  const options: RequestInit = {
     method: "POST",
     body: JSON.stringify(feedbackData),
-  });
+  };
+  if (clerkToken) {
+    options.headers = { Authorization: `Bearer ${clerkToken}` };
+  }
+  return apiRequest<any>("/feedback/opd", options);
 };
 
 // Submit IPD feedback
 export const submitIPDFeedback = async (
-  feedbackData: IPDFeedbackData
+  feedbackData: IPDFeedbackData,
+  clerkToken?: string | null
 ): Promise<ApiResponse<any>> => {
-  return apiRequest<any>("/feedback/ipd", {
+  const options: RequestInit = {
     method: "POST",
     body: JSON.stringify(feedbackData),
-  });
+  };
+  if (clerkToken) {
+    options.headers = { Authorization: `Bearer ${clerkToken}` };
+  }
+  return apiRequest<any>("/feedback/ipd", options);
 };
 
 // Get all feedback (OPD + IPD)
