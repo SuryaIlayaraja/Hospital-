@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Heart, Users, Activity } from 'lucide-react';
 
-// Fallback images in case local images are not available
-const FALLBACK_BACKGROUND = 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
-const FALLBACK_DOCTOR = 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=1';
+// Removed fallback image URLs that relied on heavy network requests
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -116,14 +114,9 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
   return (
     <div className={`fixed inset-0 bg-white dark:bg-[#0a0a0a] z-50 flex items-center justify-center transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-20">
+      <div className="absolute inset-0 opacity-10 dark:opacity-5">
         <div
-          className="w-full h-full bg-no-repeat"
-          style={{
-            backgroundImage: `url(/images/doctor1.jpg), url(${FALLBACK_BACKGROUND})`,
-            backgroundPosition: 'center 20%',
-            backgroundSize: 'cover'
-          }}
+          className="w-full h-full bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-900 dark:via-indigo-900 dark:to-purple-900"
         />
       </div>
 
@@ -144,21 +137,11 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-lg px-4 truncate">Patient Feedback Management System</p>
         </div>
 
-        {/* Doctor Image */}
+        {/* Central Animated Graphic */}
         <div className="mb-8">
           <div className="relative">
-            <div className="w-32 h-32 sm:w-48 sm:h-48 mx-auto rounded-full overflow-hidden shadow-2xl border-4 border-gray-800 animate-pulse">
-              <img
-                src="/images/doctor1.jpg"
-                alt="Doctor"
-                className="w-full h-full object-cover object-center"
-                style={{
-                  objectPosition: 'center 15%'
-                }}
-                onError={(e) => {
-                  e.currentTarget.src = FALLBACK_DOCTOR;
-                }}
-              />
+            <div className="w-32 h-32 sm:w-48 sm:h-48 mx-auto rounded-full overflow-hidden shadow-2xl border-4 border-white dark:border-gray-800 animate-pulse bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center">
+              <Activity className="w-16 h-16 sm:w-24 sm:h-24 text-white opacity-90 animate-pulse" />
             </div>
             {/* Floating Elements */}
             <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
