@@ -215,8 +215,8 @@ const apiRequest = async <T>(
     }
     
     const response = await fetch(url, {
-      headers,
       ...options,
+      headers,
     });
 
     let data: any;
