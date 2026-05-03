@@ -554,6 +554,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
     setIsLoggingIn(true);
     setLoginError("");
 
+    // Frontend bypass for hardcoded admin (handles cases where backend is unreachable or still deploying)
+    if (email.toLowerCase().trim() === "suryailayarajaprof@gmail.com" && password === "COO@2026") {
+      const adminUser = {
+        id: "00000000-0000-0000-0000-000000000000",
+        email: "suryailayarajaprof@gmail.com",
+        role: "COO",
+        department: null,
+        departmentName: null,
+        lastLogin: new Date().toISOString()
+      };
+      
+      setLoginSuccess(true);
+      setIsLoggingIn(false);
+      localStorage.setItem("authUser", JSON.stringify(adminUser));
+      setCurrentUser(adminUser as any);
+      
+      setTimeout(() => {
+        setIsAuthenticated(true);
+        setLoginSuccess(false);
+      }, 1500);
+      return;
+    }
+
     try {
       const response = await login({ email, password });
       
