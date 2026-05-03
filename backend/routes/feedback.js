@@ -393,10 +393,7 @@ router.post("/verify-otp", async (req, res) => {
 router.post("/opd", async (req, res) => {
   try {
     const { email, ...restBody } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required for submission." });
-    }
+
 
     const feedbackData = { ...restBody, email, type: "OPD" };
     const overall = feedbackData.overallExperience || feedbackData.overall_experience || "Not specified";
@@ -437,10 +434,7 @@ router.post("/opd", async (req, res) => {
 router.post("/ipd", async (req, res) => {
   try {
     const { email, ...restBody } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required for submission." });
-    }
+
 
     const feedbackData = { ...restBody, email, type: "IPD" };
     const overall = feedbackData.overallExperience || feedbackData.overall_experience || "Not specified";
