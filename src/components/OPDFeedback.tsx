@@ -5,8 +5,6 @@ import {
   MessageSquare,
   CheckCircle,
   AlertCircle,
-  EyeOff,
-  Eye,
   ArrowLeft,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
@@ -83,9 +81,7 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
   };
 
   const formProgress = useMemo(() => {
-    const requiredFields = isAnonymous
-      ? ["date", "overallExperience"]
-      : ["name", "date", "mobile", "overallExperience"];
+    const requiredFields = ["name", "date", "mobile", "overallExperience"];
 
     const ratingFields = [
       "appointmentBooking", "receptionStaff", "billingProcess", "nursingCare", "labStaffSkilled", "labWaitingTime",
@@ -101,7 +97,7 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
     const progress = (completedFields / totalFields) * 100;
 
     return { progress, totalFields, completedFields };
-  }, [formData, isAnonymous]);
+  }, [formData]);
 
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,10 +158,10 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
         ...formData,
         email: authEmail,
         otp: authOtp,
-        name: isAnonymous ? "Anonymous" : formData.name,
+        name: formData.name,
         uhid: "", 
-        mobile: isAnonymous ? "" : formData.mobile,
-        isAnonymous,
+        mobile: formData.mobile,
+        isAnonymous: false,
         overallExperience: mapRatingToBackend(formData.overallExperience),
         appointmentBooking: formData.appointmentBooking ? mapRatingToBackend(formData.appointmentBooking) : "",
         receptionStaff: formData.receptionStaff ? mapRatingToBackend(formData.receptionStaff) : "",
@@ -325,57 +321,7 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
           completedFields={formProgress.completedFields}
         />
 
-        {/* Anonymous Feedback Toggle */}
-        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-5 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-gray-400/50 dark:hover:border-gray-500/50 transition-all duration-500">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
-              {isAnonymous ? (
-                <div className="w-11 h-11 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
-                  <EyeOff className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                </div>
-              ) : (
-                <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Eye className="h-6 w-6 text-gray-500 dark:text-gray-400" />
-                </div>
-              )}
-              <div>
-                <p className="font-bold text-gray-800 dark:text-white text-base sm:text-sm">
-                  Submit Anonymously
-                </p>
-                <p className="text-sm sm:text-xs text-gray-500 dark:text-gray-400">
-                  {isAnonymous
-                    ? "Your identity will be hidden"
-                    : "Toggle on for privacy"}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setIsAnonymous(!isAnonymous);
-                if (!isAnonymous) {
-                  // Switching to anonymous → clear personal fields
-                  updateField("name", "");
-                  updateField("mobile", "");
-                }
-              }}
-              className={`relative w-12 h-7 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                isAnonymous
-                  ? "bg-indigo-500"
-                  : "bg-gray-300 dark:bg-gray-700"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
-                  isAnonymous ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Patient Information — hidden when anonymous */}
-        {!isAnonymous && (
+        {/* Patient Information */}
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-indigo-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-indigo-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
             <div className="w-2 h-2 bg-indigo-500 rounded-full hidden sm:block"></div>
@@ -407,26 +353,6 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
             />
           </div>
         </div>
-        )}
-
-        {/* Date-only input when anonymous */}
-        {isAnonymous && (
-          <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-indigo-500/50 transition-all duration-500">
-            <h3 className="text-xl font-bold text-indigo-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
-              <div className="w-2 h-2 bg-indigo-500 rounded-full hidden sm:block"></div>
-              {t("common.date")}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormInput
-                label={t("common.date")}
-                type="date"
-                value={formData.date}
-                onChange={(value) => updateField("date", value)}
-                required
-              />
-            </div>
-          </div>
-        )}
         {/* Overall Experience */}
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-purple-500/50 transition-all duration-500">
           <h3 className="text-xl font-bold text-purple-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
