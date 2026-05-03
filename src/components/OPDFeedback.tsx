@@ -14,7 +14,7 @@ import RatingSelector from "./RatingSelector";
 import FormInput from "./FormInput";
 import ProgressBar from "./ProgressBar";
 import { useLanguage } from "../contexts/LanguageContext";
-import { submitOPDFeedback, requestFeedbackOTP } from "../services/apiService";
+import { submitOPDFeedback, requestFeedbackOTP, verifyFeedbackOTP } from "../services/apiService";
 import {
   DEFAULT_OPD_QUESTIONS,
   STORAGE_KEY_OPD,
@@ -40,12 +40,12 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
-  const [isAnonymous, setIsAnonymous] = useState(false);
-  const [showOTPModal, setShowOTPModal] = useState(false);
-  const [otpInput, setOtpInput] = useState("");
+  const [authStage, setAuthStage] = useState<"email" | "otp" | "authenticated">("email");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authOtp, setAuthOtp] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
     date: "",
     mobile: "",
     overallExperience: "",
@@ -71,48 +71,26 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Map frontend rating values to backend enum values
-  // Backend expects: 'Excellent', 'Good', 'Fair', 'Poor'
-  // Frontend sends: 'Excellent', 'Good', 'Average' (translated)
   const mapRatingToBackend = (rating: string): string => {
     const excellent = t("common.excellent");
     const good = t("common.good");
     const average = t("common.average");
 
-    if (rating === excellent || rating === "Excellent" || rating === "சிறந்தது") {
-      return "Excellent";
-    }
-    if (rating === good || rating === "Good" || rating === "நல்லது") {
-      return "Good";
-    }
-    if (rating === average || rating === "Average" || rating === "சராசரி") {
-      return "Fair"; // Map "Average" to "Fair" as backend enum doesn't have "Average"
-    }
-    // Return original value if no match (shouldn't happen, but safety fallback)
+    if (rating === excellent || rating === "Excellent" || rating === "சிறந்தது") return "Excellent";
+    if (rating === good || rating === "Good" || rating === "நல்லது") return "Good";
+    if (rating === average || rating === "Average" || rating === "சராசரி") return "Fair";
     return rating;
   };
 
-  // Calculate form progress
   const formProgress = useMemo(() => {
     const requiredFields = isAnonymous
-      ? ["date", "overallExperience", "email"]
-      : ["name", "email", "date", "mobile", "overallExperience"];
+      ? ["date", "overallExperience"]
+      : ["name", "date", "mobile", "overallExperience"];
 
     const ratingFields = [
-      "appointmentBooking",
-      "receptionStaff",
-      "billingProcess",
-      "nursingCare",
-      "labStaffSkilled",
-      "labWaitingTime",
-      "radiologyStaffSkilled",
-      "radiologyWaitingTime",
-      "pharmacyWaitingTime",
-      "medicationDispensed",
-      "drugExplanation",
-      "counsellingSession",
-      "audiologyStaffSkilled",
-      "hospitalCleanliness",
+      "appointmentBooking", "receptionStaff", "billingProcess", "nursingCare", "labStaffSkilled", "labWaitingTime",
+      "radiologyStaffSkilled", "radiologyWaitingTime", "pharmacyWaitingTime", "medicationDispensed",
+      "drugExplanation", "counsellingSession", "audiologyStaffSkilled", "hospitalCleanliness",
     ];
 
     const allFields = [...requiredFields, ...ratingFields];
@@ -125,53 +103,70 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
     return { progress, totalFields, completedFields };
   }, [formData, isAnonymous]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email) {
-      alert("Please enter an email address to verify.");
+    if (!authEmail) {
+      alert("Please enter an email address.");
       return;
     }
     
     setIsSubmitting(true);
-    setSubmitStatus("idle");
-
     try {
-      const res = await requestFeedbackOTP(formData.email);
+      const res = await requestFeedbackOTP(authEmail);
       if (res.success) {
-        setShowOTPModal(true);
-        setOtpInput("");
+        setAuthStage("otp");
+        setAuthOtp("");
       } else {
         alert(res.message || "Failed to send OTP.");
-        setSubmitStatus("error");
       }
     } catch (err) {
       console.error(err);
-      setSubmitStatus("error");
+      alert("An error occurred while requesting OTP.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleVerifyAndSubmit = async () => {
-    if (!otpInput || otpInput.length < 6) {
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authOtp || authOtp.length < 6) {
       alert("Please enter a valid 6-digit OTP.");
       return;
     }
+    
+    setIsSubmitting(true);
+    try {
+      const res = await verifyFeedbackOTP(authEmail, authOtp);
+      
+      if (res.success) {
+        setAuthStage("authenticated");
+      } else {
+        alert(res.message || "Invalid OTP.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred during verification.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
     try {
-      // Map form data to backend format (convert rating values)
       const submitData = {
         ...formData,
-        otp: otpInput,
-        // Anonymous: override patient info
+        email: authEmail,
+        otp: authOtp,
         name: isAnonymous ? "Anonymous" : formData.name,
-        uhid: "", // Removed from form, sending empty
+        uhid: "", 
         mobile: isAnonymous ? "" : formData.mobile,
         isAnonymous,
         overallExperience: mapRatingToBackend(formData.overallExperience),
-        // Map other rating fields as well
         appointmentBooking: formData.appointmentBooking ? mapRatingToBackend(formData.appointmentBooking) : "",
         receptionStaff: formData.receptionStaff ? mapRatingToBackend(formData.receptionStaff) : "",
         billingProcess: formData.billingProcess ? mapRatingToBackend(formData.billingProcess) : "",
@@ -192,31 +187,15 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
 
       if (result.success) {
         setSubmitStatus("success");
-        setShowOTPModal(false);
-        // Reset form after successful submission
         setFormData({
-          name: "",
-          email: "",
-          date: "",
-          mobile: "",
-          overallExperience: "",
-          appointmentBooking: "",
-          receptionStaff: "",
-          billingProcess: "",
-          nursingCare: "",
-          labStaffSkilled: "",
-          labWaitingTime: "",
-          radiologyStaffSkilled: "",
-          radiologyWaitingTime: "",
-          pharmacyWaitingTime: "",
-          medicationDispensed: "",
-          drugExplanation: "",
-          counsellingSession: "",
-          audiologyStaffSkilled: "",
-          hospitalCleanliness: "",
-          nominateEmployee: "",
-          comments: "",
+          name: "", date: "", mobile: "", overallExperience: "", appointmentBooking: "", receptionStaff: "",
+          billingProcess: "", nursingCare: "", labStaffSkilled: "", labWaitingTime: "", radiologyStaffSkilled: "",
+          radiologyWaitingTime: "", pharmacyWaitingTime: "", medicationDispensed: "", drugExplanation: "",
+          counsellingSession: "", audiologyStaffSkilled: "", hospitalCleanliness: "", nominateEmployee: "", comments: "",
         });
+        setAuthStage("email");
+        setAuthEmail("");
+        setAuthOtp("");
       } else {
         setSubmitStatus("error");
       }
@@ -227,6 +206,88 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
       setIsSubmitting(false);
     }
   };
+
+  if (authStage !== "authenticated") {
+    return (
+      <div className="w-full min-h-screen bg-gray-50 dark:bg-[#030303] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white dark:bg-[#0c0c0c] rounded-3xl p-8 shadow-2xl border border-gray-200 dark:border-white/10">
+          <div className="flex justify-between items-center mb-8">
+            <button
+              onClick={onNavigate}
+              className="text-gray-500 hover:text-indigo-600 transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <ThemeToggle />
+          </div>
+          
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent mb-2 text-center">
+            {t("opd.title") || "OPD Feedback"}
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-center mb-8">
+            Please verify your email to continue.
+          </p>
+
+          {authStage === "email" ? (
+            <form onSubmit={handleRequestOTP} className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                <input
+                  type="email"
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-lg hover:shadow-indigo-500/25 disabled:opacity-70"
+              >
+                {isSubmitting ? "Sending..." : "Send OTP"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOTP} className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Verification Code</label>
+                <input
+                  type="text"
+                  value={authOtp}
+                  onChange={(e) => setAuthOtp(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none text-center text-2xl tracking-widest font-bold"
+                  placeholder="------"
+                  maxLength={6}
+                  required
+                />
+                <p className="text-sm text-center text-gray-500 mt-3">
+                  Sent to <span className="font-semibold text-indigo-500">{authEmail}</span>
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setAuthStage("email")}
+                  className="flex-1 py-4 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || authOtp.length < 6}
+                  className="flex-1 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-lg hover:shadow-indigo-500/25 disabled:opacity-70"
+                >
+                  {isSubmitting ? "Verifying..." : "Verify & Continue"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-white dark:bg-[#030303] text-gray-900 dark:text-white">
@@ -330,14 +391,6 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
               required
             />
             <FormInput
-              label={t("common.email") || "Email Address"}
-              type="email"
-              value={formData.email}
-              onChange={(value) => updateField("email", value)}
-              placeholder="Enter email address"
-              required
-            />
-            <FormInput
               label={t("common.date")}
               type="date"
               value={formData.date}
@@ -364,14 +417,6 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
               {t("common.date")}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormInput
-                label={t("common.email") || "Email Address"}
-                type="email"
-                value={formData.email}
-                onChange={(value) => updateField("email", value)}
-                placeholder="Required for verification"
-                required
-              />
               <FormInput
                 label={t("common.date")}
                 type="date"
@@ -501,48 +546,10 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
               }`}
           >
             <Send className="h-5 w-5" />
-            {isSubmitting ? "Sending OTP..." : t("opd.submit.button")}
+            {isSubmitting ? "Submitting..." : t("opd.submit.button")}
           </button>
         </div>
       </form>
-
-      {/* OTP Modal */}
-      {showOTPModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#0c0c0c] rounded-2xl p-6 sm:p-8 w-full max-w-sm shadow-2xl border border-gray-200 dark:border-white/10">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center">Verify Email</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-              Enter the 6-digit OTP sent to <br/><span className="font-semibold text-indigo-500">{formData.email}</span>
-            </p>
-            <input
-              type="text"
-              value={otpInput}
-              onChange={(e) => setOtpInput(e.target.value)}
-              placeholder="Enter OTP"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center text-xl tracking-widest font-bold text-gray-900 dark:text-white"
-              maxLength={6}
-            />
-            <div className="flex gap-3 mt-6">
-              <button
-                type="button"
-                onClick={() => setShowOTPModal(false)}
-                className="flex-1 py-3 px-4 rounded-xl font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleVerifyAndSubmit}
-                disabled={isSubmitting || otpInput.length < 6}
-                className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-              >
-                {isSubmitting ? "Verifying..." : "Verify"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

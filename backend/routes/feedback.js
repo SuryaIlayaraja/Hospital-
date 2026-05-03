@@ -362,6 +362,34 @@ router.post("/request-otp", async (req, res) => {
   }
 });
 
+router.post("/verify-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: "Email and OTP are required." });
+    }
+
+    const storedData = patientOtpStore.get(email.toLowerCase());
+    if (!storedData || storedData.otp !== otp.trim()) {
+      return res.status(401).json({ success: false, message: "Invalid OTP code." });
+    }
+    
+    if (new Date() > storedData.expiresAt) {
+      return res.status(401).json({ success: false, message: "OTP has expired. Please request a new one." });
+    }
+
+    // Do NOT delete the OTP from store here, because it needs to be verified again on final form submission
+    
+    res.json({
+      success: true,
+      message: "OTP verified successfully.",
+    });
+  } catch (error) {
+    console.error("Error verifying feedback OTP:", error);
+    res.status(500).json({ success: false, message: "Error verifying OTP" });
+  }
+});
+
 router.post("/opd", async (req, res) => {
   try {
     const { email, otp, ...restBody } = req.body;

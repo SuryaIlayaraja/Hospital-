@@ -269,6 +269,17 @@ export const requestFeedbackOTP = async (
   });
 };
 
+// Verify OTP for feedback submission (without submitting data)
+export const verifyFeedbackOTP = async (
+  email: string,
+  otp: string
+): Promise<ApiResponse<any>> => {
+  return apiRequest<any>("/feedback/verify-otp", {
+    method: "POST",
+    body: JSON.stringify({ email, otp }),
+  });
+};
+
 // Submit OPD feedback
 export const submitOPDFeedback = async (
   feedbackData: OPDFeedbackData
