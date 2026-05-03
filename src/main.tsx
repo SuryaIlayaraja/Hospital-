@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { Auth0Provider } from '@auth0/auth0-react';
 import App from './App.tsx';
 import './index.css';
 
@@ -13,8 +14,16 @@ if (!PUBLISHABLE_KEY) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <App />
-    </ClerkProvider>
+    <Auth0Provider
+      domain="dev-0us4zti7uxq0g6g4.jp.auth0.com"
+      clientId="vTPLMTDG7XPUVqhRcqhftYiWr7oneixS"
+      authorizationParams={{
+        redirect_uri: window.location.origin
+      }}
+    >
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+        <App />
+      </ClerkProvider>
+    </Auth0Provider>
   </StrictMode>
 );

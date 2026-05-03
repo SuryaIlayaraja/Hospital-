@@ -161,48 +161,9 @@ const AppContent: React.FC = () => {
             </div>
           ) : (
             <div className="w-full min-h-screen">
-              <SignedIn>
-                {activeTab === "raise-ticket" && (
-                  <RaiseTicketPage onNavigateBack={(tab) => setActiveTab(tab as any)} />
-                )}
-              </SignedIn>
-              <SignedOut>
-                <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-[#060606] relative">
-                  <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-2xl border border-gray-200 dark:border-white/5 text-center">
-                    <div className="w-20 h-20 bg-blue-100 dark:bg-blue-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                      <Hospital className="h-10 w-10 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Patient Portal</h2>
-                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-10">Please sign in to access support tickets.</p>
-                    
-                    <div className="flex justify-center transform scale-110">
-                      <SignIn 
-                        routing="hash" 
-                        afterSignInUrl={window.location.href}
-                        afterSignUpUrl={window.location.href}
-                        appearance={{
-                          elements: {
-                            // Hide all social/OAuth login buttons + divider
-                            socialButtonsRoot: { display: "none" },
-                            socialButtons: { display: "none" },
-                            socialButtonsBlockButton: { display: "none" },
-                            dividerRow: { display: "none" },
-                            dividerText: { display: "none" },
-                            dividerLine: { display: "none" },
-                          },
-                        }}
-                      />
-                    </div>
-                    
-                    <button 
-                      onClick={() => setActiveTab("dashboard")}
-                      className="mt-8 text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 underline underline-offset-4 transition-colors"
-                    >
-                      ← Back to Home
-                    </button>
-                  </div>
-                </div>
-              </SignedOut>
+              {activeTab === "raise-ticket" && (
+                <RaiseTicketPage onNavigateBack={(tab) => setActiveTab(tab as any)} />
+              )}
             </div>
           )}
         </main>

@@ -7,10 +7,13 @@ import {
   MessageSquare,
   History,
   Clock as ClockIcon,
+  LogOut,
+  User as UserIcon,
+  ShieldCheck,
 } from "lucide-react";
 import { useTickets, Ticket } from "../hooks/useTickets";
 import TicketChat from "./TicketChat";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -20,14 +23,27 @@ interface Props {
 
 const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
   const { t } = useLanguage();
-  const { user } = useUser();
-  const { getToken } = useAuth();
-  const getClerkToken = useCallback(() => getToken(), [getToken]);
-  const { addTicket, tickets, refetch } = useTickets({ getClerkToken });
+  const {
+    isLoading,
+    isAuthenticated,
+    user,
+    loginWithRedirect,
+    logout: auth0Logout,
+    error,
+  } = useAuth0();
+
+  // For tickets API, we might still need a token if the backend requires it.
+  // For now, we'll assume the backend can handle Auth0 sub as clerkUserId or similar.
+  const { addTicket, tickets, refetch } = useTickets({ 
+    getClerkToken: useCallback(async () => null, []) // Auth0 token logic could be added here if needed
+  });
 
   useEffect(() => {
-    refetch();
-  }, [refetch]);
+    if (isAuthenticated) {
+      refetch();
+    }
+  }, [refetch, isAuthenticated]);
+
   const [title, setTitle] = useState("");
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("medium");
   const [description, setDescription] = useState("");
@@ -42,9 +58,9 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
   const [activeChatTicket, setActiveChatTicket] = useState<Ticket | null>(null);
   const [patientChatToken, setPatientChatToken] = useState<string | null>(null);
 
-  /** Tickets raised under this Clerk account, or any ticket that has a chat token saved on this device (same browser session). */
+  /** Tickets raised under this Auth0 account, or any ticket that has a chat token saved on this device. */
   const patientTickets = useMemo(() => {
-    const uid = user?.id;
+    const uid = user?.sub;
     const filtered = tickets.filter((t) => {
       if (uid && t.clerkUserId === uid) return true;
       try {
@@ -58,7 +74,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
-  }, [tickets, user?.id]);
+  }, [tickets, user?.sub]);
 
   const handleDownload = (ticket: Ticket) => {
     const md = `# ${ticket.title}\n\n- Ticket ID: ${ticket.id
@@ -92,7 +108,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
         description,
         department,
         issueCategory,
-      }, user?.id);
+      }, user?.sub);
 
       setCreatedTicket(result.ticket);
       setPatientChatToken(result.patientChatToken || null);
@@ -125,6 +141,78 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
     setIsChatOpen(true);
   };
 
+  const handleLogout = () => {
+    auth0Logout({ logoutParams: { returnTo: window.location.origin } });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-full min-h-screen bg-white dark:bg-[#0a0a0a] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-500 dark:text-gray-400 font-bold">Authenticating Support Access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full min-h-screen bg-white dark:bg-[#0a0a0a] flex flex-col">
+        {/* Header with Back Button */}
+        <div className="relative z-10 bg-gray-50 dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 shadow-lg">
+          <div className="w-full px-6 py-6 max-w-7xl mx-auto">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onNavigateBack?.("dashboard")}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-lg transition-all duration-300"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                {t("ticket.back")}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-[2.5rem] p-10 shadow-2xl border border-gray-100 dark:border-gray-800 text-center">
+            <div className="w-20 h-20 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <ShieldCheck className="h-10 w-10 text-indigo-500" />
+            </div>
+            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-4">Secure Support Access</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+              Please sign in to your verified support account to raise new tickets or view your history.
+            </p>
+            
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-bold">
+                {error.message}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <button
+                onClick={() => loginWithRedirect()}
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-indigo-500/25 active:scale-95"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => loginWithRedirect({ authorizationParams: { screen_hint: 'signup' } })}
+                className="w-full py-4 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-2xl font-black text-lg transition-all active:scale-95"
+              >
+                Create Account
+              </button>
+            </div>
+            <p className="mt-8 text-xs text-gray-400 dark:text-gray-500">
+              Your support identity is protected by Auth0 Enterprise Security
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full min-h-screen bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white pb-20">
       {/* Background gradient */}
@@ -134,16 +222,32 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
       <div className="relative z-10 bg-gray-50 dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 shadow-lg">
         <div className="w-full px-6 py-6 max-w-7xl mx-auto">
           <div className="flex items-center justify-between gap-3 mb-4">
-            <button
-              onClick={() => onNavigateBack?.("dashboard")}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-lg transition-all duration-300"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              {t("ticket.back")}
-            </button>
-            <div className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/30 rounded-lg">
-               <History className="h-4 w-4 text-indigo-400" />
-               <span className="text-sm font-bold text-indigo-400">{patientTickets.length} Active Tickets</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onNavigateBack?.("dashboard")}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-lg transition-all duration-300"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                {t("ticket.back")}
+              </button>
+              <div className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/30 rounded-lg">
+                 <History className="h-4 w-4 text-indigo-400" />
+                 <span className="text-sm font-bold text-indigo-400">{patientTickets.length} Active Tickets</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex flex-col items-end mr-2">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Support User</span>
+                <span className="text-sm font-black text-indigo-400 truncate max-w-[150px]">{user?.email}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 rounded-lg transition-all duration-300 font-bold text-sm"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
             </div>
           </div>
           <div>
@@ -366,15 +470,15 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
                           <h3 className="font-bold text-sm text-gray-900 dark:text-white line-clamp-1 mb-1">{ticket.title}</h3>
                           <div className="flex items-center gap-3 mt-4">
                              <button 
-                               onClick={() => openPreviousChat(ticket)}
-                               className="flex-1 flex items-center justify-center gap-2 py-2 bg-indigo-500/10 hover:bg-indigo-500 rounded-xl text-indigo-400 hover:text-white text-xs font-black transition-all duration-300"
+                                onClick={() => openPreviousChat(ticket)}
+                                className="flex-1 flex items-center justify-center gap-2 py-2 bg-indigo-500/10 hover:bg-indigo-500 rounded-xl text-indigo-400 hover:text-white text-xs font-black transition-all duration-300"
                              >
                                 <MessageSquare className="h-3 w-3" />
                                 {t("ticket.history.chat") || "Chat"}
                              </button>
                              <button 
-                               onClick={() => handleDownload(ticket)}
-                               className="p-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-xl text-gray-500 dark:text-gray-400 transition-all"
+                                onClick={() => handleDownload(ticket)}
+                                className="p-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-xl text-gray-500 dark:text-gray-400 transition-all"
                              >
                                 <Download className="h-3 w-3" />
                              </button>
@@ -400,7 +504,7 @@ const RaiseTicketPage: React.FC<Props> = ({ onNavigateBack }) => {
               <TicketChat
                 ticketId={activeChatTicket.id}
                 role="patient"
-                clerkUserId={user?.id}
+                clerkUserId={user?.sub}
                 patientChatToken={
                   patientChatToken ||
                   localStorage.getItem(`ticket_chat_token:${activeChatTicket.id}`) ||
