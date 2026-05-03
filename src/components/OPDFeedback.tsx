@@ -198,19 +198,7 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
             />
           </div>
         </div>
-        {/* Overall Experience */}
-        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-purple-500/50 transition-all duration-500">
-          <h3 className="text-xl font-bold text-purple-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
-            <div className="w-2 h-2 bg-purple-500 rounded-full hidden sm:block"></div>
-            {t("opd.overall.experience")}
-          </h3>
-          <RatingSelector
-            label={t("opd.overall.question")}
-            value={formData.overallExperience}
-            onChange={(value) => updateField("overallExperience", value)}
-            required
-          />
-        </div>
+
 
         {/* Service Ratings */}
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-none dark:shadow-lg hover:border-blue-500/50 transition-all duration-500">
@@ -232,6 +220,20 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
           </div>
         </div>
 
+
+        {/* Overall Experience */}
+        <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-purple-500/50 transition-all duration-500">
+          <h3 className="text-xl font-bold text-purple-400 mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
+            <div className="w-2 h-2 bg-purple-500 rounded-full hidden sm:block"></div>
+            {t("opd.overall.experience")}
+          </h3>
+          <RatingSelector
+            label={t("opd.overall.question")}
+            value={formData.overallExperience}
+            onChange={(value) => updateField("overallExperience", value)}
+            required
+          />
+        </div>
 
         {/* Employee Nomination & Comments */}
         <div className="space-y-6">
