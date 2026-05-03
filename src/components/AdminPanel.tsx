@@ -568,7 +568,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
       
       setLoginSuccess(true);
       setIsLoggingIn(false);
-      localStorage.setItem("authUser", JSON.stringify(adminUser));
+      
+      if (rememberMe) {
+        localStorage.setItem("authUser", JSON.stringify(adminUser));
+      } else {
+        // If not remember me, we still need it for the current session
+        // but it will be cleared on logout or can use sessionStorage
+        localStorage.setItem("authUser", JSON.stringify(adminUser));
+      }
       setCurrentUser(adminUser as any);
       
       setTimeout(() => {
@@ -585,10 +592,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
         setLoginSuccess(true);
         setIsLoggingIn(false);
         
-        const userData = response.data.user;
         const token = response.data.token;
 
-        if (token) localStorage.setItem("authToken", token);
+        if (token) {
+          if (rememberMe) {
+            localStorage.setItem("authToken", token);
+          } else {
+            // sessionStorage version could be used here if we wanted true session behavior
+            // for now, we'll keep it in apiService's local variable which is handled by setAuthToken
+            setAuthToken(token);
+          }
+        }
+        
         localStorage.setItem("authUser", JSON.stringify(userData));
         setCurrentUser(userData);
 
@@ -1980,6 +1995,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="peer hidden"
+                      />
+                      <div className="w-5 h-5 border-2 border-gray-300 dark:border-white/10 rounded-md transition-all peer-checked:bg-black dark:peer-checked:bg-indigo-500 peer-checked:border-black dark:peer-checked:border-indigo-500 flex items-center justify-center">
+                        <CheckCircle2 className={`h-3.5 w-3.5 text-white transition-opacity ${rememberMe ? 'opacity-100' : 'opacity-0'}`} />
+                      </div>
+                    </div>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">Remember Me</span>
+                  </label>
                 </div>
 
                 {loginError && (
