@@ -39,7 +39,7 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
   >("idle");
 
   const todayDate = new Date();
-  const defaultDate = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+  const defaultDate = `${String(todayDate.getDate()).padStart(2, '0')}/${String(todayDate.getMonth() + 1).padStart(2, '0')}/${todayDate.getFullYear()}`;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -180,9 +180,10 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
             />
             <FormInput
               label={t("common.date")}
-              type="date"
+              type="text"
               value={formData.date}
               onChange={(value) => updateField("date", value)}
+              placeholder="DD/MM/YYYY"
               required
             />
             <FormInput
