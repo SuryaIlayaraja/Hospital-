@@ -1,35 +1,32 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Gracefully handle missing email credentials (e.g. on first deploy before env vars are set)
-const hasEmailConfig = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+// Gracefully handle missing Resend API key
+const hasEmailConfig = !!(process.env.RESEND_API_KEY);
 
-const transporter = hasEmailConfig
-  ? nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // This should be an "App Password"
-      }
-    })
-  : null;
+const resend = hasEmailConfig ? new Resend(process.env.RESEND_API_KEY) : null;
+
+// The "from" address:
+//   - If you have NOT verified a domain in Resend, use: onboarding@resend.dev  (works only for sending to your own verified email)
+//   - If you HAVE verified a domain (e.g. vikramhospital.com), use: noreply@vikramhospital.com
+const FROM_ADDRESS = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
 if (!hasEmailConfig) {
-  console.warn('[EMAIL] WARNING: EMAIL_USER or EMAIL_PASS environment variables are not set. Email sending will be disabled.');
+  console.warn('[EMAIL] WARNING: RESEND_API_KEY is not set. OTPs will only be logged to the console.');
 }
 
 /**
- * Send OTP Email
+ * Send Admin Login OTP Email
  * @param {string} to 
  * @param {string} otp 
  */
 async function sendOTPEmail(to, otp) {
-  if (!transporter) {
-    console.warn(`[EMAIL] Skipping admin OTP email to ${to} — email not configured. OTP: ${otp}`);
+  if (!resend) {
+    console.warn(`[EMAIL] Skipping admin OTP email to ${to} — Resend not configured. OTP: ${otp}`);
     return false;
   }
   try {
-    const mailOptions = {
-      from: `"Vikram ENT Admin" <${process.env.EMAIL_USER}>`,
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
       to,
       subject: 'Your Admin Login Access Code',
       html: `
@@ -49,10 +46,12 @@ async function sendOTPEmail(to, otp) {
           </p>
         </div>
       `
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[EMAIL] OTP sent to ${to}: ${info.messageId}`);
+    });
+    if (error) {
+      console.error('[EMAIL ERROR] Failed to send Admin OTP:', error);
+      return false;
+    }
+    console.log(`[EMAIL] Admin OTP sent to ${to}`);
     return true;
   } catch (error) {
     console.error('[EMAIL ERROR] Failed to send Admin OTP:', error);
@@ -66,16 +65,16 @@ async function sendOTPEmail(to, otp) {
  * @param {string} otp 
  */
 async function sendPatientOTPEmail(to, otp) {
-  if (!transporter) {
-    console.warn(`[EMAIL] Skipping patient OTP email to ${to} — email not configured. OTP: ${otp}`);
-    // Return true so the API doesn't fail — OTP is still logged to server console
+  if (!resend) {
+    console.warn(`[EMAIL] Skipping patient OTP email to ${to} — Resend not configured. OTP: ${otp}`);
+    // Still return true so the API succeeds — admin can see OTP in Render logs
     return true;
   }
   try {
-    const mailOptions = {
-      from: `"Vikram ENT Hospital" <${process.env.EMAIL_USER}>`,
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
       to,
-      subject: 'Your Feedback Verification Code',
+      subject: 'Your Feedback Verification Code — Vikram ENT Hospital',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; max-width: 600px; margin: 0 auto; border-radius: 10px;">
           <h2 style="color: #6366F1; text-align: center;">Feedback Verification</h2>
@@ -93,10 +92,12 @@ async function sendPatientOTPEmail(to, otp) {
           </p>
         </div>
       `
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[EMAIL] Patient OTP sent to ${to}: ${info.messageId}`);
+    });
+    if (error) {
+      console.error('[EMAIL ERROR] Failed to send Patient OTP:', error);
+      return false;
+    }
+    console.log(`[EMAIL] Patient OTP sent to ${to}`);
     return true;
   } catch (error) {
     console.error('[EMAIL ERROR] Failed to send Patient OTP:', error);
@@ -105,3 +106,4 @@ async function sendPatientOTPEmail(to, otp) {
 }
 
 module.exports = { sendOTPEmail, sendPatientOTPEmail };
+
