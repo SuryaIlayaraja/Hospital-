@@ -1,12 +1,21 @@
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // This should be an "App Password"
-  }
-});
+// Gracefully handle missing email credentials (e.g. on first deploy before env vars are set)
+const hasEmailConfig = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+
+const transporter = hasEmailConfig
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS, // This should be an "App Password"
+      }
+    })
+  : null;
+
+if (!hasEmailConfig) {
+  console.warn('[EMAIL] WARNING: EMAIL_USER or EMAIL_PASS environment variables are not set. Email sending will be disabled.');
+}
 
 /**
  * Send OTP Email
@@ -14,6 +23,10 @@ const transporter = nodemailer.createTransport({
  * @param {string} otp 
  */
 async function sendOTPEmail(to, otp) {
+  if (!transporter) {
+    console.warn(`[EMAIL] Skipping admin OTP email to ${to} — email not configured. OTP: ${otp}`);
+    return false;
+  }
   try {
     const mailOptions = {
       from: `"Vikram ENT Admin" <${process.env.EMAIL_USER}>`,
@@ -53,6 +66,11 @@ async function sendOTPEmail(to, otp) {
  * @param {string} otp 
  */
 async function sendPatientOTPEmail(to, otp) {
+  if (!transporter) {
+    console.warn(`[EMAIL] Skipping patient OTP email to ${to} — email not configured. OTP: ${otp}`);
+    // Return true so the API doesn't fail — OTP is still logged to server console
+    return true;
+  }
   try {
     const mailOptions = {
       from: `"Vikram ENT Hospital" <${process.env.EMAIL_USER}>`,
