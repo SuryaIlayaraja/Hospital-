@@ -21,11 +21,11 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
   ];
 
   useEffect(() => {
-    // Total duration for loading (4 seconds)
+    // Total duration for loading (2 seconds)
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(onComplete, 500); // Wait for fade out animation
-    }, 4000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [onComplete]);
@@ -104,7 +104,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
   useEffect(() => {
     const stepInterval = setInterval(() => {
       setCurrentStep(prev => (prev + 1) % steps.length);
-    }, 600);
+    }, 300);
 
     return () => clearInterval(stepInterval);
   }, []);
@@ -223,7 +223,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
 
             {/* Leading Heart Symbol */}
             <g className="heart-follower">
-              <animateMotion dur="3s" repeatCount="indefinite">
+              <animateMotion dur="1.5s" repeatCount="indefinite">
                 <mpath href="#heartbeat-path-id" />
               </animateMotion>
               <path
@@ -239,7 +239,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
             .heartbeat-path {
               stroke-dasharray: 1000;
               stroke-dashoffset: 1000;
-              animation: heartbeat-move 3s linear infinite;
+              animation: heartbeat-move 1.5s linear infinite;
             }
             .heart-head-glow {
               filter: drop-shadow(0 0 5px #ff0000);
