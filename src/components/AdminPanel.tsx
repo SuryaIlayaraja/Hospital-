@@ -217,7 +217,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
     isActive: false,
   });
   // Always show today's data by default (when no filters are active)
-  const showTodayOnly = true;
+  // State to show only today's data by default
+  const [showTodayOnly, setShowTodayOnly] = useState(true);
 
   // Authentication and user state
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -1700,8 +1701,31 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
       const todayDateObj = new Date();
       const today = todayDateObj.toISOString().split("T")[0]; // YYYY-MM-DD format
       const todayDDMMYYYY = `${todayDateObj.getDate().toString().padStart(2, '0')}/${(todayDateObj.getMonth() + 1).toString().padStart(2, '0')}/${todayDateObj.getFullYear()}`;
+      
       const filterData = (data: FeedbackData[]) => {
-        return data.filter((item) => item.date === today || item.date === todayDDMMYYYY);
+        return data.filter((item) => {
+          if (!item.date) return false;
+          // Exact matches
+          if (item.date === today || item.date === todayDDMMYYYY) return true;
+          
+          // Try parsing
+          try {
+            let itemDate;
+            if (item.date.includes('/')) {
+              const parts = item.date.split('/');
+              if (parts.length === 3) {
+                itemDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+              } else {
+                itemDate = new Date(item.date);
+              }
+            } else {
+              itemDate = new Date(item.date);
+            }
+            return itemDate.toDateString() === todayDateObj.toDateString();
+          } catch (e) {
+            return false;
+          }
+        });
       };
       filteredData = {
         opd: filterData(filteredData.opd),
@@ -2249,11 +2273,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
           <>
             {/* Date Filter Section */}
             <div className="bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <Filter className="h-6 w-6 text-indigo-400" />
-                <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
-                  Filter by Date
-                </h3>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Filter className="h-6 w-6 text-indigo-400" />
+                  <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">
+                    Filter by Date
+                  </h3>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {showTodayOnly ? "Showing Today's Data" : "Showing All Data"}
+                  </span>
+                  <button
+                    onClick={() => setShowTodayOnly(!showTodayOnly)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${
+                      showTodayOnly 
+                        ? "bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30" 
+                        : "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
+                    }`}
+                  >
+                    {showTodayOnly ? "Switch to All Data" : "Switch to Today Only"}
+                  </button>
+                </div>
               </div>
 
               {/* Filter Type Selection */}
