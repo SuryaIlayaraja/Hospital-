@@ -10,7 +10,6 @@ import {
 import ThemeToggle from "./ThemeToggle";
 import RatingSelector from "./RatingSelector";
 import FormInput from "./FormInput";
-import ProgressBar from "./ProgressBar";
 import { useLanguage } from "../contexts/LanguageContext";
 import { submitOPDFeedback } from "../services/apiService";
 import {
@@ -78,24 +77,6 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
     return rating;
   };
 
-  const formProgress = useMemo(() => {
-    const requiredFields = ["name", "email", "date", "mobile", "overallExperience"];
-
-    const ratingFields = [
-      "appointmentBooking", "receptionStaff", "billingProcess", "nursingCare", "labStaffSkilled", "labWaitingTime",
-      "radiologyStaffSkilled", "radiologyWaitingTime", "pharmacyWaitingTime", "medicationDispensed",
-      "drugExplanation", "counsellingSession", "audiologyStaffSkilled", "hospitalCleanliness",
-    ];
-
-    const allFields = [...requiredFields, ...ratingFields];
-    const completedFields = allFields.filter(
-      (field) => formData[field as keyof typeof formData] !== ""
-    ).length;
-    const totalFields = allFields.length;
-    const progress = (completedFields / totalFields) * 100;
-
-    return { progress, totalFields, completedFields };
-  }, [formData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,12 +158,6 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        {/* Progress Bar */}
-        <ProgressBar
-          progress={formProgress.progress}
-          totalFields={formProgress.totalFields}
-          completedFields={formProgress.completedFields}
-        />
 
         {/* Patient Information */}
         <div className="bg-white dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-none dark:shadow-lg hover:border-indigo-500/50 transition-all duration-500">
