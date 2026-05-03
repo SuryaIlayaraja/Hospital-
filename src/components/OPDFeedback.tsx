@@ -153,12 +153,9 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
         </div>
 
         <div className="text-center border-b border-gray-200 dark:border-white/10 pb-8 bg-gray-50 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl p-6 shadow-none dark:shadow-2xl">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent mb-3">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent mb-1">
             {t("opd.title")}
           </h2>
-          <p className="text-gray-600 dark:text-white font-semibold text-lg">
-            {t("opd.subtitle")}
-          </p>
         </div>
 
 
