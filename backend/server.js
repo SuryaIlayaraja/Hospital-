@@ -36,16 +36,27 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration - must be before other middleware
-// Allow all origins in development, specific origin in production
+// FRONTEND_URL can be a comma-separated list of allowed origins
+// e.g. FRONTEND_URL=https://hospital-frontend-three-psi.vercel.app,https://yourdomain.com
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((o) => o.trim())
+  : [];
+
 const corsOptions = {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_URL || "http://localhost:5173"
-      : true, // Allow all origins in development
+  origin: (origin, callback) => {
+    // Allow requests with no origin (curl, Postman, same-origin)
+    if (!origin) return callback(null, true);
+    // In development, allow all
+    if (process.env.NODE_ENV !== "production") return callback(null, true);
+    // In production, check against allowed list
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.warn(`[CORS] Blocked origin: ${origin}`);
+    callback(new Error(`CORS policy: origin ${origin} not allowed`));
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-chat-token"],
   credentials: true,
-  optionsSuccessStatus: 200, // Support legacy browsers
+  optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 
