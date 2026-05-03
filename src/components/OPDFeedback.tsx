@@ -200,6 +200,14 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
               required
             />
             <FormInput
+              label="Email Address"
+              type="email"
+              value={formData.email}
+              onChange={(value) => updateField("email", value)}
+              placeholder="Enter email address"
+              required
+            />
+            <FormInput
               label={t("common.date")}
               type="date"
               value={formData.date}

@@ -392,23 +392,11 @@ router.post("/verify-otp", async (req, res) => {
 
 router.post("/opd", async (req, res) => {
   try {
-    const { email, otp, ...restBody } = req.body;
+    const { email, ...restBody } = req.body;
     
-    if (!email || !otp) {
-      return res.status(400).json({ success: false, message: "Email and OTP are required for submission." });
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required for submission." });
     }
-
-    const storedData = patientOtpStore.get(email.toLowerCase());
-    if (!storedData || storedData.otp !== otp.trim()) {
-      return res.status(401).json({ success: false, message: "Invalid OTP code." });
-    }
-    
-    if (new Date() > storedData.expiresAt) {
-      return res.status(401).json({ success: false, message: "OTP has expired. Please request a new one." });
-    }
-
-    // OTP verified, remove from store
-    patientOtpStore.delete(email.toLowerCase());
 
     const feedbackData = { ...restBody, email, type: "OPD" };
     const overall = feedbackData.overallExperience || feedbackData.overall_experience || "Not specified";
@@ -448,23 +436,11 @@ router.post("/opd", async (req, res) => {
 
 router.post("/ipd", async (req, res) => {
   try {
-    const { email, otp, ...restBody } = req.body;
+    const { email, ...restBody } = req.body;
     
-    if (!email || !otp) {
-      return res.status(400).json({ success: false, message: "Email and OTP are required for submission." });
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required for submission." });
     }
-
-    const storedData = patientOtpStore.get(email.toLowerCase());
-    if (!storedData || storedData.otp !== otp.trim()) {
-      return res.status(401).json({ success: false, message: "Invalid OTP code." });
-    }
-    
-    if (new Date() > storedData.expiresAt) {
-      return res.status(401).json({ success: false, message: "OTP has expired. Please request a new one." });
-    }
-
-    // OTP verified, remove from store
-    patientOtpStore.delete(email.toLowerCase());
 
     const feedbackData = { ...restBody, email, type: "IPD" };
     const overall = feedbackData.overallExperience || feedbackData.overall_experience || "Not specified";
