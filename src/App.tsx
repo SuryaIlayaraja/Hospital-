@@ -151,15 +151,19 @@ const AppContent: React.FC = () => {
                  onNavigate={(tab) => setActiveTab(tab as any)}
                />
             </div>
+          ) : activeTab === "opd" ? (
+            <div className="w-full min-h-screen">
+              <OPDFeedback onNavigate={() => setActiveTab("dashboard")} />
+            </div>
+          ) : activeTab === "ipd" ? (
+            <div className="w-full min-h-screen">
+              <IPDFeedback onNavigate={() => setActiveTab("dashboard")} />
+            </div>
           ) : (
             <div className="w-full min-h-screen">
               <SignedIn>
-                {activeTab === "raise-ticket" ? (
+                {activeTab === "raise-ticket" && (
                   <RaiseTicketPage onNavigateBack={(tab) => setActiveTab(tab as any)} />
-                ) : activeTab === "opd" ? (
-                  <OPDFeedback onNavigate={() => setActiveTab("dashboard")} />
-                ) : (
-                  <IPDFeedback onNavigate={() => setActiveTab("dashboard")} />
                 )}
               </SignedIn>
               <SignedOut>
@@ -169,7 +173,7 @@ const AppContent: React.FC = () => {
                       <Hospital className="h-10 w-10 text-blue-600 dark:text-blue-400" />
                     </div>
                     <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Patient Portal</h2>
-                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-10">Please sign in to access feedback forms and support tickets.</p>
+                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-10">Please sign in to access support tickets.</p>
                     
                     <div className="flex justify-center transform scale-110">
                       <SignIn 

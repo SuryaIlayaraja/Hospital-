@@ -136,6 +136,8 @@ export const clearAuthToken = () => {
 // Types for feedback data
 export interface OPDFeedbackData {
   name: string;
+  email: string;
+  otp: string;
   uhid: string;
   date: string;
   mobile: string;
@@ -160,6 +162,8 @@ export interface OPDFeedbackData {
 
 export interface IPDFeedbackData {
   name: string;
+  email: string;
+  otp: string;
   uhid: string;
   date: string;
   mobile: string;
@@ -203,20 +207,21 @@ const apiRequest = async <T>(
     const url = `${API_BASE_URL}${endpoint}`;
     console.log(`Making API request to: ${options.method || "GET"} ${url}`);
     
+    // Get auth token
     const token = getAuthToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...options.headers as Record<string, string>,
     };
     
-    // Add authorization header if token exists and it wasn't explicitly passed
-    if (token && !headers.Authorization) {
+    // Add authorization header if token exists
+    if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
     
     const response = await fetch(url, {
-      ...options,
       headers,
+      ...options,
     });
 
     let data: any;
@@ -254,34 +259,34 @@ const apiRequest = async <T>(
   }
 };
 
+// Request OTP for feedback submission
+export const requestFeedbackOTP = async (
+  email: string
+): Promise<ApiResponse<any>> => {
+  return apiRequest<any>("/feedback/request-otp", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+};
+
 // Submit OPD feedback
 export const submitOPDFeedback = async (
-  feedbackData: OPDFeedbackData,
-  clerkToken?: string | null
+  feedbackData: OPDFeedbackData
 ): Promise<ApiResponse<any>> => {
-  const options: RequestInit = {
+  return apiRequest<any>("/feedback/opd", {
     method: "POST",
     body: JSON.stringify(feedbackData),
-  };
-  if (clerkToken) {
-    options.headers = { Authorization: `Bearer ${clerkToken}` };
-  }
-  return apiRequest<any>("/feedback/opd", options);
+  });
 };
 
 // Submit IPD feedback
 export const submitIPDFeedback = async (
-  feedbackData: IPDFeedbackData,
-  clerkToken?: string | null
+  feedbackData: IPDFeedbackData
 ): Promise<ApiResponse<any>> => {
-  const options: RequestInit = {
+  return apiRequest<any>("/feedback/ipd", {
     method: "POST",
     body: JSON.stringify(feedbackData),
-  };
-  if (clerkToken) {
-    options.headers = { Authorization: `Bearer ${clerkToken}` };
-  }
-  return apiRequest<any>("/feedback/ipd", options);
+  });
 };
 
 // Get all feedback (OPD + IPD)

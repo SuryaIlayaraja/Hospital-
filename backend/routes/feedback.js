@@ -1,31 +1,11 @@
 const express = require("express");
-const { verifyToken } = require("@clerk/backend");
 const { getSupabase } = require("../lib/supabase");
 const { feedbackRowToClient } = require("../lib/mappers");
+const { sendPatientOTPEmail } = require("../lib/email");
 
 const router = express.Router();
 
-/** Verify Clerk session token from Authorization header */
-async function requireClerkAuth(req, res) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ success: false, message: "Authentication required. Please sign in." });
-    return null;
-  }
-  const token = authHeader.substring(7);
-  const secretKey = process.env.CLERK_SECRET_KEY;
-  if (!secretKey) {
-    res.status(503).json({ success: false, message: "Authentication service not configured on server." });
-    return null;
-  }
-  try {
-    const payload = await verifyToken(token, { secretKey });
-    return payload;
-  } catch {
-    res.status(401).json({ success: false, message: "Invalid or expired session. Please sign in again." });
-    return null;
-  }
-}
+const patientOtpStore = new Map(); // email -> { otp, expiresAt }
 
 const DEPARTMENT_FIELD_MAP = {
   Nursing: "nursingCare",
@@ -354,13 +334,55 @@ router.get("/yearly", async (req, res) => {
   }
 });
 
+router.post("/request-otp", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    patientOtpStore.set(email.toLowerCase(), { otp, expiresAt });
+
+    await sendPatientOTPEmail(email, otp);
+
+    console.log("------------------------------------------");
+    console.log(`[FEEDBACK] OTP for ${email}: ${otp}`);
+    console.log("------------------------------------------");
+
+    res.json({
+      success: true,
+      message: "OTP sent successfully to your email.",
+    });
+  } catch (error) {
+    console.error("Error requesting feedback OTP:", error);
+    res.status(500).json({ success: false, message: "Failed to generate OTP" });
+  }
+});
+
 router.post("/opd", async (req, res) => {
   try {
-    // Verify Clerk session
-    const payload = await requireClerkAuth(req, res);
-    if (!payload) return;
+    const { email, otp, ...restBody } = req.body;
+    
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: "Email and OTP are required for submission." });
+    }
 
-    const feedbackData = { ...req.body, type: "OPD", clerk_user_id: payload.sub };
+    const storedData = patientOtpStore.get(email.toLowerCase());
+    if (!storedData || storedData.otp !== otp.trim()) {
+      return res.status(401).json({ success: false, message: "Invalid OTP code." });
+    }
+    
+    if (new Date() > storedData.expiresAt) {
+      return res.status(401).json({ success: false, message: "OTP has expired. Please request a new one." });
+    }
+
+    // OTP verified, remove from store
+    patientOtpStore.delete(email.toLowerCase());
+
+    const feedbackData = { ...restBody, email, type: "OPD" };
     const overall = feedbackData.overallExperience || feedbackData.overall_experience || "Not specified";
     const ts = feedbackData.timestamp ? new Date(feedbackData.timestamp) : new Date();
 
@@ -398,11 +420,25 @@ router.post("/opd", async (req, res) => {
 
 router.post("/ipd", async (req, res) => {
   try {
-    // Verify Clerk session
-    const payload = await requireClerkAuth(req, res);
-    if (!payload) return;
+    const { email, otp, ...restBody } = req.body;
+    
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: "Email and OTP are required for submission." });
+    }
 
-    const feedbackData = { ...req.body, type: "IPD", clerk_user_id: payload.sub };
+    const storedData = patientOtpStore.get(email.toLowerCase());
+    if (!storedData || storedData.otp !== otp.trim()) {
+      return res.status(401).json({ success: false, message: "Invalid OTP code." });
+    }
+    
+    if (new Date() > storedData.expiresAt) {
+      return res.status(401).json({ success: false, message: "OTP has expired. Please request a new one." });
+    }
+
+    // OTP verified, remove from store
+    patientOtpStore.delete(email.toLowerCase());
+
+    const feedbackData = { ...restBody, email, type: "IPD" };
     const overall = feedbackData.overallExperience || feedbackData.overall_experience || "Not specified";
     const ts = feedbackData.timestamp ? new Date(feedbackData.timestamp) : new Date();
 

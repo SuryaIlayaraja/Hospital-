@@ -14,8 +14,7 @@ import RatingSelector from "./RatingSelector";
 import FormInput from "./FormInput";
 import ProgressBar from "./ProgressBar";
 import { useLanguage } from "../contexts/LanguageContext";
-import { submitOPDFeedback } from "../services/apiService";
-import { useAuth } from "@clerk/clerk-react";
+import { submitOPDFeedback, requestFeedbackOTP } from "../services/apiService";
 import {
   DEFAULT_OPD_QUESTIONS,
   STORAGE_KEY_OPD,
@@ -37,14 +36,16 @@ interface OPDFeedbackProps {
 
 const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
   const { t } = useLanguage();
-  const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [otpInput, setOtpInput] = useState("");
   const [formData, setFormData] = useState({
     name: "",
+    email: "",
     date: "",
     mobile: "",
     overallExperience: "",
@@ -94,8 +95,8 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
   // Calculate form progress
   const formProgress = useMemo(() => {
     const requiredFields = isAnonymous
-      ? ["date", "overallExperience"]
-      : ["name", "date", "mobile", "overallExperience"];
+      ? ["date", "overallExperience", "email"]
+      : ["name", "email", "date", "mobile", "overallExperience"];
 
     const ratingFields = [
       "appointmentBooking",
@@ -126,6 +127,36 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.email) {
+      alert("Please enter an email address to verify.");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+
+    try {
+      const res = await requestFeedbackOTP(formData.email);
+      if (res.success) {
+        setShowOTPModal(true);
+        setOtpInput("");
+      } else {
+        alert(res.message || "Failed to send OTP.");
+        setSubmitStatus("error");
+      }
+    } catch (err) {
+      console.error(err);
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyAndSubmit = async () => {
+    if (!otpInput || otpInput.length < 6) {
+      alert("Please enter a valid 6-digit OTP.");
+      return;
+    }
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
@@ -133,6 +164,7 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
       // Map form data to backend format (convert rating values)
       const submitData = {
         ...formData,
+        otp: otpInput,
         // Anonymous: override patient info
         name: isAnonymous ? "Anonymous" : formData.name,
         uhid: "", // Removed from form, sending empty
@@ -156,14 +188,15 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
         hospitalCleanliness: formData.hospitalCleanliness ? mapRatingToBackend(formData.hospitalCleanliness) : "",
       };
 
-      const clerkToken = await getToken();
-      const result = await submitOPDFeedback(submitData, clerkToken);
+      const result = await submitOPDFeedback(submitData);
 
       if (result.success) {
         setSubmitStatus("success");
+        setShowOTPModal(false);
         // Reset form after successful submission
         setFormData({
           name: "",
+          email: "",
           date: "",
           mobile: "",
           overallExperience: "",
@@ -297,6 +330,14 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
               required
             />
             <FormInput
+              label={t("common.email") || "Email Address"}
+              type="email"
+              value={formData.email}
+              onChange={(value) => updateField("email", value)}
+              placeholder="Enter email address"
+              required
+            />
+            <FormInput
               label={t("common.date")}
               type="date"
               value={formData.date}
@@ -322,7 +363,15 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
               <div className="w-2 h-2 bg-indigo-500 rounded-full hidden sm:block"></div>
               {t("common.date")}
             </h3>
-            <div className="max-w-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormInput
+                label={t("common.email") || "Email Address"}
+                type="email"
+                value={formData.email}
+                onChange={(value) => updateField("email", value)}
+                placeholder="Required for verification"
+                required
+              />
               <FormInput
                 label={t("common.date")}
                 type="date"
@@ -452,10 +501,48 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
               }`}
           >
             <Send className="h-5 w-5" />
-            {isSubmitting ? "Submitting..." : t("opd.submit.button")}
+            {isSubmitting ? "Sending OTP..." : t("opd.submit.button")}
           </button>
         </div>
       </form>
+
+      {/* OTP Modal */}
+      {showOTPModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#0c0c0c] rounded-2xl p-6 sm:p-8 w-full max-w-sm shadow-2xl border border-gray-200 dark:border-white/10">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center">Verify Email</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
+              Enter the 6-digit OTP sent to <br/><span className="font-semibold text-indigo-500">{formData.email}</span>
+            </p>
+            <input
+              type="text"
+              value={otpInput}
+              onChange={(e) => setOtpInput(e.target.value)}
+              placeholder="Enter OTP"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center text-xl tracking-widest font-bold text-gray-900 dark:text-white"
+              maxLength={6}
+            />
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowOTPModal(false)}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleVerifyAndSubmit}
+                disabled={isSubmitting || otpInput.length < 6}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              >
+                {isSubmitting ? "Verifying..." : "Verify"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

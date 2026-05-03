@@ -33,13 +33,15 @@ const {
 } = require("./lib/socketDb");
 
 const app = express();
-app.set("trust proxy", 1); // Trust first proxy for express-rate-limit and IP resolution
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration - must be before other middleware
 // Allow all origins in development, specific origin in production
 const corsOptions = {
-  origin: true, // Allow any origin that makes the request (required for dynamic subdomains + credentials)
+  origin:
+    process.env.NODE_ENV === "production"
+      ? process.env.FRONTEND_URL || "http://localhost:5173"
+      : true, // Allow all origins in development
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-chat-token"],
   credentials: true,

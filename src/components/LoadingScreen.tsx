@@ -140,8 +140,21 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, hospitalName 
         {/* Central Animated Graphic */}
         <div className="mb-8">
           <div className="relative">
-            <div className="w-32 h-32 sm:w-48 sm:h-48 mx-auto rounded-full overflow-hidden shadow-2xl border-4 border-white dark:border-gray-800 animate-pulse bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center">
-              <Activity className="w-16 h-16 sm:w-24 sm:h-24 text-white opacity-90 animate-pulse" />
+            <div className="w-32 h-32 sm:w-48 sm:h-48 mx-auto rounded-full overflow-hidden shadow-2xl border-4 border-white dark:border-gray-800 relative bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center">
+              {/* Fallback Icon while image loads */}
+              <Activity className="w-16 h-16 sm:w-24 sm:h-24 text-white opacity-50 absolute inset-0 m-auto animate-pulse" />
+              
+              <img
+                src="/images/doctor1.jpg"
+                alt="Doctor"
+                className="w-full h-full object-cover object-center relative z-10 animate-fade-in"
+                style={{
+                  objectPosition: 'center 15%'
+                }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
             </div>
             {/* Floating Elements */}
             <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
