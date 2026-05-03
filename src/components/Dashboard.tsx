@@ -1278,7 +1278,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-4">
               <button
                 onClick={() => onNavigate?.("opd")}
-                className="group flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl font-bold text-base sm:text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-indigo-500/20"
+                className="group flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold text-base sm:text-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-blue-500/20"
               >
                 <Users className="h-5 w-5" />
                 {t('opdFeedback')}
@@ -1286,7 +1286,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </button>
               <button
                 onClick={() => onNavigate?.("ipd")}
-                className="flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-bold text-base sm:text-lg hover:from-violet-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-violet-500/20"
+                className="flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-bold text-base sm:text-lg hover:from-pink-600 hover:to-rose-600 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-pink-500/20"
               >
                 <UserCheck className="h-5 w-5" />
                 {t('ipdFeedback')}
