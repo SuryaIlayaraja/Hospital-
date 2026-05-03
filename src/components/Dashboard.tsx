@@ -1280,15 +1280,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => onNavigate?.("opd")}
                 className="group flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 bg-indigo-600 dark:bg-white text-white dark:text-black rounded-xl font-bold text-base sm:text-lg hover:bg-indigo-700 dark:hover:bg-gray-100 transition-all duration-300 hover:scale-105 hover:shadow-2xl"
               >
-                {t('shareFeedback')}
+                <Users className="h-5 w-5" />
+                {t('opdFeedback')}
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <button
-                onClick={handleMeetDoctors}
-                className="flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold text-base sm:text-lg hover:from-pink-600 hover:to-purple-700 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/20"
+                onClick={() => onNavigate?.("ipd")}
+                className="flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold text-base sm:text-lg hover:from-emerald-600 hover:to-green-700 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/20"
               >
-                <Stethoscope className="h-5 w-5" />
-                {t('meetDoctors')}
+                <UserCheck className="h-5 w-5" />
+                {t('ipdFeedback')}
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </div>

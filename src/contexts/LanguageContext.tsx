@@ -90,8 +90,8 @@ const translations = {
     'elevateYour': 'Elevate Your',
     'healthcare': 'Healthcare',
     'subtitle': 'Curated high-performance care for patients, families, and professionals. Experience the difference of quality healthcare.',
-    'shareFeedback': 'Share Feedback',
-    'meetDoctors': 'Meet Our Doctors',
+    'shareFeedback': 'OPD Feedback',
+    'meetDoctors': 'IPD Feedback',
 
     // Dashboard Sections
     'quickAccess': 'Quick Access',
@@ -449,8 +449,8 @@ const translations = {
     'elevateYour': 'உங்கள்',
     'healthcare': 'சுகாதாரத்தை மேம்படுத்துங்கள்',
     'subtitle': 'நோயாளிகள், குடும்பங்கள் மற்றும் நிபுணர்களுக்கான உயர்தர சுகாதார சேவைகள். தரமான சுகாதாரத்தின் வித்தியாசத்தை அனுபவியுங்கள்.',
-    'shareFeedback': 'கருத்து பகிர்',
-    'meetDoctors': 'மருத்துவர்களை சந்திக்கவும்',
+    'shareFeedback': 'வெளிநோயாளர் கருத்து',
+    'meetDoctors': 'உள்நோயாளர் கருத்து',
 
     // Dashboard Sections
     'quickAccess': 'விரைவு அணுகல்',
