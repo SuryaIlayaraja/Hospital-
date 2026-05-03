@@ -203,6 +203,10 @@ const apiRequest = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
+  // 15 second timeout — prevents infinite "Sending..." hang
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
   try {
     const url = `${API_BASE_URL}${endpoint}`;
     console.log(`Making API request to: ${options.method || "GET"} ${url}`);
@@ -222,7 +226,10 @@ const apiRequest = async <T>(
     const response = await fetch(url, {
       headers,
       ...options,
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     let data: any;
     const contentType = response.headers.get("content-type");
@@ -250,11 +257,17 @@ const apiRequest = async <T>(
 
     return data;
   } catch (error) {
+    clearTimeout(timeoutId);
     console.error("API request error:", error);
+    const isTimeout = error instanceof Error && error.name === 'AbortError';
+    const isNetwork = error instanceof TypeError && error.message.includes('fetch');
     return {
       success: false,
-      message:
-        error instanceof Error ? error.message : "Unknown error occurred",
+      message: isTimeout
+        ? "Request timed out. The server may be starting up — please try again in a moment."
+        : isNetwork
+          ? "Cannot reach the server. Please check your connection and try again."
+          : error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
 };
