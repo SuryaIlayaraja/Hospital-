@@ -12,7 +12,7 @@ import RatingSelector from "./RatingSelector";
 import FormInput from "./FormInput";
 import ProgressBar from "./ProgressBar";
 import { useLanguage } from "../contexts/LanguageContext";
-import { submitIPDFeedback, requestFeedbackOTP, verifyFeedbackOTP } from "../services/apiService";
+import { submitIPDFeedback } from "../services/apiService";
 import {
   DEFAULT_IPD_QUESTIONS,
   STORAGE_KEY_IPD,
@@ -38,12 +38,10 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
-  const [authStage, setAuthStage] = useState<"email" | "otp" | "authenticated">("email");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authOtp, setAuthOtp] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
+    email: "",
     date: "",
     mobile: "",
     overallExperience: "",
@@ -78,7 +76,7 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
   };
 
   const formProgress = useMemo(() => {
-    const requiredFields = ["name", "date", "mobile", "overallExperience"];
+    const requiredFields = ["name", "email", "date", "mobile", "overallExperience"];
 
     const ratingFields = [
       "registrationProcess", "roomReadiness", "roomCleanliness", "doctorExplanation", "nurseCommunication",
@@ -96,54 +94,6 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
     return { progress, totalFields, completedFields };
   }, [formData]);
 
-  const handleRequestOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authEmail) {
-      alert("Please enter an email address.");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    try {
-      const res = await requestFeedbackOTP(authEmail);
-      if (res.success) {
-        setAuthStage("otp");
-        setAuthOtp("");
-      } else {
-        alert(res.message || "Failed to send OTP.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred while requesting OTP.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authOtp || authOtp.length < 6) {
-      alert("Please enter a valid 6-digit OTP.");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    try {
-      const res = await verifyFeedbackOTP(authEmail, authOtp);
-      
-      if (res.success) {
-        setAuthStage("authenticated");
-      } else {
-        alert(res.message || "Invalid OTP.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred during verification.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -153,10 +103,8 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
     try {
       const submitData = {
         ...formData,
-        email: authEmail,
-        otp: authOtp,
         name: formData.name,
-        uhid: "", 
+        uhid: "",
         mobile: formData.mobile,
         isAnonymous: false,
         overallExperience: mapRatingToBackend(formData.overallExperience),
@@ -178,14 +126,11 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
       if (result.success) {
         setSubmitStatus("success");
         setFormData({
-          name: "", date: "", mobile: "", overallExperience: "", registrationProcess: "", roomReadiness: "",
+          name: "", email: "", date: "", mobile: "", overallExperience: "", registrationProcess: "", roomReadiness: "",
           roomCleanliness: "", doctorExplanation: "", nurseCommunication: "", planExplanation: "", promptnessAttending: "",
           pharmacyTimeliness: "", billingCourtesy: "", operationsHospitality: "", dischargeProcess: "",
           nominateEmployee: "", comments: "",
         });
-        setAuthStage("email");
-        setAuthEmail("");
-        setAuthOtp("");
       } else {
         setSubmitStatus("error");
       }
@@ -196,88 +141,6 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
       setIsSubmitting(false);
     }
   };
-
-  if (authStage !== "authenticated") {
-    return (
-      <div className="w-full min-h-screen bg-gray-50 dark:bg-[#030303] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white dark:bg-[#0c0c0c] rounded-3xl p-8 shadow-2xl border border-gray-200 dark:border-white/10">
-          <div className="flex justify-between items-center mb-8">
-            <button
-              onClick={onNavigate}
-              className="text-gray-500 hover:text-indigo-600 transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-            <ThemeToggle />
-          </div>
-          
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent mb-2 text-center">
-            {t("ipd.title") || "IPD Feedback"}
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-center mb-8">
-            Please verify your email to continue.
-          </p>
-
-          {authStage === "email" ? (
-            <form onSubmit={handleRequestOTP} className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
-                <input
-                  type="email"
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-lg hover:shadow-indigo-500/25 disabled:opacity-70"
-              >
-                {isSubmitting ? "Sending..." : "Send OTP"}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOTP} className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Verification Code</label>
-                <input
-                  type="text"
-                  value={authOtp}
-                  onChange={(e) => setAuthOtp(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none text-center text-2xl tracking-widest font-bold"
-                  placeholder="------"
-                  maxLength={6}
-                  required
-                />
-                <p className="text-sm text-center text-gray-500 mt-3">
-                  Sent to <span className="font-semibold text-indigo-500">{authEmail}</span>
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAuthStage("email")}
-                  className="flex-1 py-4 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || authOtp.length < 6}
-                  className="flex-1 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-lg hover:shadow-indigo-500/25 disabled:opacity-70"
-                >
-                  {isSubmitting ? "Verifying..." : "Verify & Continue"}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full min-h-screen bg-white dark:bg-[#030303] text-gray-900 dark:text-white">
