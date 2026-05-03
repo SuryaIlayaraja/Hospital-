@@ -56,6 +56,9 @@ app.use(
   }),
 );
 
+// Trust the first proxy (required on Render, Heroku, etc. which sit behind a reverse proxy)
+app.set('trust proxy', 1);
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -64,9 +67,9 @@ const limiter = rateLimit({
     success: false,
     message: "Too many requests from this IP, please try again later.",
   },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  skip: (req, res) => process.env.NODE_ENV !== "production", // Disable in development
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req, res) => process.env.NODE_ENV !== "production",
 });
 app.use("/api/", limiter);
 
