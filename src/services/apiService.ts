@@ -203,9 +203,9 @@ const apiRequest = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
-  // 15 second timeout — prevents infinite "Sending..." hang
+  // 60 second timeout — accounts for Render free tier cold start (can take 30-60s)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
 
   try {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -264,7 +264,7 @@ const apiRequest = async <T>(
     return {
       success: false,
       message: isTimeout
-        ? "Request timed out. The server may be starting up — please try again in a moment."
+        ? "The server is waking up from sleep — please wait a moment and try again."
         : isNetwork
           ? "Cannot reach the server. Please check your connection and try again."
           : error instanceof Error ? error.message : "Unknown error occurred",
