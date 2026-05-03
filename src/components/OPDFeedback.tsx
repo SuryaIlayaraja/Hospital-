@@ -38,10 +38,13 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
     "idle" | "success" | "error"
   >("idle");
 
+  const todayDate = new Date();
+  const defaultDate = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    date: "",
+    date: defaultDate,
     mobile: "",
     overallExperience: "",
     appointmentBooking: "",
@@ -113,7 +116,7 @@ const OPDFeedback: React.FC<OPDFeedbackProps> = ({ onNavigate }) => {
       if (result.success) {
         setSubmitStatus("success");
         setFormData({
-          name: "", email: "", date: "", mobile: "", overallExperience: "", appointmentBooking: "", receptionStaff: "",
+          name: "", email: "", date: defaultDate, mobile: "", overallExperience: "", appointmentBooking: "", receptionStaff: "",
           billingProcess: "", nursingCare: "", labStaffSkilled: "", labWaitingTime: "", radiologyStaffSkilled: "",
           radiologyWaitingTime: "", pharmacyWaitingTime: "", medicationDispensed: "", drugExplanation: "",
           counsellingSession: "", audiologyStaffSkilled: "", hospitalCleanliness: "", nominateEmployee: "", comments: "",

@@ -38,10 +38,13 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
     "idle" | "success" | "error"
   >("idle");
 
+  const todayDate = new Date();
+  const defaultDate = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    date: "",
+    date: defaultDate,
     mobile: "",
     overallExperience: "",
     registrationProcess: "",
@@ -107,7 +110,7 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
       if (result.success) {
         setSubmitStatus("success");
         setFormData({
-          name: "", email: "", date: "", mobile: "", overallExperience: "", registrationProcess: "", roomReadiness: "",
+          name: "", email: "", date: defaultDate, mobile: "", overallExperience: "", registrationProcess: "", roomReadiness: "",
           roomCleanliness: "", doctorExplanation: "", nurseCommunication: "", planExplanation: "", promptnessAttending: "",
           pharmacyTimeliness: "", billingCourtesy: "", operationsHospitality: "", dischargeProcess: "",
           nominateEmployee: "", comments: "",
