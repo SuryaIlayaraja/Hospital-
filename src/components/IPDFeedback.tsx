@@ -211,6 +211,7 @@ const IPDFeedback: React.FC<IPDFeedbackProps> = ({ onNavigate }) => {
                   label={q.label}
                   value={formData[q.id as keyof typeof formData] || ""}
                   onChange={(value) => updateField(q.id, value)}
+                  required={true}
                 />
               ))}
           </div>
