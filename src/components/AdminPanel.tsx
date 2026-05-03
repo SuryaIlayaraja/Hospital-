@@ -1312,16 +1312,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
     doc.setFont("helvetica", "bold");
     doc.text("Daily Summary", 15, 55);
 
-    const todayOPD = feedback.opd.filter((f) => f.date === todayDate).length;
-    const todayIPD = feedback.ipd.filter((f) => f.date === todayDate).length;
+    const todayDDMMYYYY = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+
+    const todayOPD = feedback.opd.filter((f) => f.date === todayDate || f.date === todayDDMMYYYY).length;
+    const todayIPD = feedback.ipd.filter((f) => f.date === todayDate || f.date === todayDDMMYYYY).length;
     const todayTickets = tickets.filter((t) => {
       const ticketDate = new Date(t.createdAt).toISOString().split("T")[0];
       return ticketDate === todayDate;
     }).length;
 
     const allTodayFeedback = [
-      ...feedback.opd.filter((f) => f.date === todayDate),
-      ...feedback.ipd.filter((f) => f.date === todayDate),
+      ...feedback.opd.filter((f) => f.date === todayDate || f.date === todayDDMMYYYY),
+      ...feedback.ipd.filter((f) => f.date === todayDate || f.date === todayDDMMYYYY),
     ];
     const totalFeedback = allTodayFeedback.length;
 
@@ -1613,7 +1615,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
 
     const filterData = (data: FeedbackData[]) => {
       return data.filter((item) => {
-        const itemDate = new Date(item.date);
+        let itemDate;
+        if (item.date && item.date.includes('/')) {
+          const parts = item.date.split('/');
+          if (parts.length === 3) {
+            itemDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+          } else {
+            itemDate = new Date(item.date);
+          }
+        } else {
+          itemDate = new Date(item.date);
+        }
 
         if (dateFilter.filterType === "single") {
           if (!dateFilter.singleDate) return true;
@@ -1685,9 +1697,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
 
     // Apply today-only filter (default behavior)
     if (showTodayOnly && !dateFilter.isActive && !searchFilter.isActive) {
-      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+      const todayDateObj = new Date();
+      const today = todayDateObj.toISOString().split("T")[0]; // YYYY-MM-DD format
+      const todayDDMMYYYY = `${todayDateObj.getDate().toString().padStart(2, '0')}/${(todayDateObj.getMonth() + 1).toString().padStart(2, '0')}/${todayDateObj.getFullYear()}`;
       const filterData = (data: FeedbackData[]) => {
-        return data.filter((item) => item.date === today);
+        return data.filter((item) => item.date === today || item.date === todayDDMMYYYY);
       };
       filteredData = {
         opd: filterData(filteredData.opd),
@@ -1699,7 +1713,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onSettingsUpdate, onNavigate })
     if (dateFilter.isActive) {
       const filterData = (data: FeedbackData[]) => {
         return data.filter((item) => {
-          const itemDate = new Date(item.date);
+          let itemDate;
+          if (item.date && item.date.includes('/')) {
+            const parts = item.date.split('/');
+            if (parts.length === 3) {
+              itemDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+            } else {
+              itemDate = new Date(item.date);
+            }
+          } else {
+            itemDate = new Date(item.date);
+          }
 
           if (dateFilter.filterType === "single") {
             if (!dateFilter.singleDate) return true;
